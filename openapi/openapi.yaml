@@ -1,0 +1,825 @@
+openapi: 3.0.3
+info:
+  title: Lentes API
+  version: 0.1.0
+  description: API de la tienda en línea de lentes de contacto. Fuente de verdad del contrato con lentes-web.
+servers:
+  - url: https://api.tutienda.com
+    description: Producción
+  - url: http://localhost:8080
+    description: Local
+paths:
+  /healthz:
+    get:
+      operationId: getHealth
+      summary: Salud del servicio
+      responses:
+        "200":
+          description: Servicio y base de datos disponibles
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status:
+                    type: string
+                    example: ok
+        "503":
+          $ref: "#/components/responses/Problem"
+  /v1/products:
+    get:
+      operationId: listProducts
+      summary: Catálogo con filtros y paginación por cursor
+      parameters:
+        - name: brand
+          in: query
+          description: Slug de la marca
+          schema: { type: string }
+        - name: lens_type
+          in: query
+          schema: { $ref: "#/components/schemas/LensType" }
+        - name: replacement
+          in: query
+          schema: { $ref: "#/components/schemas/Replacement" }
+        - name: cursor
+          in: query
+          description: Cursor opaco devuelto en `next_cursor`
+          schema: { type: string }
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+      responses:
+        "200":
+          description: Página de productos
+          headers:
+            Cache-Control:
+              schema: { type: string, example: "public, s-maxage=300" }
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: "#/components/schemas/Product" }
+                  next_cursor:
+                    type: string
+                    nullable: true
+        "400":
+          $ref: "#/components/responses/Problem"
+  /v1/brands:
+    get:
+      operationId: listBrands
+      summary: Lista de marcas
+      responses:
+        "200":
+          description: Marcas ordenadas por nombre
+          headers:
+            Cache-Control:
+              schema: { type: string, example: "public, s-maxage=300" }
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: "#/components/schemas/Brand" }
+  /v1/products/{slug}:
+    get:
+      operationId: getProduct
+      summary: Detalle del producto y parámetros disponibles
+      parameters:
+        - $ref: "#/components/parameters/Slug"
+      responses:
+        "200":
+          description: Producto con imágenes y valores de graduación existentes
+          headers:
+            Cache-Control:
+              schema: { type: string, example: "public, s-maxage=300" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProductDetail" }
+        "404":
+          $ref: "#/components/responses/Problem"
+  /v1/products/{slug}/variant:
+    get:
+      operationId: getProductVariant
+      summary: Resuelve la variante por parámetros y devuelve precio y stock
+      description: Los parámetros que no aplican al modelo (p. ej. `cylinder` en esféricos) se omiten.
+      parameters:
+        - $ref: "#/components/parameters/Slug"
+        - name: sphere
+          in: query
+          schema: { type: number, format: double }
+        - name: cylinder
+          in: query
+          schema: { type: number, format: double }
+        - name: axis
+          in: query
+          schema: { type: integer, minimum: 0, maximum: 180 }
+        - name: addition
+          in: query
+          schema: { type: string }
+        - name: base_curve
+          in: query
+          required: true
+          schema: { type: number, format: double }
+        - name: diameter
+          in: query
+          required: true
+          schema: { type: number, format: double }
+        - name: color
+          in: query
+          schema: { type: string }
+      responses:
+        "200":
+          description: Variante encontrada
+          headers:
+            Cache-Control:
+              schema: { type: string, example: "public, s-maxage=300" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Variant" }
+        "400":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+  /v1/cart:
+    get:
+      operationId: getCart
+      summary: Carrito actual (vacío si no existe)
+      description: Con sesión es el carrito del cliente; sin sesión, el del header `X-Cart-Token`.
+      security:
+        - {}
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/CartToken"
+      responses:
+        "200":
+          description: Carrito
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Cart" }
+  /v1/cart/items:
+    post:
+      operationId: addCartItem
+      summary: Agrega una variante para un ojo (suma si la línea ya existe)
+      description: |
+        Sin sesión ni token válido crea un carrito anónimo y devuelve `cart_token`; el cliente debe
+        guardarlo y enviarlo en `X-Cart-Token`. Falla con 409 si no hay existencias suficientes.
+      security:
+        - {}
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/CartToken"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CartItemInput" }
+      responses:
+        "201":
+          description: Carrito actualizado
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Cart" }
+        "400":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+  /v1/cart/items/{id}:
+    patch:
+      operationId: updateCartItem
+      summary: Cambia la cantidad de una línea
+      security:
+        - {}
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+        - $ref: "#/components/parameters/CartToken"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CartItemUpdate" }
+      responses:
+        "200":
+          description: Carrito actualizado
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Cart" }
+        "400":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+    delete:
+      operationId: deleteCartItem
+      summary: Quita una línea
+      security:
+        - {}
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+        - $ref: "#/components/parameters/CartToken"
+      responses:
+        "200":
+          description: Carrito actualizado
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Cart" }
+        "404":
+          $ref: "#/components/responses/Problem"
+  /v1/cart/merge:
+    post:
+      operationId: mergeCart
+      summary: Une el carrito anónimo (`X-Cart-Token`) al del cliente al iniciar sesión
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/CartToken"
+      responses:
+        "200":
+          description: Carrito del cliente
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Cart" }
+  /v1/me:
+    get:
+      operationId: getMe
+      summary: Perfil del cliente
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Perfil
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Customer" }
+    put:
+      operationId: updateMe
+      summary: Actualiza el perfil
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CustomerUpdate" }
+      responses:
+        "200":
+          description: Perfil actualizado
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Customer" }
+        "400":
+          $ref: "#/components/responses/Problem"
+  /v1/me/addresses:
+    get:
+      operationId: listAddresses
+      summary: Direcciones del cliente
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Direcciones, la predeterminada primero
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: "#/components/schemas/Address" }
+    post:
+      operationId: createAddress
+      summary: "Agrega una dirección (la primera queda predeterminada)"
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AddressInput" }
+      responses:
+        "201":
+          description: Dirección creada
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Address" }
+        "400":
+          $ref: "#/components/responses/Problem"
+  /v1/me/addresses/{id}:
+    put:
+      operationId: updateAddress
+      summary: Reemplaza una dirección
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AddressInput" }
+      responses:
+        "200":
+          description: Dirección actualizada
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Address" }
+        "400":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+    delete:
+      operationId: deleteAddress
+      summary: Elimina una dirección
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "204":
+          description: Eliminada
+        "404":
+          $ref: "#/components/responses/Problem"
+  /v1/admin/brands:
+    post:
+      operationId: adminCreateBrand
+      summary: Crea una marca
+      security:
+        - bearerAuth: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BrandInput" }
+      responses:
+        "201":
+          description: Marca creada
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Brand" }
+        "400":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+  /v1/admin/products:
+    get:
+      operationId: adminListProducts
+      summary: Productos, incluidos los inactivos
+      security:
+        - bearerAuth: [admin]
+      parameters:
+        - name: cursor
+          in: query
+          schema: { type: string }
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+      responses:
+        "200":
+          description: Página de productos
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: "#/components/schemas/AdminProduct" }
+                  next_cursor:
+                    type: string
+                    nullable: true
+        "400":
+          $ref: "#/components/responses/Problem"
+    post:
+      operationId: adminCreateProduct
+      summary: Crea un producto
+      security:
+        - bearerAuth: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ProductInput" }
+      responses:
+        "201":
+          description: Producto creado
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminProduct" }
+        "400":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+  /v1/admin/products/{id}:
+    put:
+      operationId: adminUpdateProduct
+      summary: "Reemplaza un producto (para retirarlo, active=false)"
+      security:
+        - bearerAuth: [admin]
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ProductInput" }
+      responses:
+        "200":
+          description: Producto actualizado
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminProduct" }
+        "400":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+  /v1/admin/variants:
+    get:
+      operationId: adminListVariants
+      summary: Variantes de un producto, incluidas las inactivas
+      security:
+        - bearerAuth: [admin]
+      parameters:
+        - name: product_id
+          in: query
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Variantes
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: "#/components/schemas/AdminVariant" }
+    post:
+      operationId: adminCreateVariant
+      summary: Crea una variante
+      security:
+        - bearerAuth: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/VariantInput" }
+      responses:
+        "201":
+          description: Variante creada
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminVariant" }
+        "400":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+  /v1/admin/variants/{id}:
+    put:
+      operationId: adminUpdateVariant
+      summary: "Reemplaza una variante (el producto no cambia; para retirarla, active=false)"
+      security:
+        - bearerAuth: [admin]
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/VariantInput" }
+      responses:
+        "200":
+          description: Variante actualizada
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminVariant" }
+        "400":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+  /v1/admin/variants/import:
+    post:
+      operationId: adminImportVariants
+      summary: "Carga masiva de variantes por CSV (upsert por sku, todo o nada)"
+      description: |
+        Columnas: `product_slug,sku,sphere,cylinder,axis,addition,base_curve,diameter,color,price_cents,compare_at_cents,stock,active`.
+        Requeridas: `product_slug`, `sku`, `base_curve`, `diameter`, `price_cents`, `stock`. Máximo 5 MB y 5,000 filas.
+        El encabezado es la fila 1. Si hay errores no se aplica nada y se devuelven por fila.
+      security:
+        - bearerAuth: [admin]
+      requestBody:
+        required: true
+        content:
+          text/csv:
+            schema: { type: string, format: binary }
+      responses:
+        "200":
+          description: Resultado
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [created, updated]
+                properties:
+                  created: { type: integer }
+                  updated: { type: integer }
+        "400":
+          description: Archivo inválido; `errors` trae el detalle por fila
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ImportProblem" }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Access token de Supabase Auth. El scope `admin` exige app_metadata.role = admin.
+  parameters:
+    CartToken:
+      name: X-Cart-Token
+      in: header
+      required: false
+      description: Token del carrito anónimo
+      schema: { type: string }
+    Id:
+      name: id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    Slug:
+      name: slug
+      in: path
+      required: true
+      schema: { type: string }
+  responses:
+    Problem:
+      description: Error (RFC 9457)
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Problem" }
+  schemas:
+    Problem:
+      type: object
+      required: [type, title, status]
+      properties:
+        type: { type: string, example: "about:blank" }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+    LensType:
+      type: string
+      enum: [spherical, toric, multifocal, cosmetic]
+    Replacement:
+      type: string
+      enum: [daily, biweekly, monthly, quarterly, yearly]
+    Brand:
+      type: object
+      required: [id, name, slug]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        slug: { type: string }
+    Product:
+      type: object
+      required: [id, brand, name, slug, lens_type, replacement, pieces_per_box, requires_prescription]
+      properties:
+        id: { type: string, format: uuid }
+        brand: { $ref: "#/components/schemas/Brand" }
+        name: { type: string }
+        slug: { type: string }
+        description: { type: string, nullable: true }
+        lens_type: { $ref: "#/components/schemas/LensType" }
+        replacement: { $ref: "#/components/schemas/Replacement" }
+        pieces_per_box: { type: integer }
+        material: { type: string, nullable: true }
+        water_content_pct: { type: number, nullable: true }
+        requires_prescription: { type: boolean }
+    ProductImage:
+      type: object
+      required: [url, position]
+      properties:
+        url: { type: string, format: uri }
+        position: { type: integer }
+    ProductOptions:
+      description: Valores que existen en variantes activas del modelo, ordenados.
+      type: object
+      required: [spheres, cylinders, axes, additions, base_curves, diameters, colors]
+      properties:
+        spheres: { type: array, items: { type: number, format: double } }
+        cylinders: { type: array, items: { type: number, format: double } }
+        axes: { type: array, items: { type: integer } }
+        additions: { type: array, items: { type: string } }
+        base_curves: { type: array, items: { type: number, format: double } }
+        diameters: { type: array, items: { type: number, format: double } }
+        colors: { type: array, items: { type: string } }
+    ProductDetail:
+      allOf:
+        - $ref: "#/components/schemas/Product"
+        - type: object
+          required: [images, options]
+          properties:
+            images:
+              type: array
+              items: { $ref: "#/components/schemas/ProductImage" }
+            options: { $ref: "#/components/schemas/ProductOptions" }
+    Variant:
+      type: object
+      required: [id, sku, base_curve, diameter, price_cents, available, in_stock]
+      properties:
+        id: { type: string, format: uuid }
+        sku: { type: string }
+        sphere: { type: number, format: double, nullable: true }
+        cylinder: { type: number, format: double, nullable: true }
+        axis: { type: integer, nullable: true }
+        addition: { type: string, nullable: true }
+        base_curve: { type: number, format: double }
+        diameter: { type: number, format: double }
+        color: { type: string, nullable: true }
+        price_cents: { type: integer, format: int64, description: Centavos MXN }
+        compare_at_cents: { type: integer, format: int64, nullable: true }
+        available: { type: integer, description: "stock - reserved" }
+        in_stock: { type: boolean }
+    ImportProblem:
+      allOf:
+        - $ref: "#/components/schemas/Problem"
+        - type: object
+          properties:
+            errors:
+              type: array
+              items:
+                type: object
+                required: [row, message]
+                properties:
+                  row: { type: integer }
+                  message: { type: string }
+    Customer:
+      type: object
+      required: [email, marketing_opt_in, created_at]
+      properties:
+        email: { type: string }
+        full_name: { type: string, nullable: true }
+        phone: { type: string, nullable: true }
+        marketing_opt_in: { type: boolean }
+        created_at: { type: string, format: date-time }
+    CustomerUpdate:
+      type: object
+      required: [marketing_opt_in]
+      properties:
+        full_name: { type: string, nullable: true }
+        phone: { type: string, nullable: true }
+        marketing_opt_in: { type: boolean }
+    AddressInput:
+      type: object
+      required: [recipient, street, ext_number, neighborhood, city, state, postal_code, phone]
+      properties:
+        recipient: { type: string }
+        street: { type: string }
+        ext_number: { type: string }
+        int_number: { type: string, nullable: true }
+        neighborhood: { type: string }
+        city: { type: string }
+        state: { type: string }
+        postal_code: { type: string, pattern: "^[0-9]{5}$" }
+        phone: { type: string }
+        is_default: { type: boolean, default: false }
+    Address:
+      allOf:
+        - $ref: "#/components/schemas/AddressInput"
+        - type: object
+          required: [id, is_default]
+          properties:
+            id: { type: string, format: uuid }
+            is_default: { type: boolean }
+    BrandInput:
+      type: object
+      required: [name, slug]
+      properties:
+        name: { type: string }
+        slug: { type: string }
+    ProductInput:
+      type: object
+      required: [brand_id, name, slug, lens_type, replacement, pieces_per_box, requires_prescription, active]
+      properties:
+        brand_id: { type: string, format: uuid }
+        name: { type: string }
+        slug: { type: string }
+        description: { type: string, nullable: true }
+        lens_type: { $ref: "#/components/schemas/LensType" }
+        replacement: { $ref: "#/components/schemas/Replacement" }
+        pieces_per_box: { type: integer }
+        material: { type: string, nullable: true }
+        water_content_pct: { type: number, nullable: true }
+        requires_prescription: { type: boolean }
+        active: { type: boolean }
+    AdminProduct:
+      allOf:
+        - $ref: "#/components/schemas/Product"
+        - type: object
+          required: [active]
+          properties:
+            active: { type: boolean }
+    VariantInput:
+      type: object
+      required: [product_id, sku, base_curve, diameter, price_cents, stock, active]
+      properties:
+        product_id: { type: string, format: uuid }
+        sku: { type: string }
+        sphere: { type: number, format: double, nullable: true }
+        cylinder: { type: number, format: double, nullable: true }
+        axis: { type: integer, nullable: true }
+        addition: { type: string, nullable: true }
+        base_curve: { type: number, format: double }
+        diameter: { type: number, format: double }
+        color: { type: string, nullable: true }
+        price_cents: { type: integer, format: int64 }
+        compare_at_cents: { type: integer, format: int64, nullable: true }
+        stock: { type: integer }
+        active: { type: boolean }
+    AdminVariant:
+      allOf:
+        - $ref: "#/components/schemas/Variant"
+        - type: object
+          required: [product_id, stock, reserved, active]
+          properties:
+            product_id: { type: string, format: uuid }
+            stock: { type: integer }
+            reserved: { type: integer }
+            active: { type: boolean }
+    CartItemInput:
+      type: object
+      required: [variant_id, eye, quantity]
+      properties:
+        variant_id: { type: string, format: uuid }
+        eye: { $ref: "#/components/schemas/Eye" }
+        quantity: { type: integer, minimum: 1, maximum: 12 }
+    CartItemUpdate:
+      type: object
+      required: [quantity]
+      properties:
+        quantity: { type: integer, minimum: 1, maximum: 12 }
+    Eye:
+      type: string
+      enum: [right, left, both]
+    CartItem:
+      type: object
+      required: [id, variant_id, sku, eye, quantity, unit_price_cents, line_total_cents, available, purchasable, product, base_curve, diameter]
+      properties:
+        id: { type: string, format: uuid }
+        variant_id: { type: string, format: uuid }
+        sku: { type: string }
+        eye: { $ref: "#/components/schemas/Eye" }
+        quantity: { type: integer }
+        unit_price_cents: { type: integer, format: int64 }
+        line_total_cents: { type: integer, format: int64 }
+        available: { type: integer, description: "stock - reserved ahora mismo" }
+        purchasable: { type: boolean, description: "false si la variante o el producto ya no están activos" }
+        product:
+          type: object
+          required: [name, slug, brand]
+          properties:
+            name: { type: string }
+            slug: { type: string }
+            brand: { type: string }
+            image_url: { type: string, nullable: true }
+        sphere: { type: number, format: double, nullable: true }
+        cylinder: { type: number, format: double, nullable: true }
+        axis: { type: integer, nullable: true }
+        addition: { type: string, nullable: true }
+        base_curve: { type: number, format: double }
+        diameter: { type: number, format: double }
+        color: { type: string, nullable: true }
+    Cart:
+      type: object
+      required: [items, subtotal_cents, item_count]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/CartItem" }
+        subtotal_cents: { type: integer, format: int64, description: Centavos MXN }
+        item_count: { type: integer, description: Total de cajas }
+        cart_token:
+          type: string
+          nullable: true
+          description: Solo cuando se acaba de crear un carrito anónimo
