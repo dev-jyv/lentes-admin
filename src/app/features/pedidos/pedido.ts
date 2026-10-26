@@ -82,7 +82,10 @@ const CARRIERS = ['Estafeta', 'DHL', 'FedEx', 'Paquetexpress', 'Redpack', 'Corre
                   <button type="button" class="rounded-lg border border-input px-3 py-2 text-sm" (click)="askTracking.set(false)">Cancelar</button>
                 </div>
               } @else if (confirmCancel()) {
-                <p class="text-sm">¿Cancelar el pedido? Se libera el inventario apartado. No se puede deshacer.</p>
+                <p class="text-sm">
+                  ¿Cancelar el pedido? La existencia vuelve al inventario y no se puede deshacer.
+                  <strong>El dinero no se reembolsa automáticamente:</strong> reembolsa el pago en Mercado Pago.
+                </p>
                 <div class="flex gap-2">
                   <button type="button" class="rounded-lg bg-destructive px-3 py-2 text-sm text-destructive-foreground disabled:opacity-50" [disabled]="busy()" (click)="apply('cancelled')">Sí, cancelar</button>
                   <button type="button" class="rounded-lg border border-input px-3 py-2 text-sm" (click)="confirmCancel.set(false)">Volver</button>

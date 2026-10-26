@@ -51,7 +51,7 @@ contra un contrato provisional (ver siguiente sección) para no frenar al admin 
 - **Al publicarse los endpoints reales:** `pnpm api:sync`, cambiar los imports de `api/provisional/*` por `api/generated/*`, borrar `openapi/provisional`,
   `src/app/api/provisional`, `scripts/mock-api.mjs`, el desvío del interceptor y `provisionalApiUrl`. Los nombres de operación (`adminListOrders`, etc.) se
   conservaron para que el cambio sea casi mecánico; si la API usa otros, se ajustan ahí.
-- **Pedidos (ya publicados):** las transiciones, la guía obligatoria al enviar, la corrección de guía y el `409` ante un cambio inválido o concurrente siguen el contrato real. Cancelar repone el inventario pero **no reembolsa** (reglas y pendientes: `lentes-api/docs/ADMIN_ORDERS.md`). La pantalla de pedido ya avisa de la cancelación; falta decidir el flujo de reembolso.
+- **Pedidos (ya publicados):** las transiciones, la guía obligatoria al enviar, la corrección de guía y el `409` ante un cambio inválido o concurrente siguen el contrato real. Cancelar repone el inventario pero **no reembolsa** (reglas y pendientes: `lentes-api/docs/ADMIN_ORDERS.md`). La confirmación de cancelar avisa que el reembolso es manual; falta decidir el flujo de reembolso.
 - **Recetas (ya publicadas):** la revisión sigue el contrato real. Rechazar exige `reject_reason` (lo ve el cliente), aprobar una receta vencida o revisar dos veces responde 409, y la cola trae el correo del cliente y `file_url` (lectura prefirmada de 10 min). Reglas y pendientes legales: `lentes-api/docs/PRESCRIPTIONS.md`.
 
 ## Decisiones tomadas
