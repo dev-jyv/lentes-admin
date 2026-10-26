@@ -639,6 +639,131 @@ paths:
           $ref: "#/components/responses/Problem"
         "409":
           $ref: "#/components/responses/Problem"
+  /v1/admin/uploads/image-url:
+    post:
+      operationId: adminCreateImageUploadUrl
+      summary: URL prefirmada de R2 para subir una foto de producto
+      description: |
+        PUT directo desde el navegador al bucket público, 10 minutos, tamaño y tipo firmados. Solo JPG, PNG o WebP, máx. 5 MB.
+        Después se registra con `POST /v1/admin/products/{id}/images`.
+      security:
+        - bearerAuth: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ImageUploadInput" }
+      responses:
+        "200":
+          description: URL de subida
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ImageUpload" }
+        "400":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "502":
+          $ref: "#/components/responses/Problem"
+  /v1/admin/products/{id}/images:
+    get:
+      operationId: adminListProductImages
+      summary: Galería del producto en orden (la primera es la principal)
+      security:
+        - bearerAuth: [admin]
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Imágenes
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: "#/components/schemas/ProductImageAdmin" }
+        "404":
+          $ref: "#/components/responses/Problem"
+    post:
+      operationId: adminAddProductImage
+      summary: Registra una imagen ya subida al final de la galería
+      description: |
+        La llave debe empezar con `productos/{id}/` y el archivo existir en R2 como imagen válida (tipo y ≤ 5 MB).
+        `409` si la galería ya tiene 10 imágenes o el archivo ya está registrado. El catálogo público puede tardar hasta 5 minutos en reflejarlo (caché de borde).
+      security:
+        - bearerAuth: [admin]
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ImageAddInput" }
+      responses:
+        "201":
+          description: Imagen registrada
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProductImageAdmin" }
+        "400":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        "502":
+          $ref: "#/components/responses/Problem"
+  /v1/admin/products/{id}/images/order:
+    put:
+      operationId: adminReorderProductImages
+      summary: Define el orden completo de la galería
+      description: Debe traer exactamente las imágenes actuales, sin repetir ni agregar ajenas (`400`).
+      security:
+        - bearerAuth: [admin]
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ImageOrderInput" }
+      responses:
+        "200":
+          description: Galería reordenada
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: "#/components/schemas/ProductImageAdmin" }
+        "400":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+  /v1/admin/products/{id}/images/{imageId}:
+    delete:
+      operationId: adminDeleteProductImage
+      summary: Quita una imagen de la galería
+      description: Borra el registro y compacta las posiciones. El archivo en R2 se conserva.
+      security:
+        - bearerAuth: [admin]
+      parameters:
+        - $ref: "#/components/parameters/Id"
+        - name: imageId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "204":
+          description: Eliminada
+        "404":
+          $ref: "#/components/responses/Problem"
   /v1/admin/brands:
     post:
       operationId: adminCreateBrand
@@ -1297,3 +1422,36 @@ components:
         status: { $ref: "#/components/schemas/OrderStatus" }
         tracking_carrier: { type: string, maxLength: 60 }
         tracking_number: { type: string, maxLength: 80 }
+    ProductImageAdmin:
+      type: object
+      required: [id, r2_key, url, position]
+      properties:
+        id: { type: string, format: uuid }
+        r2_key: { type: string }
+        url: { type: string, format: uri, description: URL pública (R2_PUBLIC_BASE_URL) }
+        position: { type: integer }
+    ImageUploadInput:
+      type: object
+      required: [product_id, content_type, size_bytes]
+      properties:
+        product_id: { type: string, format: uuid }
+        content_type: { type: string, enum: [image/jpeg, image/png, image/webp] }
+        size_bytes: { type: integer, format: int64, minimum: 1, maximum: 5242880 }
+    ImageUpload:
+      type: object
+      required: [upload_url, r2_key]
+      properties:
+        upload_url: { type: string, format: uri }
+        r2_key: { type: string, description: Llave que se manda al registrar la imagen }
+    ImageAddInput:
+      type: object
+      required: [r2_key]
+      properties:
+        r2_key: { type: string }
+    ImageOrderInput:
+      type: object
+      required: [image_ids]
+      properties:
+        image_ids:
+          type: array
+          items: { type: string, format: uuid }

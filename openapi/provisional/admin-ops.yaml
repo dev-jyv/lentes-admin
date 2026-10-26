@@ -6,110 +6,6 @@ info:
   title: Lentes API - operaciones admin (propuesta)
   version: 0.0.1
 paths:
-  /v1/admin/uploads/image-url:
-    post:
-      operationId: adminCreateImageUploadUrl
-      tags: [images]
-      description: URL prefirmada de R2 (PUT directo desde el navegador, 10 min). Solo jpeg, png o webp, máx. 5 MB.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [product_id, content_type, size_bytes]
-              properties:
-                product_id: { type: string, format: uuid }
-                content_type: { type: string, enum: [image/jpeg, image/png, image/webp] }
-                size_bytes: { type: integer, maximum: 5242880 }
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: object
-                required: [upload_url, r2_key]
-                properties:
-                  upload_url: { type: string }
-                  r2_key: { type: string }
-  /v1/admin/products/{id}/images:
-    get:
-      operationId: adminListProductImages
-      tags: [images]
-      parameters:
-        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
-      responses:
-        "200":
-          description: Galería en orden (la primera es la principal)
-          content:
-            application/json:
-              schema:
-                type: object
-                required: [items]
-                properties:
-                  items:
-                    type: array
-                    items: { $ref: "#/components/schemas/ProductImageAdmin" }
-    post:
-      operationId: adminAddProductImage
-      tags: [images]
-      description: Registra una imagen ya subida a R2; se agrega al final de la galería.
-      parameters:
-        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [r2_key]
-              properties:
-                r2_key: { type: string }
-      responses:
-        "201":
-          description: Creada
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/ProductImageAdmin" }
-  /v1/admin/products/{id}/images/order:
-    put:
-      operationId: adminReorderProductImages
-      tags: [images]
-      description: Define el orden completo de la galería.
-      parameters:
-        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [image_ids]
-              properties:
-                image_ids: { type: array, items: { type: string, format: uuid } }
-      responses:
-        "200":
-          description: Galería reordenada
-          content:
-            application/json:
-              schema:
-                type: object
-                required: [items]
-                properties:
-                  items:
-                    type: array
-                    items: { $ref: "#/components/schemas/ProductImageAdmin" }
-  /v1/admin/products/{id}/images/{imageId}:
-    delete:
-      operationId: adminDeleteProductImage
-      tags: [images]
-      parameters:
-        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
-        - { name: imageId, in: path, required: true, schema: { type: string, format: uuid } }
-      responses:
-        "204":
-          description: Eliminada
   /v1/admin/variants/{id}/stock-adjustments:
     get:
       operationId: adminListStockAdjustments
@@ -206,14 +102,6 @@ components:
         title: { type: string }
         status: { type: integer }
         detail: { type: string }
-    ProductImageAdmin:
-      type: object
-      required: [id, r2_key, url, position]
-      properties:
-        id: { type: string, format: uuid }
-        r2_key: { type: string }
-        url: { type: string, description: "URL pública (img.tutienda.com)" }
-        position: { type: integer }
     StockReason:
       type: string
       enum: [receipt, count_correction, damage, return, other]

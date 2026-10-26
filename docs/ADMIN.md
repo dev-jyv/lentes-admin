@@ -37,16 +37,16 @@ Sin SSR: es un SPA interno, no necesita SEO.
 | A1 | Marcas, productos, variantes (precio, existencia, activo), carga masiva por CSV | Hecha | Existe (`/v1/admin/brands`, `products`, `variants`, `variants/import`) |
 | A2 | Pedidos: lista con filtro por estado, detalle, cambio de estado, guía de envío (paquetería + número) | **Hecha contra el contrato real** (`lentes-api` B7) | Existe (`GET/PATCH /v1/admin/orders`) |
 | A3 | Recetas: pendientes/aprobadas/rechazadas, ver archivo (URL prefirmada de R2), aprobar o rechazar con motivo | **Hecha contra el contrato real** (`lentes-api` B6) | Existe (`GET/PATCH /v1/admin/prescriptions`) |
-| A4 | Fotos de producto: subida a R2 con URL prefirmada, orden de galería, eliminar | UI hecha contra contrato **provisional** | Faltan `POST /v1/admin/uploads/image-url`, `GET/POST /v1/admin/products/{id}/images`, `PUT .../images/order`, `DELETE .../images/{imageId}` |
+| A4 | Fotos de producto: subida a R2 con URL prefirmada, orden de galería, eliminar | **Hecha contra el contrato real** (`lentes-api` B8) | Existe (`/v1/admin/uploads/image-url`, `/v1/admin/products/{id}/images*`) |
 | A5 | Inventario (ajustes con motivo e historial, stock bajo) y reportes (ventas, recompra) | UI hecha contra contrato **provisional** | Faltan `POST/GET /v1/admin/variants/{id}/stock-adjustments`, `GET /v1/admin/inventory/low-stock`, `GET /v1/admin/reports/sales`, `GET /v1/admin/reports/repurchase` |
 
 Regla: una fase se **cierra** cuando su endpoint existe en `lentes-api/api/openapi.yaml`. Si el endpoint aún no existe, la UI se construye
 contra un contrato provisional (ver siguiente sección) para no frenar al admin y para dejarle a la API una propuesta concreta.
 
-### Contrato provisional (A4 y A5; pedidos y recetas ya son reales)
+### Contrato provisional (solo A5; pedidos, recetas e imágenes ya son reales)
 
 - `openapi/provisional/admin-ops.yaml` es la **propuesta del admin** para `lentes-api`; no es el contrato real. Genera `src/app/api/provisional/` (`pnpm api:gen`).
-- En desarrollo, `core/api.interceptor.ts` desvía `uploads*`, `inventory*`, `reports*`, `products/{id}/images*` y `variants/{id}/stock-adjustments*` a `environment.provisionalApiUrl` (mock en `:8081`, `pnpm mock`).
+- En desarrollo, `core/api.interceptor.ts` desvía `inventory*`, `reports*` y `variants/{id}/stock-adjustments*` a `environment.provisionalApiUrl` (mock en `:8081`, `pnpm mock`).
   En producción ese valor va vacío: todo va a la API real.
 - **Al publicarse los endpoints reales:** `pnpm api:sync`, cambiar los imports de `api/provisional/*` por `api/generated/*`, borrar `openapi/provisional`,
   `src/app/api/provisional`, `scripts/mock-api.mjs`, el desvío del interceptor y `provisionalApiUrl`. Los nombres de operación (`adminListOrders`, etc.) se
@@ -79,7 +79,7 @@ contra un contrato provisional (ver siguiente sección) para no frenar al admin 
 ## Pendientes de decisión (necesitan tu confirmación)
 
 - **Bitácora de ajustes:** que la API la haga transaccional (ajuste + stock en la misma transacción) y que guarde el correo de quien lo hizo.
-- **Imágenes eliminadas:** ¿se borra el objeto de R2 al eliminar, o se conserva (pedidos viejos podrían referenciarlo)?
+- **Imágenes eliminadas:** la API borra el registro y **conserva** el archivo en R2 (no destructivo); ver `lentes-api/docs/ADMIN_IMAGES.md` para decidir si se borra el objeto y si se purga la caché de Cloudflare (los cambios tardan hasta 5 min en verse en la tienda).
 - **Umbral de stock bajo:** 5 es un valor por defecto; ¿distinto por producto (diarios vs. mensuales)?
 - **Reportes:** confirmar la zona horaria de corte (America/Mexico_City) y si el ingreso incluye envío.
 - Reglas para **aprobar/rechazar recetas** (qué valida el revisor, vigencia máxima, si exige cédula) — validar con el abogado, según el SPEC.

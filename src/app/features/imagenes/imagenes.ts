@@ -2,8 +2,8 @@ import { HttpClient } from '@angular/common/http';
 import { Component, inject, input, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
-import type { ProductImageAdmin } from '../../api/provisional/model';
-import { ImagesService } from '../../api/provisional/images/images.service';
+import { DefaultService } from '../../api/generated/default/default.service';
+import type { ProductImageAdmin } from '../../api/generated/model';
 import { IMAGE_TYPES, move, validateImage, type ImageType } from '../../core/images';
 import { problemMessage } from '../../core/problem';
 
@@ -50,7 +50,7 @@ import { problemMessage } from '../../core/problem';
 export default class Imagenes implements OnInit {
   /** :productId de la ruta (withComponentInputBinding). */
   readonly productId = input.required<string>();
-  private readonly api = inject(ImagesService);
+  private readonly api = inject(DefaultService);
   private readonly http = inject(HttpClient);
   protected readonly images = signal<ProductImageAdmin[]>([]);
   protected readonly busy = signal(false);

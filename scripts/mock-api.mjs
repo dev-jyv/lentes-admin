@@ -1,9 +1,20 @@
-// Mock PROVISIONAL de imágenes, inventario y reportes (ver openapi/provisional); recetas y pedidos ya salen de la API real.
+// Mock PROVISIONAL de inventario y reportes (ver openapi/provisional); recetas, pedidos e imágenes ya salen de la API real.
 // Solo desarrollo: `pnpm mock` en :8081. No valida auth.
 import { createServer } from 'node:http';
 
 const id = () => crypto.randomUUID();
 const ago = (h) => new Date(Date.now() - h * 3600_000).toISOString();
+// --- A5: inventario (en memoria) ---
+const stock = new Map(); // variant_id -> stock
+const adjustments = new Map(); // variant_id -> []
+const low = [
+  { variant_id: id(), sku: 'BIO-MON-2.00', product_id: id(), product_name: 'Biofinity', brand_name: 'CooperVision', stock: 3, reserved: 1 },
+  { variant_id: id(), sku: 'OAS-BW-3.50', product_id: id(), product_name: 'Acuvue Oasys', brand_name: 'Acuvue', stock: 2, reserved: 2 },
+  { variant_id: id(), sku: 'AIR-AQ-1.00', product_id: id(), product_name: 'Air Optix Aqua', brand_name: 'Alcon', stock: 12, reserved: 0 },
+];
+low.forEach((v) => stock.set(v.variant_id, v.stock));
+const stockOf = (vid) => (stock.has(vid) ? stock.get(vid) : 10);
+
 const readBody = (req) => new Promise((resolve) => { let b = ''; req.on('data', (c) => (b += c)); req.on('end', () => resolve(b ? JSON.parse(b) : {})); });
 
 createServer(async (req, res) => {
@@ -16,50 +27,8 @@ createServer(async (req, res) => {
   const url = new URL(req.url, 'http://x');
   const p = url.pathname;
   const q = url.searchParams;
+  let m;
 
-  // --- A4 ---
-  if (p === '/v1/admin/uploads/image-url' && req.method === 'POST') {
-    const b = await readBody(req);
-    const ext = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' }[b.content_type];
-    if (!ext) return problem(400, 'Tipo no permitido');
-    const key = `productos/${b.product_id}/${id()}.${ext}`;
-    return send(200, { upload_url: `http://localhost:8081/uploads/${key}`, r2_key: key });
-  }
-  m = p.match(/^\/uploads\/(.+)$/);
-  if (m && req.method === 'PUT') {
-    const chunks = [];
-    req.on('data', (c) => chunks.push(c));
-    return req.on('end', () => { files.set(m[1], { type: req.headers['content-type'], buf: Buffer.concat(chunks) }); res.writeHead(200).end(); });
-  }
-  if (m && req.method === 'GET') {
-    const f = files.get(m[1]);
-    if (!f) return res.writeHead(404).end();
-    res.writeHead(200, { 'content-type': f.type }); return res.end(f.buf);
-  }
-  m = p.match(/^\/v1\/admin\/products\/([^/]+)\/images(?:\/(order|[^/]+))?$/);
-  if (m) {
-    const g = galleries.get(m[1]) ?? [];
-    galleries.set(m[1], g);
-    if (!m[2] && req.method === 'GET') return send(200, { items: imgView(g) });
-    if (!m[2] && req.method === 'POST') {
-      const b = await readBody(req);
-      const img = { id: id(), r2_key: b.r2_key };
-      g.push(img);
-      return send(201, imgView(g)[g.length - 1]);
-    }
-    if (m[2] === 'order' && req.method === 'PUT') {
-      const b = await readBody(req);
-      const byId = new Map(g.map((i) => [i.id, i]));
-      const next = b.image_ids.map((x) => byId.get(x)).filter(Boolean);
-      if (next.length !== g.length) return problem(400, 'Orden inválido', 'Debe incluir todas las imágenes.');
-      galleries.set(m[1], next);
-      return send(200, { items: imgView(next) });
-    }
-    if (m[2] && m[2] !== 'order' && req.method === 'DELETE') {
-      galleries.set(m[1], g.filter((i) => i.id !== m[2]));
-      return res.writeHead(204).end();
-    }
-  }
   // --- A5 ---
   if (p === '/v1/admin/inventory/low-stock') {
     const t = Number(q.get('threshold') ?? 5);

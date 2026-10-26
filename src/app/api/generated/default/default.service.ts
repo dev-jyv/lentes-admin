@@ -31,6 +31,7 @@ import type {
   AdminListOrdersParams,
   AdminListPrescriptions200,
   AdminListPrescriptionsParams,
+  AdminListProductImages200,
   AdminListProducts200,
   AdminListProductsParams,
   AdminListVariants200,
@@ -38,6 +39,7 @@ import type {
   AdminOrder,
   AdminPrescription,
   AdminProduct,
+  AdminReorderProductImages200,
   AdminVariant,
   Brand,
   BrandInput,
@@ -50,6 +52,10 @@ import type {
   CustomerUpdate,
   GetHealth200,
   GetProductVariantParams,
+  ImageAddInput,
+  ImageOrderInput,
+  ImageUpload,
+  ImageUploadInput,
   ListAddresses200,
   ListBrands200,
   ListPrescriptions200,
@@ -65,6 +71,7 @@ import type {
   PrescriptionUpload,
   PrescriptionUploadInput,
   ProductDetail,
+  ProductImageAdmin,
   ProductInput,
   Variant,
   VariantInput
@@ -1180,6 +1187,198 @@ export class DefaultService {
     );
   }
 /**
+ * PUT directo desde el navegador al bucket público, 10 minutos, tamaño y tipo firmados. Solo JPG, PNG o WebP, máx. 5 MB.
+ * Después se registra con `POST /v1/admin/products/{id}/images`.
+ * @summary URL prefirmada de R2 para subir una foto de producto
+ */
+ adminCreateImageUploadUrl<TData = ImageUpload>(imageUploadInput: ImageUploadInput, options?: HttpClientBodyOptions): Observable<TData>;
+ adminCreateImageUploadUrl<TData = ImageUpload>(imageUploadInput: ImageUploadInput, options?: HttpClientEventOptions): Observable<HttpEvent<TData>>;
+ adminCreateImageUploadUrl<TData = ImageUpload>(imageUploadInput: ImageUploadInput, options?: HttpClientResponseOptions): Observable<AngularHttpResponse<TData>>;
+  adminCreateImageUploadUrl<TData = ImageUpload>(
+    imageUploadInput: ImageUploadInput, options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.post<TData>(
+      `/v1/admin/uploads/image-url`,
+      imageUploadInput,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+      }
+    );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.post<TData>(
+      `/v1/admin/uploads/image-url`,
+      imageUploadInput,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+      }
+    );
+    }
+
+    return this.http.post<TData>(
+      `/v1/admin/uploads/image-url`,
+      imageUploadInput,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+      }
+    );
+  }
+/**
+ * @summary Galería del producto en orden (la primera es la principal)
+ */
+ adminListProductImages<TData = AdminListProductImages200>(id: string, options?: HttpClientBodyOptions): Observable<TData>;
+ adminListProductImages<TData = AdminListProductImages200>(id: string, options?: HttpClientEventOptions): Observable<HttpEvent<TData>>;
+ adminListProductImages<TData = AdminListProductImages200>(id: string, options?: HttpClientResponseOptions): Observable<AngularHttpResponse<TData>>;
+  adminListProductImages<TData = AdminListProductImages200>(
+    id: string, options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.get<TData>(
+      `/v1/admin/products/${id}/images`,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+      }
+    );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.get<TData>(
+      `/v1/admin/products/${id}/images`,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+      }
+    );
+    }
+
+    return this.http.get<TData>(
+      `/v1/admin/products/${id}/images`,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+      }
+    );
+  }
+/**
+ * La llave debe empezar con `productos/{id}/` y el archivo existir en R2 como imagen válida (tipo y ≤ 5 MB).
+ * `409` si la galería ya tiene 10 imágenes o el archivo ya está registrado. El catálogo público puede tardar hasta 5 minutos en reflejarlo (caché de borde).
+ * @summary Registra una imagen ya subida al final de la galería
+ */
+ adminAddProductImage<TData = ProductImageAdmin>(id: string,
+    imageAddInput: ImageAddInput, options?: HttpClientBodyOptions): Observable<TData>;
+ adminAddProductImage<TData = ProductImageAdmin>(id: string,
+    imageAddInput: ImageAddInput, options?: HttpClientEventOptions): Observable<HttpEvent<TData>>;
+ adminAddProductImage<TData = ProductImageAdmin>(id: string,
+    imageAddInput: ImageAddInput, options?: HttpClientResponseOptions): Observable<AngularHttpResponse<TData>>;
+  adminAddProductImage<TData = ProductImageAdmin>(
+    id: string,
+    imageAddInput: ImageAddInput, options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.post<TData>(
+      `/v1/admin/products/${id}/images`,
+      imageAddInput,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+      }
+    );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.post<TData>(
+      `/v1/admin/products/${id}/images`,
+      imageAddInput,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+      }
+    );
+    }
+
+    return this.http.post<TData>(
+      `/v1/admin/products/${id}/images`,
+      imageAddInput,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+      }
+    );
+  }
+/**
+ * Debe traer exactamente las imágenes actuales, sin repetir ni agregar ajenas (`400`).
+ * @summary Define el orden completo de la galería
+ */
+ adminReorderProductImages<TData = AdminReorderProductImages200>(id: string,
+    imageOrderInput: ImageOrderInput, options?: HttpClientBodyOptions): Observable<TData>;
+ adminReorderProductImages<TData = AdminReorderProductImages200>(id: string,
+    imageOrderInput: ImageOrderInput, options?: HttpClientEventOptions): Observable<HttpEvent<TData>>;
+ adminReorderProductImages<TData = AdminReorderProductImages200>(id: string,
+    imageOrderInput: ImageOrderInput, options?: HttpClientResponseOptions): Observable<AngularHttpResponse<TData>>;
+  adminReorderProductImages<TData = AdminReorderProductImages200>(
+    id: string,
+    imageOrderInput: ImageOrderInput, options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.put<TData>(
+      `/v1/admin/products/${id}/images/order`,
+      imageOrderInput,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+      }
+    );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.put<TData>(
+      `/v1/admin/products/${id}/images/order`,
+      imageOrderInput,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+      }
+    );
+    }
+
+    return this.http.put<TData>(
+      `/v1/admin/products/${id}/images/order`,
+      imageOrderInput,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+      }
+    );
+  }
+/**
+ * Borra el registro y compacta las posiciones. El archivo en R2 se conserva.
+ * @summary Quita una imagen de la galería
+ */
+ adminDeleteProductImage<TData = void>(id: string,
+    imageId: string, options?: HttpClientBodyOptions): Observable<TData>;
+ adminDeleteProductImage<TData = void>(id: string,
+    imageId: string, options?: HttpClientEventOptions): Observable<HttpEvent<TData>>;
+ adminDeleteProductImage<TData = void>(id: string,
+    imageId: string, options?: HttpClientResponseOptions): Observable<AngularHttpResponse<TData>>;
+  adminDeleteProductImage<TData = void>(
+    id: string,
+    imageId: string, options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.delete<TData>(
+      `/v1/admin/products/${id}/images/${imageId}`,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+      }
+    );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.delete<TData>(
+      `/v1/admin/products/${id}/images/${imageId}`,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+      }
+    );
+    }
+
+    return this.http.delete<TData>(
+      `/v1/admin/products/${id}/images/${imageId}`,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+      }
+    );
+  }
+/**
  * @summary Crea una marca
  */
  adminCreateBrand<TData = Brand>(brandInput: BrandInput, options?: HttpClientBodyOptions): Observable<TData>;
@@ -1505,6 +1704,11 @@ export type AdminReviewPrescriptionClientResult = NonNullable<AdminPrescription>
 export type AdminListOrdersClientResult = NonNullable<AdminListOrders200>
 export type AdminGetOrderClientResult = NonNullable<AdminOrder>
 export type AdminUpdateOrderClientResult = NonNullable<AdminOrder>
+export type AdminCreateImageUploadUrlClientResult = NonNullable<ImageUpload>
+export type AdminListProductImagesClientResult = NonNullable<AdminListProductImages200>
+export type AdminAddProductImageClientResult = NonNullable<ProductImageAdmin>
+export type AdminReorderProductImagesClientResult = NonNullable<AdminReorderProductImages200>
+export type AdminDeleteProductImageClientResult = NonNullable<void>
 export type AdminCreateBrandClientResult = NonNullable<Brand>
 export type AdminListProductsClientResult = NonNullable<AdminListProducts200>
 export type AdminCreateProductClientResult = NonNullable<AdminProduct>

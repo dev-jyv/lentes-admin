@@ -5,21 +5,13 @@
  * OpenAPI spec version: 0.0.1
  */
 
-export * from './adminAddProductImageBody';
-export * from './adminCreateImageUploadUrl200';
-export * from './adminCreateImageUploadUrlBody';
-export * from './adminCreateImageUploadUrlBodyContentType';
 export * from './adminListLowStock200';
 export * from './adminListLowStockParams';
-export * from './adminListProductImages200';
 export * from './adminListStockAdjustments200';
-export * from './adminReorderProductImages200';
-export * from './adminReorderProductImagesBody';
 export * from './adminRepurchaseReportParams';
 export * from './adminSalesReportParams';
 export * from './lowStockItem';
 export * from './problem';
-export * from './productImageAdmin';
 export * from './repurchaseReport';
 export * from './salesReport';
 export * from './salesReportDailyItem';
