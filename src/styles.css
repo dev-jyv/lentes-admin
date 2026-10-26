@@ -1,3 +1,152 @@
-/* You can add global styles to this file, and also import other style files */
-
 @import 'tailwindcss';
+
+/* Homologado con lentes-web (brand book "Película lagrimal"). El tema lo fija data-theme en <html> (ver index.html). */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+@theme inline {
+  --font-sans: 'Figtree', 'Helvetica Neue', Arial, sans-serif;
+  --font-display: 'Bricolage Grotesque', 'Avenir Next', 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-amber: var(--amber);
+  --color-amber-soft: var(--amber-soft);
+  --color-good: var(--good);
+  --color-warn: var(--warn);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+}
+
+@theme {
+  --breakpoint-sm: 600px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1440px;
+  --ease-out-soft: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+:root {
+  color-scheme: light;
+  --bg: #f2f6f7;
+  --surface: #ffffff;
+  --ink: #0e2230;
+  --muted-ink: #566a75;
+  --line: #d5dfe3;
+  --teal: #0f7c8c;
+  --teal-soft: #d6eef1;
+  --amber: #c9851f;
+  --amber-soft: #f7e8cf;
+  --good: #1f8a5b;
+  --warn: #b7791f;
+
+  --background: var(--bg);
+  --foreground: var(--ink);
+  --card: var(--surface);
+  --primary: var(--teal);
+  --primary-foreground: #ffffff;
+  --secondary: var(--teal-soft);
+  --muted: #e6edef;
+  --muted-foreground: var(--muted-ink);
+  --accent: var(--teal-soft);
+  --destructive: #b42318;
+  --destructive-foreground: #ffffff;
+  --border: var(--line);
+  --input: var(--line);
+  --ring: var(--teal);
+  --radius: 0.75rem;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #0a151b;
+  --surface: #11212a;
+  --ink: #e4edf0;
+  --muted-ink: #8fa4ae;
+  --line: #223841;
+  --teal: #43c3d2;
+  --teal-soft: #12343b;
+  --amber: #f0b85a;
+  --amber-soft: #3a2c15;
+  --good: #4cc38a;
+  --warn: #e8b04b;
+
+  --primary-foreground: #0a151b;
+  --muted: #162a33;
+  --destructive: #f2877e;
+  --destructive-foreground: #0a151b;
+}
+
+/* Valores ópticos (esfera, cilindro, eje, curva base): monoespaciada con cifras tabulares. */
+@utility optic {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans antialiased;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
+  }
+  h1 {
+    font-weight: 800;
+  }
+  h2,
+  h3 {
+    font-weight: 600;
+  }
+  input:not([type='checkbox'], [type='radio'], [type='file']),
+  select,
+  textarea {
+    @apply bg-card text-foreground placeholder:text-muted-foreground;
+  }
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible,
+  button:focus-visible,
+  a:focus-visible {
+    @apply ring-3 ring-ring/50 outline-none;
+  }
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    @apply border-ring;
+  }
+  button:not(:disabled) {
+    cursor: pointer;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

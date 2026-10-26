@@ -16,21 +16,21 @@ const fmt = (n: number | null | undefined) => (n == null ? '—' : n > 0 ? `+${n
 @Component({
   selector: 'app-recetas',
   template: `
-    <h1 class="mb-6 text-2xl font-semibold">Recetas</h1>
+    <h1 class="mb-6 text-2xl">Recetas</h1>
     <div role="tablist" aria-label="Estado" class="mb-4 flex gap-2">
       @for (t of tabs; track t.value) {
-        <button type="button" role="tab" [attr.aria-selected]="tab() === t.value" class="rounded border px-3 py-2 text-sm" [class.bg-slate-900]="tab() === t.value" [class.text-white]="tab() === t.value" [class.border-slate-300]="tab() !== t.value" (click)="select(t.value)">{{ t.label }}</button>
+        <button type="button" role="tab" [attr.aria-selected]="tab() === t.value" class="rounded-lg border px-3 py-2 text-sm" [class.bg-primary]="tab() === t.value" [class.text-primary-foreground]="tab() === t.value" [class.border-input]="tab() !== t.value" (click)="select(t.value)">{{ t.label }}</button>
       }
     </div>
-    @if (error()) { <p role="alert" class="mb-4 text-sm text-red-700">{{ error() }}</p> }
-    <ul class="divide-y rounded border border-slate-200">
+    @if (error()) { <p role="alert" class="mb-4 text-sm text-destructive">{{ error() }}</p> }
+    <ul class="divide-y rounded-lg border border-border">
       @for (r of items(); track r.id) {
         <li class="space-y-2 p-4 text-sm">
           <div class="flex flex-wrap justify-between gap-2">
             <div>
               <p class="font-medium">{{ r.customer_email }}</p>
-              <p class="text-slate-600">Dr(a). {{ r.doctor_name }}@if (r.doctor_license) { · Cédula {{ r.doctor_license }} } · emitida {{ d(r.issued_at) }} · vigente hasta {{ d(r.expires_at) }}</p>
-              <p class="text-xs text-slate-500">Subida {{ dt(r.created_at) }}</p>
+              <p class="text-muted-foreground">Dr(a). {{ r.doctor_name }}@if (r.doctor_license) { · Cédula {{ r.doctor_license }} } · emitida {{ d(r.issued_at) }} · vigente hasta {{ d(r.expires_at) }}</p>
+              <p class="text-xs text-muted-foreground">Subida {{ dt(r.created_at) }}</p>
             </div>
             @if (r.file_url) { <a [href]="r.file_url" target="_blank" rel="noopener noreferrer" class="underline">Ver archivo</a> }
           </div>
@@ -38,27 +38,27 @@ const fmt = (n: number | null | undefined) => (n == null ? '—' : n > 0 ? `+${n
             OD: esf {{ f(r.od_sphere) }} cil {{ f(r.od_cylinder) }} eje {{ r.od_axis ?? '—' }} add {{ r.od_addition ?? '—' }}<br />
             OI: esf {{ f(r.os_sphere) }} cil {{ f(r.os_cylinder) }} eje {{ r.os_axis ?? '—' }} add {{ r.os_addition ?? '—' }}
           </p>
-          @if (r.status === 'rejected' && r.reject_reason) { <p class="text-red-700">Motivo: {{ r.reject_reason }}</p> }
+          @if (r.status === 'rejected' && r.reject_reason) { <p class="text-destructive">Motivo: {{ r.reject_reason }}</p> }
           @if (r.status === 'pending') {
             @if (rejecting() === r.id) {
               <div class="space-y-2">
                 <label [attr.for]="'reason-' + r.id" class="block">Motivo del rechazo (se le muestra al cliente)</label>
-                <textarea [id]="'reason-' + r.id" rows="2" class="w-full rounded border border-slate-300 px-3 py-2" [value]="reason()" (input)="reason.set(val($event))"></textarea>
+                <textarea [id]="'reason-' + r.id" rows="2" class="w-full rounded-lg border border-input px-3 py-2" [value]="reason()" (input)="reason.set(val($event))"></textarea>
                 <div class="flex gap-2">
-                  <button type="button" class="rounded bg-red-700 px-3 py-2 text-white disabled:opacity-50" [disabled]="busy() || !reason().trim()" (click)="review(r, 'rejected')">Rechazar</button>
-                  <button type="button" class="rounded border border-slate-300 px-3 py-2" (click)="rejecting.set(null)">Cancelar</button>
+                  <button type="button" class="rounded-lg bg-destructive px-3 py-2 text-destructive-foreground disabled:opacity-50" [disabled]="busy() || !reason().trim()" (click)="review(r, 'rejected')">Rechazar</button>
+                  <button type="button" class="rounded-lg border border-input px-3 py-2" (click)="rejecting.set(null)">Cancelar</button>
                 </div>
               </div>
             } @else {
               <div class="flex gap-2">
-                <button type="button" class="rounded bg-slate-900 px-3 py-2 text-white disabled:opacity-50" [disabled]="busy()" (click)="review(r, 'approved')">Aprobar</button>
-                <button type="button" class="rounded border border-slate-300 px-3 py-2" (click)="startReject(r.id)">Rechazar</button>
+                <button type="button" class="rounded-lg bg-primary px-3 py-2 text-primary-foreground disabled:opacity-50" [disabled]="busy()" (click)="review(r, 'approved')">Aprobar</button>
+                <button type="button" class="rounded-lg border border-input px-3 py-2" (click)="startReject(r.id)">Rechazar</button>
               </div>
             }
           }
         </li>
       } @empty {
-        <li class="p-4 text-slate-500">No hay recetas en este estado.</li>
+        <li class="p-4 text-muted-foreground">No hay recetas en este estado.</li>
       }
     </ul>
   `,

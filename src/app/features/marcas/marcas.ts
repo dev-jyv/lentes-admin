@@ -10,30 +10,30 @@ import { slugify } from '../../core/slug';
   selector: 'app-marcas',
   imports: [FormField],
   template: `
-    <h1 class="mb-6 text-2xl font-semibold">Marcas</h1>
-    <section class="mb-8 max-w-md space-y-3 rounded border border-slate-200 p-4">
+    <h1 class="mb-6 text-2xl">Marcas</h1>
+    <section class="mb-8 max-w-md space-y-3 rounded-lg border border-border p-4">
       <h2 class="font-medium">Nueva marca</h2>
       <form class="space-y-3" (submit)="create($event)">
         <div>
           <label for="name" class="mb-1 block text-sm">Nombre</label>
-          <input id="name" class="w-full rounded border border-slate-300 px-3 py-2" [formField]="model.name" (input)="autoSlug()" />
+          <input id="name" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.name" (input)="autoSlug()" />
         </div>
         <div>
           <label for="slug" class="mb-1 block text-sm">Slug (URL)</label>
-          <input id="slug" class="w-full rounded border border-slate-300 px-3 py-2" [formField]="model.slug" />
+          <input id="slug" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.slug" />
         </div>
-        @if (error()) { <p role="alert" class="text-sm text-red-700">{{ error() }}</p> }
-        <button type="submit" class="rounded bg-slate-900 px-3 py-2 text-white disabled:opacity-50" [disabled]="busy()">Crear marca</button>
+        @if (error()) { <p role="alert" class="text-sm text-destructive">{{ error() }}</p> }
+        <button type="submit" class="rounded-lg bg-primary px-3 py-2 text-primary-foreground disabled:opacity-50" [disabled]="busy()">Crear marca</button>
       </form>
     </section>
-    @if (loadError()) { <p role="alert" class="mb-4 text-sm text-red-700">{{ loadError() }}</p> }
+    @if (loadError()) { <p role="alert" class="mb-4 text-sm text-destructive">{{ loadError() }}</p> }
     <table class="w-full max-w-2xl text-sm">
       <thead><tr class="border-b text-left"><th class="py-2">Nombre</th><th>Slug</th></tr></thead>
       <tbody>
         @for (b of brands(); track b.id) {
-          <tr class="border-b"><td class="py-2">{{ b.name }}</td><td class="text-slate-600">{{ b.slug }}</td></tr>
+          <tr class="border-b"><td class="py-2">{{ b.name }}</td><td class="text-muted-foreground">{{ b.slug }}</td></tr>
         } @empty {
-          <tr><td colspan="2" class="py-4 text-slate-500">Aún no hay marcas.</td></tr>
+          <tr><td colspan="2" class="py-4 text-muted-foreground">Aún no hay marcas.</td></tr>
         }
       </tbody>
     </table>

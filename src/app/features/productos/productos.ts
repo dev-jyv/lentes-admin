@@ -40,75 +40,75 @@ const empty = (): ProductForm => ({
   imports: [FormField, RouterLink],
   template: `
     <div class="mb-6 flex items-center justify-between">
-      <h1 class="text-2xl font-semibold">Productos</h1>
-      <button type="button" class="rounded bg-slate-900 px-3 py-2 text-sm text-white" (click)="startCreate()">Nuevo producto</button>
+      <h1 class="text-2xl">Productos</h1>
+      <button type="button" class="rounded-lg bg-primary px-3 py-2 text-sm text-primary-foreground" (click)="startCreate()">Nuevo producto</button>
     </div>
 
     @if (editing()) {
-      <section class="mb-8 max-w-3xl rounded border border-slate-200 p-4" aria-labelledby="form-title">
+      <section class="mb-8 max-w-3xl rounded-lg border border-border p-4" aria-labelledby="form-title">
         <h2 id="form-title" class="mb-3 font-medium">{{ editingId() ? 'Editar producto' : 'Nuevo producto' }}</h2>
         <form class="grid gap-3 sm:grid-cols-2" (submit)="save($event)">
           <div>
             <label for="brand" class="mb-1 block text-sm">Marca</label>
-            <select id="brand" class="w-full rounded border border-slate-300 px-3 py-2" [formField]="model.brand_id">
+            <select id="brand" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.brand_id">
               <option value="">Elegir…</option>
               @for (b of brands(); track b.id) { <option [value]="b.id">{{ b.name }}</option> }
             </select>
           </div>
           <div>
             <label for="pname" class="mb-1 block text-sm">Nombre</label>
-            <input id="pname" class="w-full rounded border border-slate-300 px-3 py-2" [formField]="model.name" (input)="autoSlug()" />
+            <input id="pname" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.name" (input)="autoSlug()" />
           </div>
           <div>
             <label for="pslug" class="mb-1 block text-sm">Slug (URL)</label>
-            <input id="pslug" class="w-full rounded border border-slate-300 px-3 py-2" [formField]="model.slug" />
+            <input id="pslug" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.slug" />
           </div>
           <div>
             <label for="lens" class="mb-1 block text-sm">Tipo de lente</label>
-            <select id="lens" class="w-full rounded border border-slate-300 px-3 py-2" [formField]="model.lens_type">
+            <select id="lens" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.lens_type">
               @for (o of lensTypes; track o.value) { <option [value]="o.value">{{ o.label }}</option> }
             </select>
           </div>
           <div>
             <label for="repl" class="mb-1 block text-sm">Reemplazo</label>
-            <select id="repl" class="w-full rounded border border-slate-300 px-3 py-2" [formField]="model.replacement">
+            <select id="repl" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.replacement">
               @for (o of replacements; track o.value) { <option [value]="o.value">{{ o.label }}</option> }
             </select>
           </div>
           <div>
             <label for="pieces" class="mb-1 block text-sm">Piezas por caja</label>
-            <input id="pieces" type="number" class="w-full rounded border border-slate-300 px-3 py-2" [formField]="model.pieces_per_box" />
+            <input id="pieces" type="number" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.pieces_per_box" />
           </div>
           <div>
             <label for="material" class="mb-1 block text-sm">Material</label>
-            <input id="material" class="w-full rounded border border-slate-300 px-3 py-2" [formField]="model.material" />
+            <input id="material" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.material" />
           </div>
           <div>
             <label for="water" class="mb-1 block text-sm">Contenido de agua (%)</label>
-            <input id="water" type="number" step="0.1" class="w-full rounded border border-slate-300 px-3 py-2" [formField]="model.water_content_pct" />
+            <input id="water" type="number" step="0.1" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.water_content_pct" />
           </div>
           <div class="sm:col-span-2">
             <label for="desc" class="mb-1 block text-sm">Descripción</label>
-            <textarea id="desc" rows="3" class="w-full rounded border border-slate-300 px-3 py-2" [formField]="model.description"></textarea>
+            <textarea id="desc" rows="3" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.description"></textarea>
           </div>
           <label class="flex items-center gap-2 text-sm"><input type="checkbox" [formField]="model.requires_prescription" /> Requiere receta</label>
           <label class="flex items-center gap-2 text-sm"><input type="checkbox" [formField]="model.active" /> Activo (visible en la tienda)</label>
-          @if (error()) { <p role="alert" class="text-sm text-red-700 sm:col-span-2">{{ error() }}</p> }
+          @if (error()) { <p role="alert" class="text-sm text-destructive sm:col-span-2">{{ error() }}</p> }
           <div class="flex gap-2 sm:col-span-2">
-            <button type="submit" class="rounded bg-slate-900 px-3 py-2 text-white disabled:opacity-50" [disabled]="busy()">Guardar</button>
-            <button type="button" class="rounded border border-slate-300 px-3 py-2" (click)="editing.set(false)">Cancelar</button>
+            <button type="submit" class="rounded-lg bg-primary px-3 py-2 text-primary-foreground disabled:opacity-50" [disabled]="busy()">Guardar</button>
+            <button type="button" class="rounded-lg border border-input px-3 py-2" (click)="editing.set(false)">Cancelar</button>
           </div>
         </form>
       </section>
     }
 
-    @if (loadError()) { <p role="alert" class="mb-4 text-sm text-red-700">{{ loadError() }}</p> }
+    @if (loadError()) { <p role="alert" class="mb-4 text-sm text-destructive">{{ loadError() }}</p> }
     <table class="w-full text-sm">
       <thead><tr class="border-b text-left"><th class="py-2">Producto</th><th>Tipo</th><th>Reemplazo</th><th>Estado</th><th></th></tr></thead>
       <tbody>
         @for (p of products(); track p.id) {
           <tr class="border-b">
-            <td class="py-2"><span class="text-slate-500">{{ p.brand.name }}</span> {{ p.name }}</td>
+            <td class="py-2"><span class="text-muted-foreground">{{ p.brand.name }}</span> {{ p.name }}</td>
             <td>{{ lensLabel(p.lens_type) }}</td>
             <td>{{ replLabel(p.replacement) }}</td>
             <td>{{ p.active ? 'Activo' : 'Inactivo' }}</td>
@@ -119,12 +119,12 @@ const empty = (): ProductForm => ({
             </td>
           </tr>
         } @empty {
-          <tr><td colspan="5" class="py-4 text-slate-500">Aún no hay productos.</td></tr>
+          <tr><td colspan="5" class="py-4 text-muted-foreground">Aún no hay productos.</td></tr>
         }
       </tbody>
     </table>
     @if (nextCursor()) {
-      <button type="button" class="mt-4 rounded border border-slate-300 px-3 py-2 text-sm" (click)="load(true)">Cargar más</button>
+      <button type="button" class="mt-4 rounded-lg border border-input px-3 py-2 text-sm" (click)="load(true)">Cargar más</button>
     }
   `,
 })

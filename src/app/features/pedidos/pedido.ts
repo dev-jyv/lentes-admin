@@ -15,13 +15,13 @@ const CARRIERS = ['Estafeta', 'DHL', 'FedEx', 'Paquetexpress', 'Redpack', 'Corre
   imports: [RouterLink],
   template: `
     <a routerLink="/pedidos" class="text-sm underline">← Pedidos</a>
-    @if (loadError()) { <p role="alert" class="mt-4 text-sm text-red-700">{{ loadError() }}</p> }
+    @if (loadError()) { <p role="alert" class="mt-4 text-sm text-destructive">{{ loadError() }}</p> }
     @if (order(); as o) {
       <div class="my-4 flex flex-wrap items-baseline justify-between gap-2">
-        <h1 class="text-2xl font-semibold">Pedido {{ folio(o.number) }}</h1>
-        <span class="rounded bg-slate-100 px-3 py-1 text-sm">{{ label(o.status) }}</span>
+        <h1 class="text-2xl">Pedido {{ folio(o.number) }}</h1>
+        <span class="rounded-lg bg-muted px-3 py-1 text-sm">{{ label(o.status) }}</span>
       </div>
-      <p class="mb-6 text-sm text-slate-600">{{ o.customer_email }} · creado {{ date(o.created_at) }}@if (o.paid_at) { · pagado {{ date(o.paid_at) }} }</p>
+      <p class="mb-6 text-sm text-muted-foreground">{{ o.customer_email }} · creado {{ date(o.created_at) }}@if (o.paid_at) { · pagado {{ date(o.paid_at) }} }</p>
 
       <div class="grid gap-6 lg:grid-cols-[1fr_320px]">
         <section aria-labelledby="art">
@@ -31,7 +31,7 @@ const CARRIERS = ['Estafeta', 'DHL', 'FedEx', 'Paquetexpress', 'Redpack', 'Corre
             <tbody>
               @for (l of o.items; track $index) {
                 <tr class="border-b">
-                  <td class="py-2">{{ l.product_name }} <span class="text-slate-500">· {{ l.brand_name }}</span><br /><span class="text-xs text-slate-500">{{ l.sku }} {{ l.description }}</span></td>
+                  <td class="py-2">{{ l.product_name }} <span class="text-muted-foreground">· {{ l.brand_name }}</span><br /><span class="text-xs text-muted-foreground">{{ l.sku }} {{ l.description }}</span></td>
                   <td>{{ eye(l.eye) }}</td><td>{{ l.quantity }}</td><td class="text-right">{{ money(l.unit_price_cents) }}</td>
                 </tr>
               }
@@ -65,36 +65,36 @@ const CARRIERS = ['Estafeta', 'DHL', 'FedEx', 'Paquetexpress', 'Redpack', 'Corre
           }
 
           @if (next().length) {
-            <section aria-labelledby="acc" class="space-y-3 rounded border border-slate-200 p-4">
+            <section aria-labelledby="acc" class="space-y-3 rounded-lg border border-border p-4">
               <h2 id="acc" class="font-medium">Cambiar estado</h2>
               @if (askTracking()) {
                 <div>
                   <label for="carrier" class="mb-1 block text-sm">Paquetería</label>
-                  <input id="carrier" list="carriers" class="w-full rounded border border-slate-300 px-3 py-2" [value]="carrier()" (input)="carrier.set(val($event))" />
+                  <input id="carrier" list="carriers" class="w-full rounded-lg border border-input px-3 py-2" [value]="carrier()" (input)="carrier.set(val($event))" />
                   <datalist id="carriers">@for (c of carriers; track c) { <option [value]="c"></option> }</datalist>
                 </div>
                 <div>
                   <label for="tracking" class="mb-1 block text-sm">Número de guía</label>
-                  <input id="tracking" class="w-full rounded border border-slate-300 px-3 py-2" [value]="tracking()" (input)="tracking.set(val($event))" />
+                  <input id="tracking" class="w-full rounded-lg border border-input px-3 py-2" [value]="tracking()" (input)="tracking.set(val($event))" />
                 </div>
                 <div class="flex gap-2">
-                  <button type="button" class="rounded bg-slate-900 px-3 py-2 text-sm text-white disabled:opacity-50" [disabled]="busy() || !carrier().trim() || !tracking().trim()" (click)="apply('shipped')">Marcar enviado</button>
-                  <button type="button" class="rounded border border-slate-300 px-3 py-2 text-sm" (click)="askTracking.set(false)">Cancelar</button>
+                  <button type="button" class="rounded-lg bg-primary px-3 py-2 text-sm text-primary-foreground disabled:opacity-50" [disabled]="busy() || !carrier().trim() || !tracking().trim()" (click)="apply('shipped')">Marcar enviado</button>
+                  <button type="button" class="rounded-lg border border-input px-3 py-2 text-sm" (click)="askTracking.set(false)">Cancelar</button>
                 </div>
               } @else if (confirmCancel()) {
                 <p class="text-sm">¿Cancelar el pedido? Se libera el inventario apartado. No se puede deshacer.</p>
                 <div class="flex gap-2">
-                  <button type="button" class="rounded bg-red-700 px-3 py-2 text-sm text-white disabled:opacity-50" [disabled]="busy()" (click)="apply('cancelled')">Sí, cancelar</button>
-                  <button type="button" class="rounded border border-slate-300 px-3 py-2 text-sm" (click)="confirmCancel.set(false)">Volver</button>
+                  <button type="button" class="rounded-lg bg-destructive px-3 py-2 text-sm text-destructive-foreground disabled:opacity-50" [disabled]="busy()" (click)="apply('cancelled')">Sí, cancelar</button>
+                  <button type="button" class="rounded-lg border border-input px-3 py-2 text-sm" (click)="confirmCancel.set(false)">Volver</button>
                 </div>
               } @else {
                 <div class="flex flex-wrap gap-2">
                   @for (s of next(); track s) {
-                    <button type="button" class="rounded border border-slate-300 px-3 py-2 text-sm hover:bg-slate-100 disabled:opacity-50" [disabled]="busy()" (click)="choose(s)">{{ action(s) }}</button>
+                    <button type="button" class="rounded-lg border border-input px-3 py-2 text-sm hover:bg-accent disabled:opacity-50" [disabled]="busy()" (click)="choose(s)">{{ action(s) }}</button>
                   }
                 </div>
               }
-              @if (error()) { <p role="alert" class="text-sm text-red-700">{{ error() }}</p> }
+              @if (error()) { <p role="alert" class="text-sm text-destructive">{{ error() }}</p> }
             </section>
           }
         </aside>

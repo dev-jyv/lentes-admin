@@ -8,23 +8,32 @@ import { AuthService } from '../../core/auth.service';
   imports: [FormField],
   template: `
     <main class="mx-auto mt-24 w-full max-w-sm p-4">
-      <h1 class="mb-6 text-2xl font-semibold">Admin · Iniciar sesión</h1>
+      <div class="mb-6 flex items-center gap-2">
+        <svg viewBox="0 0 32 32" aria-hidden="true" class="size-7" fill="none">
+          <circle cx="16" cy="16" r="14.2" stroke="var(--teal)" stroke-width="1.6" />
+          <circle cx="16" cy="16" r="8.4" fill="var(--amber-soft)" stroke="var(--amber)" stroke-width="1.6" />
+          <circle cx="16" cy="16" r="3.6" fill="var(--ink)" />
+          <circle cx="14.4" cy="14.4" r="1.1" fill="#fff" opacity="0.9" />
+        </svg>
+        <span class="font-display text-xl font-extrabold tracking-tight">pupila</span>
+      </div>
+      <h1 class="mb-6 text-2xl">Admin · Iniciar sesión</h1>
       @if (error() === 'forbidden') {
-        <p role="alert" class="mb-4 text-sm text-red-700">Esta cuenta no tiene permisos de administrador.</p>
+        <p role="alert" class="mb-4 text-sm text-destructive">Esta cuenta no tiene permisos de administrador.</p>
       }
       <form class="space-y-4" (submit)="submit($event)">
         <div>
           <label for="email" class="mb-1 block text-sm">Correo</label>
-          <input id="email" type="email" autocomplete="email" class="w-full rounded border border-slate-300 px-3 py-2" [formField]="model.email" />
+          <input id="email" type="email" autocomplete="email" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.email" />
         </div>
         <div>
           <label for="password" class="mb-1 block text-sm">Contraseña</label>
-          <input id="password" type="password" autocomplete="current-password" class="w-full rounded border border-slate-300 px-3 py-2" [formField]="model.password" />
+          <input id="password" type="password" autocomplete="current-password" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.password" />
         </div>
         @if (failed()) {
-          <p role="alert" class="text-sm text-red-700">Correo o contraseña incorrectos.</p>
+          <p role="alert" class="text-sm text-destructive">Correo o contraseña incorrectos.</p>
         }
-        <button type="submit" class="w-full rounded bg-slate-900 px-3 py-2 text-white disabled:opacity-50" [disabled]="busy()">
+        <button type="submit" class="w-full rounded-lg bg-primary px-3 py-2 text-primary-foreground disabled:opacity-50" [disabled]="busy()">
           Entrar
         </button>
       </form>

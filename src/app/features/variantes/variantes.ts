@@ -36,63 +36,63 @@ const fmt = (n: number | null | undefined) => (n == null ? '—' : String(n));
   template: `
     <a routerLink="/productos" class="text-sm underline">← Productos</a>
     <div class="my-4 flex items-center justify-between">
-      <h1 class="text-2xl font-semibold">Variantes</h1>
-      <button type="button" class="rounded bg-slate-900 px-3 py-2 text-sm text-white" (click)="startCreate()">Nueva variante</button>
+      <h1 class="text-2xl">Variantes</h1>
+      <button type="button" class="rounded-lg bg-primary px-3 py-2 text-sm text-primary-foreground" (click)="startCreate()">Nueva variante</button>
     </div>
 
     @if (editing()) {
-      <section class="mb-8 max-w-3xl rounded border border-slate-200 p-4" aria-labelledby="vtitle">
+      <section class="mb-8 max-w-3xl rounded-lg border border-border p-4" aria-labelledby="vtitle">
         <h2 id="vtitle" class="mb-3 font-medium">{{ editingId() ? 'Editar variante' : 'Nueva variante' }}</h2>
         <form class="grid gap-3 sm:grid-cols-3" (submit)="save($event)">
           <div class="sm:col-span-3">
             <label for="sku" class="mb-1 block text-sm">SKU</label>
-            <input id="sku" class="w-full rounded border border-slate-300 px-3 py-2" [formField]="model.sku" />
+            <input id="sku" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.sku" />
           </div>
           <div>
             <label for="sphere" class="mb-1 block text-sm">Esfera</label>
-            <input id="sphere" type="number" step="0.25" class="w-full rounded border border-slate-300 px-3 py-2" [formField]="model.sphere" />
+            <input id="sphere" type="number" step="0.25" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.sphere" />
           </div>
           <div>
             <label for="cyl" class="mb-1 block text-sm">Cilindro</label>
-            <input id="cyl" type="number" step="0.25" class="w-full rounded border border-slate-300 px-3 py-2" [formField]="model.cylinder" />
+            <input id="cyl" type="number" step="0.25" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.cylinder" />
           </div>
           <div>
             <label for="axis" class="mb-1 block text-sm">Eje</label>
-            <input id="axis" type="number" class="w-full rounded border border-slate-300 px-3 py-2" [formField]="model.axis" />
+            <input id="axis" type="number" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.axis" />
           </div>
           <div>
             <label for="add" class="mb-1 block text-sm">Adición</label>
-            <input id="add" class="w-full rounded border border-slate-300 px-3 py-2" [formField]="model.addition" />
+            <input id="add" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.addition" />
           </div>
           <div>
             <label for="bc" class="mb-1 block text-sm">Curva base</label>
-            <input id="bc" type="number" step="0.1" class="w-full rounded border border-slate-300 px-3 py-2" [formField]="model.base_curve" />
+            <input id="bc" type="number" step="0.1" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.base_curve" />
           </div>
           <div>
             <label for="dia" class="mb-1 block text-sm">Diámetro</label>
-            <input id="dia" type="number" step="0.1" class="w-full rounded border border-slate-300 px-3 py-2" [formField]="model.diameter" />
+            <input id="dia" type="number" step="0.1" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.diameter" />
           </div>
           <div>
             <label for="color" class="mb-1 block text-sm">Color (cosméticos)</label>
-            <input id="color" class="w-full rounded border border-slate-300 px-3 py-2" [formField]="model.color" />
+            <input id="color" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.color" />
           </div>
           <div>
             <label for="price" class="mb-1 block text-sm">Precio (MXN)</label>
-            <input id="price" type="number" step="0.01" class="w-full rounded border border-slate-300 px-3 py-2" [formField]="model.price_pesos" />
+            <input id="price" type="number" step="0.01" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.price_pesos" />
           </div>
           <div>
             <label for="cmp" class="mb-1 block text-sm">Precio de lista (MXN)</label>
-            <input id="cmp" type="number" step="0.01" class="w-full rounded border border-slate-300 px-3 py-2" [formField]="model.compare_at_pesos" />
+            <input id="cmp" type="number" step="0.01" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.compare_at_pesos" />
           </div>
           <div>
-            <label for="stock" class="mb-1 block text-sm">Existencia @if (editingId()) { <span class="text-xs text-slate-500">(usa “Ajustar”)</span> }</label>
-            <input id="stock" type="number" class="w-full rounded border border-slate-300 px-3 py-2" [formField]="model.stock" />
+            <label for="stock" class="mb-1 block text-sm">Existencia @if (editingId()) { <span class="text-xs text-muted-foreground">(usa “Ajustar”)</span> }</label>
+            <input id="stock" type="number" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.stock" />
           </div>
           <label class="flex items-center gap-2 text-sm sm:col-span-3"><input type="checkbox" [formField]="model.active" /> Activa (a la venta)</label>
-          @if (error()) { <p role="alert" class="text-sm text-red-700 sm:col-span-3">{{ error() }}</p> }
+          @if (error()) { <p role="alert" class="text-sm text-destructive sm:col-span-3">{{ error() }}</p> }
           <div class="flex gap-2 sm:col-span-3">
-            <button type="submit" class="rounded bg-slate-900 px-3 py-2 text-white disabled:opacity-50" [disabled]="busy()">Guardar</button>
-            <button type="button" class="rounded border border-slate-300 px-3 py-2" (click)="editing.set(false)">Cancelar</button>
+            <button type="submit" class="rounded-lg bg-primary px-3 py-2 text-primary-foreground disabled:opacity-50" [disabled]="busy()">Guardar</button>
+            <button type="button" class="rounded-lg border border-input px-3 py-2" (click)="editing.set(false)">Cancelar</button>
           </div>
         </form>
       </section>
@@ -104,27 +104,27 @@ const fmt = (n: number | null | undefined) => (n == null ? '—' : String(n));
       </div>
     }
 
-    <section class="mb-8 max-w-3xl rounded border border-slate-200 p-4" aria-labelledby="imp">
+    <section class="mb-8 max-w-3xl rounded-lg border border-border p-4" aria-labelledby="imp">
       <h2 id="imp" class="mb-1 font-medium">Carga masiva por CSV</h2>
-      <p class="mb-3 text-sm text-slate-600">
+      <p class="mb-3 text-sm text-muted-foreground">
         Se actualiza por SKU. Todo o nada: si una fila falla, no se aplica nada. Máx. 5 MB y 5,000 filas.
         Columnas: product_slug, sku, sphere, cylinder, axis, addition, base_curve, diameter, color, price_cents, compare_at_cents, stock, active.
       </p>
       <label for="csv" class="mb-1 block text-sm">Archivo CSV</label>
       <input id="csv" type="file" accept=".csv,text/csv" class="mb-3 block text-sm" (change)="pickFile($event)" />
-      <button type="button" class="rounded bg-slate-900 px-3 py-2 text-sm text-white disabled:opacity-50" [disabled]="!file() || importing()" (click)="runImport()">
+      <button type="button" class="rounded-lg bg-primary px-3 py-2 text-sm text-primary-foreground disabled:opacity-50" [disabled]="!file() || importing()" (click)="runImport()">
         {{ importing() ? 'Importando…' : 'Importar' }}
       </button>
       @if (importOk()) { <p role="status" class="mt-3 text-sm">{{ importOk() }}</p> }
-      @if (importError()) { <p role="alert" class="mt-3 text-sm text-red-700">{{ importError() }}</p> }
+      @if (importError()) { <p role="alert" class="mt-3 text-sm text-destructive">{{ importError() }}</p> }
       @if (rowErrors().length) {
-        <ul class="mt-2 max-h-48 overflow-auto text-sm text-red-700">
+        <ul class="mt-2 max-h-48 overflow-auto text-sm text-destructive">
           @for (e of rowErrors(); track e.row) { <li>Fila {{ e.row }}: {{ e.message }}</li> }
         </ul>
       }
     </section>
 
-    @if (loadError()) { <p role="alert" class="mb-4 text-sm text-red-700">{{ loadError() }}</p> }
+    @if (loadError()) { <p role="alert" class="mb-4 text-sm text-destructive">{{ loadError() }}</p> }
     <table class="w-full text-sm">
       <thead><tr class="border-b text-left">
         <th class="py-2">SKU</th><th>Esf</th><th>Cil</th><th>Eje</th><th>Add</th><th>CB</th><th>Diám</th>
@@ -143,7 +143,7 @@ const fmt = (n: number | null | undefined) => (n == null ? '—' : String(n));
             </td>
           </tr>
         } @empty {
-          <tr><td colspan="12" class="py-4 text-slate-500">Este producto aún no tiene variantes.</td></tr>
+          <tr><td colspan="12" class="py-4 text-muted-foreground">Este producto aún no tiene variantes.</td></tr>
         }
       </tbody>
     </table>

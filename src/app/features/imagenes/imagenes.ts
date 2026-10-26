@@ -12,38 +12,38 @@ import { problemMessage } from '../../core/problem';
   imports: [RouterLink],
   template: `
     <a routerLink="/productos" class="text-sm underline">← Productos</a>
-    <h1 class="my-4 text-2xl font-semibold">Imágenes del producto</h1>
-    <p class="mb-4 text-sm text-slate-600">La primera es la imagen principal en la tienda. JPG, PNG o WebP, máx. 5 MB cada una.</p>
+    <h1 class="my-4 text-2xl">Imágenes del producto</h1>
+    <p class="mb-4 text-sm text-muted-foreground">La primera es la imagen principal en la tienda. JPG, PNG o WebP, máx. 5 MB cada una.</p>
 
     <div class="mb-6 max-w-md">
       <label for="files" class="mb-1 block text-sm">Agregar imágenes</label>
       <input id="files" type="file" multiple [accept]="accept" class="block text-sm" (change)="upload($event)" [disabled]="busy()" />
       @if (busy()) { <p role="status" class="mt-2 text-sm">Subiendo…</p> }
     </div>
-    @if (loadError()) { <p role="alert" class="mb-4 text-sm text-red-700">{{ loadError() }}</p> }
+    @if (loadError()) { <p role="alert" class="mb-4 text-sm text-destructive">{{ loadError() }}</p> }
     @if (errors().length) {
-      <ul role="alert" class="mb-4 text-sm text-red-700">@for (e of errors(); track $index) { <li>{{ e }}</li> }</ul>
+      <ul role="alert" class="mb-4 text-sm text-destructive">@for (e of errors(); track $index) { <li>{{ e }}</li> }</ul>
     }
 
     <ul class="grid grid-cols-2 gap-4 sm:grid-cols-4">
       @for (img of images(); track img.id; let i = $index; let first = $first; let last = $last) {
-        <li class="space-y-2 rounded border border-slate-200 p-2">
-          <img [src]="img.url" [alt]="'Imagen ' + (i + 1) + ' del producto'" class="aspect-square w-full rounded bg-slate-100 object-contain" />
-          <p class="text-xs text-slate-600">@if (first) { <strong>Principal</strong> } @else { Posición {{ i + 1 }} }</p>
+        <li class="space-y-2 rounded-lg border border-border p-2">
+          <img [src]="img.url" [alt]="'Imagen ' + (i + 1) + ' del producto'" class="aspect-square w-full rounded-lg bg-muted object-contain" />
+          <p class="text-xs text-muted-foreground">@if (first) { <strong>Principal</strong> } @else { Posición {{ i + 1 }} }</p>
           @if (confirming() === img.id) {
             <div class="flex gap-1">
-              <button type="button" class="rounded bg-red-700 px-2 py-1 text-xs text-white disabled:opacity-50" [disabled]="busy()" (click)="remove(img)">Sí, eliminar</button>
-              <button type="button" class="rounded border border-slate-300 px-2 py-1 text-xs" (click)="confirming.set(null)">No</button>
+              <button type="button" class="rounded-lg bg-destructive px-2 py-1 text-xs text-destructive-foreground disabled:opacity-50" [disabled]="busy()" (click)="remove(img)">Sí, eliminar</button>
+              <button type="button" class="rounded-lg border border-input px-2 py-1 text-xs" (click)="confirming.set(null)">No</button>
             </div>
           } @else {
             <div class="flex flex-wrap gap-1">
-              <button type="button" class="rounded border border-slate-300 px-2 py-1 text-xs disabled:opacity-40" [disabled]="first || busy()" [attr.aria-label]="'Mover imagen ' + (i + 1) + ' antes'" (click)="shift(i, -1)">←</button>
-              <button type="button" class="rounded border border-slate-300 px-2 py-1 text-xs disabled:opacity-40" [disabled]="last || busy()" [attr.aria-label]="'Mover imagen ' + (i + 1) + ' después'" (click)="shift(i, 1)">→</button>
-              <button type="button" class="rounded border border-slate-300 px-2 py-1 text-xs" (click)="confirming.set(img.id)">Eliminar</button>
+              <button type="button" class="rounded-lg border border-input px-2 py-1 text-xs disabled:opacity-40" [disabled]="first || busy()" [attr.aria-label]="'Mover imagen ' + (i + 1) + ' antes'" (click)="shift(i, -1)">←</button>
+              <button type="button" class="rounded-lg border border-input px-2 py-1 text-xs disabled:opacity-40" [disabled]="last || busy()" [attr.aria-label]="'Mover imagen ' + (i + 1) + ' después'" (click)="shift(i, 1)">→</button>
+              <button type="button" class="rounded-lg border border-input px-2 py-1 text-xs" (click)="confirming.set(img.id)">Eliminar</button>
             </div>
           }
         </li>
-      } @empty { <li class="text-sm text-slate-500">Este producto aún no tiene imágenes.</li> }
+      } @empty { <li class="text-sm text-muted-foreground">Este producto aún no tiene imágenes.</li> }
     </ul>
   `,
 })

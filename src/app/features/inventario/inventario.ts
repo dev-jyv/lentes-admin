@@ -10,13 +10,13 @@ import { StockAdjust } from './stock-adjust';
   selector: 'app-inventario',
   imports: [RouterLink, StockAdjust],
   template: `
-    <h1 class="mb-2 text-2xl font-semibold">Inventario</h1>
-    <p class="mb-6 text-sm text-slate-600">Variantes activas con existencia disponible (stock − apartado) igual o menor al umbral.</p>
+    <h1 class="mb-2 text-2xl">Inventario</h1>
+    <p class="mb-6 text-sm text-muted-foreground">Variantes activas con existencia disponible (stock − apartado) igual o menor al umbral.</p>
     <div class="mb-4 flex items-center gap-2 text-sm">
       <label for="thr">Umbral</label>
-      <input id="thr" type="number" min="0" class="w-24 rounded border border-slate-300 px-3 py-2" [value]="threshold()" (change)="setThreshold($event)" />
+      <input id="thr" type="number" min="0" class="w-24 rounded-lg border border-input px-3 py-2" [value]="threshold()" (change)="setThreshold($event)" />
     </div>
-    @if (error()) { <p role="alert" class="mb-4 text-sm text-red-700">{{ error() }}</p> }
+    @if (error()) { <p role="alert" class="mb-4 text-sm text-destructive">{{ error() }}</p> }
     <table class="w-full text-sm">
       <thead><tr class="border-b text-left"><th class="py-2">SKU</th><th>Producto</th><th>Existencia</th><th>Apartado</th><th>Disponible</th><th></th></tr></thead>
       <tbody>
@@ -25,13 +25,13 @@ import { StockAdjust } from './stock-adjust';
             <td class="py-2">{{ v.sku }}</td>
             <td>{{ v.brand_name }} · {{ v.product_name }}</td>
             <td>{{ v.stock }}</td><td>{{ v.reserved }}</td>
-            <td [class.text-red-700]="v.available <= 0" [class.font-medium]="v.available <= 0">{{ v.available }}</td>
+            <td [class.text-destructive]="v.available <= 0" [class.font-medium]="v.available <= 0">{{ v.available }}</td>
             <td class="space-x-3 text-right">
               <button type="button" class="underline" (click)="selected.set(v)">Ajustar</button>
               <a class="underline" [routerLink]="['/productos', v.product_id, 'variantes']">Variantes</a>
             </td>
           </tr>
-        } @empty { <tr><td colspan="6" class="py-4 text-slate-500">Nada por reponer con ese umbral.</td></tr> }
+        } @empty { <tr><td colspan="6" class="py-4 text-muted-foreground">Nada por reponer con ese umbral.</td></tr> }
       </tbody>
     </table>
     @if (selected(); as v) {

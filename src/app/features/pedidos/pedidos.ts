@@ -12,15 +12,15 @@ import { problemMessage } from '../../core/problem';
   selector: 'app-pedidos',
   imports: [RouterLink],
   template: `
-    <h1 class="mb-6 text-2xl font-semibold">Pedidos</h1>
+    <h1 class="mb-6 text-2xl">Pedidos</h1>
     <div class="mb-4 flex items-center gap-2 text-sm">
       <label for="status">Estado</label>
-      <select id="status" class="rounded border border-slate-300 px-3 py-2" (change)="filter($event)">
+      <select id="status" class="rounded-lg border border-input px-3 py-2" (change)="filter($event)">
         <option value="">Todos</option>
         @for (s of statuses; track s.value) { <option [value]="s.value">{{ s.label }}</option> }
       </select>
     </div>
-    @if (error()) { <p role="alert" class="mb-4 text-sm text-red-700">{{ error() }}</p> }
+    @if (error()) { <p role="alert" class="mb-4 text-sm text-destructive">{{ error() }}</p> }
     <table class="w-full text-sm">
       <thead><tr class="border-b text-left"><th class="py-2">Folio</th><th>Cliente</th><th>Estado</th><th>Total</th><th>Creado</th><th></th></tr></thead>
       <tbody>
@@ -34,12 +34,12 @@ import { problemMessage } from '../../core/problem';
             <td class="text-right"><a class="underline" [routerLink]="['/pedidos', o.id]">Ver</a></td>
           </tr>
         } @empty {
-          <tr><td colspan="6" class="py-4 text-slate-500">No hay pedidos con ese filtro.</td></tr>
+          <tr><td colspan="6" class="py-4 text-muted-foreground">No hay pedidos con ese filtro.</td></tr>
         }
       </tbody>
     </table>
     @if (nextCursor()) {
-      <button type="button" class="mt-4 rounded border border-slate-300 px-3 py-2 text-sm" (click)="load(true)">Cargar más</button>
+      <button type="button" class="mt-4 rounded-lg border border-input px-3 py-2 text-sm" (click)="load(true)">Cargar más</button>
     }
   `,
 })
