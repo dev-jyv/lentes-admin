@@ -12,4 +12,5 @@ export type CartItemProduct = {
   brand: string;
   /** @nullable */
   image_url?: string | null;
+  requires_prescription: boolean;
 };

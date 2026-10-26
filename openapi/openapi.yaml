@@ -352,6 +352,214 @@ paths:
           description: Eliminada
         "404":
           $ref: "#/components/responses/Problem"
+  /v1/checkout:
+    post:
+      operationId: createCheckout
+      summary: Valida el carrito, aparta inventario, crea el pedido y la preferencia de Mercado Pago
+      description: |
+        Aparta las existencias por 15 minutos y devuelve el `init_point` de Checkout Pro. Los precios salen de la base
+        al momento de apartar (nunca del cliente). Un cliente tiene un solo pedido pendiente: crear otro libera el anterior.
+        `409` si el carrito está vacío, no hay existencias (type `out-of-stock`), falta o no sirve la receta.
+        `502` si Mercado Pago falla (el apartado se libera y se puede reintentar). Con Turnstile configurado exige `turnstile_token`.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CheckoutInput" }
+      responses:
+        "201":
+          description: Pedido creado; el cliente debe ir al init_point
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CheckoutResult" }
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        "502":
+          $ref: "#/components/responses/Problem"
+  /v1/me/orders/{id}:
+    get:
+      operationId: getOrder
+      summary: Detalle de un pedido del cliente
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Pedido
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Order" }
+        "404":
+          $ref: "#/components/responses/Problem"
+  /v1/webhooks/mercadopago:
+    post:
+      operationId: mercadoPagoWebhook
+      summary: Notificaciones de pago de Mercado Pago
+      description: |
+        Sin sesión: se autentica con la firma `x-signature` (HMAC-SHA256 con el secreto del webhook, con tolerancia de reloj).
+        El cuerpo nunca se usa para decidir: se consulta el pago a Mercado Pago y se valida referencia, monto y moneda.
+        Es idempotente por id de notificación. Responde 200 aunque la notificación no cambie nada; 401 si la firma es inválida.
+      security:
+        - {}
+      parameters:
+        - name: x-signature
+          in: header
+          required: true
+          schema: { type: string }
+        - name: x-request-id
+          in: header
+          required: true
+          schema: { type: string }
+        - name: data.id
+          in: query
+          required: true
+          description: Id del pago; es el que firma Mercado Pago.
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        "200":
+          description: Recibida
+        "400":
+          $ref: "#/components/responses/Problem"
+        "401":
+          $ref: "#/components/responses/Problem"
+  /v1/me/prescriptions/upload-url:
+    post:
+      operationId: createPrescriptionUploadUrl
+      summary: URL prefirmada de R2 para subir el archivo de una receta
+      description: |
+        El navegador sube el archivo directo a R2 con `PUT` (cabecera `Content-Type` igual a la declarada; el tamaño exacto va firmado).
+        Vigencia 10 minutos, máximo 10 MB, solo JPG, PNG, WebP o PDF. Después se registra la receta con `POST /v1/me/prescriptions`.
+        `409` si el cliente ya tiene 10 recetas en revisión. `503` si el almacenamiento no está configurado.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PrescriptionUploadInput" }
+      responses:
+        "200":
+          description: URL de subida
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PrescriptionUpload" }
+        "400":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        "502":
+          $ref: "#/components/responses/Problem"
+  /v1/me/prescriptions:
+    get:
+      operationId: listPrescriptions
+      summary: Recetas del cliente, la más reciente primero
+      description: "`file_url` es una URL de lectura prefirmada de 10 minutos."
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Recetas
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: "#/components/schemas/Prescription" }
+    post:
+      operationId: createPrescription
+      summary: Registra una receta ya subida (queda pendiente de revisión)
+      description: |
+        Valida rangos y pasos de 0.25, eje con cilindro, fechas y vigencia, que el archivo sea del cliente y que exista en R2.
+        La revisión clínica es del admin.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PrescriptionInput" }
+      responses:
+        "201":
+          description: Receta registrada
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Prescription" }
+        "400":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        "502":
+          $ref: "#/components/responses/Problem"
+  /v1/admin/prescriptions:
+    get:
+      operationId: adminListPrescriptions
+      summary: Cola de revisión de recetas
+      description: Pendientes de la más antigua a la más nueva; las demás, la más reciente primero. Máximo 100.
+      security:
+        - bearerAuth: [admin]
+      parameters:
+        - name: status
+          in: query
+          schema: { $ref: "#/components/schemas/RxStatus" }
+      responses:
+        "200":
+          description: Recetas
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: "#/components/schemas/AdminPrescription" }
+        "400":
+          $ref: "#/components/responses/Problem"
+  /v1/admin/prescriptions/{id}:
+    patch:
+      operationId: adminReviewPrescription
+      summary: Aprueba o rechaza una receta pendiente
+      description: Rechazar exige `reject_reason` (se le muestra al cliente). No se puede aprobar una receta vencida ni revisar dos veces (`409`).
+      security:
+        - bearerAuth: [admin]
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PrescriptionReview" }
+      responses:
+        "200":
+          description: Receta revisada
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminPrescription" }
+        "400":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
   /v1/admin/brands:
     post:
       operationId: adminCreateBrand
@@ -603,7 +811,7 @@ components:
         slug: { type: string }
     Product:
       type: object
-      required: [id, brand, name, slug, lens_type, replacement, pieces_per_box, requires_prescription]
+      required: [id, brand, name, slug, lens_type, replacement, pieces_per_box, requires_prescription, from_price_cents, image_url]
       properties:
         id: { type: string, format: uuid }
         brand: { $ref: "#/components/schemas/Brand" }
@@ -616,6 +824,18 @@ components:
         material: { type: string, nullable: true }
         water_content_pct: { type: number, nullable: true }
         requires_prescription: { type: boolean }
+        from_price_cents:
+          type: integer
+          format: int64
+          nullable: true
+          description: |
+            Precio mínimo (centavos MXN) entre las variantes activas con existencia disponible (stock - reserved > 0).
+            `null` si el modelo no tiene ninguna disponible (agotado).
+        image_url:
+          type: string
+          format: uri
+          nullable: true
+          description: Imagen principal (la de menor posición); `null` si el modelo no tiene imágenes.
     ProductImage:
       type: object
       required: [url, position]
@@ -797,12 +1017,13 @@ components:
         purchasable: { type: boolean, description: "false si la variante o el producto ya no están activos" }
         product:
           type: object
-          required: [name, slug, brand]
+          required: [name, slug, brand, requires_prescription]
           properties:
             name: { type: string }
             slug: { type: string }
             brand: { type: string }
             image_url: { type: string, nullable: true }
+            requires_prescription: { type: boolean }
         sphere: { type: number, format: double, nullable: true }
         cylinder: { type: number, format: double, nullable: true }
         axis: { type: integer, nullable: true }
@@ -823,3 +1044,118 @@ components:
           type: string
           nullable: true
           description: Solo cuando se acaba de crear un carrito anónimo
+    CheckoutInput:
+      type: object
+      required: [address_id]
+      properties:
+        address_id: { type: string, format: uuid }
+        prescription_id: { type: string, format: uuid, nullable: true }
+        turnstile_token: { type: string }
+    CheckoutResult:
+      type: object
+      required: [order_id, number, total_cents, init_point]
+      properties:
+        order_id: { type: string, format: uuid }
+        number: { type: integer, format: int64, description: "Folio visible (LC-000123)" }
+        total_cents: { type: integer, format: int64 }
+        init_point: { type: string, format: uri, description: URL de Mercado Pago Checkout Pro }
+    OrderStatus:
+      type: string
+      enum: [pending_payment, paid, preparing, shipped, delivered, cancelled, refunded, expired]
+    OrderItem:
+      type: object
+      required: [product_name, brand_name, product_slug, sku, eye, quantity, unit_price_cents, base_curve, diameter]
+      properties:
+        product_name: { type: string }
+        brand_name: { type: string }
+        product_slug: { type: string }
+        sku: { type: string }
+        eye: { $ref: "#/components/schemas/Eye" }
+        quantity: { type: integer }
+        unit_price_cents: { type: integer, format: int64, description: Precio pagado en ese pedido }
+        sphere: { type: number, format: double, nullable: true }
+        cylinder: { type: number, format: double, nullable: true }
+        axis: { type: integer, nullable: true }
+        addition: { type: string, nullable: true }
+        base_curve: { type: number, format: double }
+        diameter: { type: number, format: double }
+        color: { type: string, nullable: true }
+    Order:
+      type: object
+      required: [id, number, status, subtotal_cents, shipping_cents, discount_cents, total_cents, created_at, items]
+      properties:
+        id: { type: string, format: uuid }
+        number: { type: integer, format: int64 }
+        status: { $ref: "#/components/schemas/OrderStatus" }
+        subtotal_cents: { type: integer, format: int64 }
+        shipping_cents: { type: integer, format: int64 }
+        discount_cents: { type: integer, format: int64 }
+        total_cents: { type: integer, format: int64 }
+        created_at: { type: string, format: date-time }
+        paid_at: { type: string, format: date-time, nullable: true }
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/OrderItem" }
+    RxStatus:
+      type: string
+      enum: [pending, approved, rejected]
+    PrescriptionUploadInput:
+      type: object
+      required: [content_type, size_bytes]
+      properties:
+        content_type: { type: string, enum: [image/jpeg, image/png, image/webp, application/pdf] }
+        size_bytes: { type: integer, format: int64, minimum: 1, maximum: 10485760 }
+    PrescriptionUpload:
+      type: object
+      required: [upload_url, r2_key, expires_in]
+      properties:
+        upload_url: { type: string, format: uri }
+        r2_key: { type: string, description: Llave que se manda al registrar la receta }
+        expires_in: { type: integer, description: Segundos de vigencia de la URL }
+    PrescriptionFields:
+      type: object
+      required: [od_sphere, os_sphere, issued_at, expires_at, doctor_name]
+      properties:
+        od_sphere: { type: number, format: double }
+        od_cylinder: { type: number, format: double, nullable: true }
+        od_axis: { type: integer, nullable: true }
+        od_addition: { type: string, nullable: true }
+        os_sphere: { type: number, format: double }
+        os_cylinder: { type: number, format: double, nullable: true }
+        os_axis: { type: integer, nullable: true }
+        os_addition: { type: string, nullable: true }
+        issued_at: { type: string, format: date }
+        expires_at: { type: string, format: date }
+        doctor_name: { type: string }
+        doctor_license: { type: string, nullable: true }
+    PrescriptionInput:
+      allOf:
+        - $ref: "#/components/schemas/PrescriptionFields"
+        - type: object
+          required: [r2_key]
+          properties:
+            r2_key: { type: string, description: Llave devuelta por upload-url; debe ser del cliente y existir en R2 }
+    Prescription:
+      allOf:
+        - $ref: "#/components/schemas/PrescriptionFields"
+        - type: object
+          required: [id, status, created_at, file_url, reject_reason]
+          properties:
+            id: { type: string, format: uuid }
+            status: { $ref: "#/components/schemas/RxStatus" }
+            created_at: { type: string, format: date-time }
+            reject_reason: { type: string, nullable: true }
+            file_url: { type: string, format: uri, nullable: true, description: "URL de lectura prefirmada, de corta vida" }
+    AdminPrescription:
+      allOf:
+        - $ref: "#/components/schemas/Prescription"
+        - type: object
+          required: [customer_email]
+          properties:
+            customer_email: { type: string }
+    PrescriptionReview:
+      type: object
+      required: [status]
+      properties:
+        status: { type: string, enum: [approved, rejected] }
+        reject_reason: { type: string, maxLength: 500, description: Obligatorio al rechazar }

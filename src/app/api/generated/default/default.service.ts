@@ -27,10 +27,13 @@ import type {
   Address,
   AddressInput,
   AdminImportVariants200,
+  AdminListPrescriptions200,
+  AdminListPrescriptionsParams,
   AdminListProducts200,
   AdminListProductsParams,
   AdminListVariants200,
   AdminListVariantsParams,
+  AdminPrescription,
   AdminProduct,
   AdminVariant,
   Brand,
@@ -38,14 +41,25 @@ import type {
   Cart,
   CartItemInput,
   CartItemUpdate,
+  CheckoutInput,
+  CheckoutResult,
   Customer,
   CustomerUpdate,
   GetHealth200,
   GetProductVariantParams,
   ListAddresses200,
   ListBrands200,
+  ListPrescriptions200,
   ListProducts200,
   ListProductsParams,
+  MercadoPagoWebhookBody,
+  MercadoPagoWebhookParams,
+  Order,
+  Prescription,
+  PrescriptionInput,
+  PrescriptionReview,
+  PrescriptionUpload,
+  PrescriptionUploadInput,
   ProductDetail,
   ProductInput,
   Variant,
@@ -743,6 +757,312 @@ export class DefaultService {
     );
   }
 /**
+ * Aparta las existencias por 15 minutos y devuelve el `init_point` de Checkout Pro. Los precios salen de la base
+ * al momento de apartar (nunca del cliente). Un cliente tiene un solo pedido pendiente: crear otro libera el anterior.
+ * `409` si el carrito está vacío, no hay existencias (type `out-of-stock`), falta o no sirve la receta.
+ * `502` si Mercado Pago falla (el apartado se libera y se puede reintentar). Con Turnstile configurado exige `turnstile_token`.
+ * @summary Valida el carrito, aparta inventario, crea el pedido y la preferencia de Mercado Pago
+ */
+ createCheckout<TData = CheckoutResult>(checkoutInput: CheckoutInput, options?: HttpClientBodyOptions): Observable<TData>;
+ createCheckout<TData = CheckoutResult>(checkoutInput: CheckoutInput, options?: HttpClientEventOptions): Observable<HttpEvent<TData>>;
+ createCheckout<TData = CheckoutResult>(checkoutInput: CheckoutInput, options?: HttpClientResponseOptions): Observable<AngularHttpResponse<TData>>;
+  createCheckout<TData = CheckoutResult>(
+    checkoutInput: CheckoutInput, options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.post<TData>(
+      `/v1/checkout`,
+      checkoutInput,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+      }
+    );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.post<TData>(
+      `/v1/checkout`,
+      checkoutInput,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+      }
+    );
+    }
+
+    return this.http.post<TData>(
+      `/v1/checkout`,
+      checkoutInput,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+      }
+    );
+  }
+/**
+ * @summary Detalle de un pedido del cliente
+ */
+ getOrder<TData = Order>(id: string, options?: HttpClientBodyOptions): Observable<TData>;
+ getOrder<TData = Order>(id: string, options?: HttpClientEventOptions): Observable<HttpEvent<TData>>;
+ getOrder<TData = Order>(id: string, options?: HttpClientResponseOptions): Observable<AngularHttpResponse<TData>>;
+  getOrder<TData = Order>(
+    id: string, options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.get<TData>(
+      `/v1/me/orders/${id}`,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+      }
+    );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.get<TData>(
+      `/v1/me/orders/${id}`,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+      }
+    );
+    }
+
+    return this.http.get<TData>(
+      `/v1/me/orders/${id}`,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+      }
+    );
+  }
+/**
+ * Sin sesión: se autentica con la firma `x-signature` (HMAC-SHA256 con el secreto del webhook, con tolerancia de reloj).
+ * El cuerpo nunca se usa para decidir: se consulta el pago a Mercado Pago y se valida referencia, monto y moneda.
+ * Es idempotente por id de notificación. Responde 200 aunque la notificación no cambie nada; 401 si la firma es inválida.
+ * @summary Notificaciones de pago de Mercado Pago
+ */
+ mercadoPagoWebhook<TData = void>(mercadoPagoWebhookBody: MercadoPagoWebhookBody,
+    params: MercadoPagoWebhookParams, options?: HttpClientBodyOptions): Observable<TData>;
+ mercadoPagoWebhook<TData = void>(mercadoPagoWebhookBody: MercadoPagoWebhookBody,
+    params: MercadoPagoWebhookParams, options?: HttpClientEventOptions): Observable<HttpEvent<TData>>;
+ mercadoPagoWebhook<TData = void>(mercadoPagoWebhookBody: MercadoPagoWebhookBody,
+    params: MercadoPagoWebhookParams, options?: HttpClientResponseOptions): Observable<AngularHttpResponse<TData>>;
+  mercadoPagoWebhook<TData = void>(
+    mercadoPagoWebhookBody: MercadoPagoWebhookBody,
+    params: MercadoPagoWebhookParams, options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    const filteredParams = filterParams({...params, ...options?.params}, new Set<string>([]));
+
+    if (options?.observe === 'events') {
+      return this.http.post<TData>(
+      `/v1/webhooks/mercadopago`,
+      mercadoPagoWebhookBody,{
+    ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+        params: filteredParams,}
+    );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.post<TData>(
+      `/v1/webhooks/mercadopago`,
+      mercadoPagoWebhookBody,{
+    ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+        params: filteredParams,}
+    );
+    }
+
+    return this.http.post<TData>(
+      `/v1/webhooks/mercadopago`,
+      mercadoPagoWebhookBody,{
+    ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+        params: filteredParams,}
+    );
+  }
+/**
+ * El navegador sube el archivo directo a R2 con `PUT` (cabecera `Content-Type` igual a la declarada; el tamaño exacto va firmado).
+ * Vigencia 10 minutos, máximo 10 MB, solo JPG, PNG, WebP o PDF. Después se registra la receta con `POST /v1/me/prescriptions`.
+ * `409` si el cliente ya tiene 10 recetas en revisión. `503` si el almacenamiento no está configurado.
+ * @summary URL prefirmada de R2 para subir el archivo de una receta
+ */
+ createPrescriptionUploadUrl<TData = PrescriptionUpload>(prescriptionUploadInput: PrescriptionUploadInput, options?: HttpClientBodyOptions): Observable<TData>;
+ createPrescriptionUploadUrl<TData = PrescriptionUpload>(prescriptionUploadInput: PrescriptionUploadInput, options?: HttpClientEventOptions): Observable<HttpEvent<TData>>;
+ createPrescriptionUploadUrl<TData = PrescriptionUpload>(prescriptionUploadInput: PrescriptionUploadInput, options?: HttpClientResponseOptions): Observable<AngularHttpResponse<TData>>;
+  createPrescriptionUploadUrl<TData = PrescriptionUpload>(
+    prescriptionUploadInput: PrescriptionUploadInput, options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.post<TData>(
+      `/v1/me/prescriptions/upload-url`,
+      prescriptionUploadInput,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+      }
+    );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.post<TData>(
+      `/v1/me/prescriptions/upload-url`,
+      prescriptionUploadInput,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+      }
+    );
+    }
+
+    return this.http.post<TData>(
+      `/v1/me/prescriptions/upload-url`,
+      prescriptionUploadInput,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+      }
+    );
+  }
+/**
+ * `file_url` es una URL de lectura prefirmada de 10 minutos.
+ * @summary Recetas del cliente, la más reciente primero
+ */
+ listPrescriptions<TData = ListPrescriptions200>( options?: HttpClientBodyOptions): Observable<TData>;
+ listPrescriptions<TData = ListPrescriptions200>( options?: HttpClientEventOptions): Observable<HttpEvent<TData>>;
+ listPrescriptions<TData = ListPrescriptions200>( options?: HttpClientResponseOptions): Observable<AngularHttpResponse<TData>>;
+  listPrescriptions<TData = ListPrescriptions200>(
+     options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.get<TData>(
+      `/v1/me/prescriptions`,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+      }
+    );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.get<TData>(
+      `/v1/me/prescriptions`,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+      }
+    );
+    }
+
+    return this.http.get<TData>(
+      `/v1/me/prescriptions`,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+      }
+    );
+  }
+/**
+ * Valida rangos y pasos de 0.25, eje con cilindro, fechas y vigencia, que el archivo sea del cliente y que exista en R2.
+ * La revisión clínica es del admin.
+ * @summary Registra una receta ya subida (queda pendiente de revisión)
+ */
+ createPrescription<TData = Prescription>(prescriptionInput: PrescriptionInput, options?: HttpClientBodyOptions): Observable<TData>;
+ createPrescription<TData = Prescription>(prescriptionInput: PrescriptionInput, options?: HttpClientEventOptions): Observable<HttpEvent<TData>>;
+ createPrescription<TData = Prescription>(prescriptionInput: PrescriptionInput, options?: HttpClientResponseOptions): Observable<AngularHttpResponse<TData>>;
+  createPrescription<TData = Prescription>(
+    prescriptionInput: PrescriptionInput, options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.post<TData>(
+      `/v1/me/prescriptions`,
+      prescriptionInput,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+      }
+    );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.post<TData>(
+      `/v1/me/prescriptions`,
+      prescriptionInput,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+      }
+    );
+    }
+
+    return this.http.post<TData>(
+      `/v1/me/prescriptions`,
+      prescriptionInput,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+      }
+    );
+  }
+/**
+ * Pendientes de la más antigua a la más nueva; las demás, la más reciente primero. Máximo 100.
+ * @summary Cola de revisión de recetas
+ */
+ adminListPrescriptions<TData = AdminListPrescriptions200>(params?: AdminListPrescriptionsParams, options?: HttpClientBodyOptions): Observable<TData>;
+ adminListPrescriptions<TData = AdminListPrescriptions200>(params?: AdminListPrescriptionsParams, options?: HttpClientEventOptions): Observable<HttpEvent<TData>>;
+ adminListPrescriptions<TData = AdminListPrescriptions200>(params?: AdminListPrescriptionsParams, options?: HttpClientResponseOptions): Observable<AngularHttpResponse<TData>>;
+  adminListPrescriptions<TData = AdminListPrescriptions200>(
+    params?: AdminListPrescriptionsParams, options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    const filteredParams = filterParams({...params, ...options?.params}, new Set<string>([]));
+
+    if (options?.observe === 'events') {
+      return this.http.get<TData>(
+      `/v1/admin/prescriptions`,{
+    ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+        params: filteredParams,}
+    );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.get<TData>(
+      `/v1/admin/prescriptions`,{
+    ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+        params: filteredParams,}
+    );
+    }
+
+    return this.http.get<TData>(
+      `/v1/admin/prescriptions`,{
+    ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+        params: filteredParams,}
+    );
+  }
+/**
+ * Rechazar exige `reject_reason` (se le muestra al cliente). No se puede aprobar una receta vencida ni revisar dos veces (`409`).
+ * @summary Aprueba o rechaza una receta pendiente
+ */
+ adminReviewPrescription<TData = AdminPrescription>(id: string,
+    prescriptionReview: PrescriptionReview, options?: HttpClientBodyOptions): Observable<TData>;
+ adminReviewPrescription<TData = AdminPrescription>(id: string,
+    prescriptionReview: PrescriptionReview, options?: HttpClientEventOptions): Observable<HttpEvent<TData>>;
+ adminReviewPrescription<TData = AdminPrescription>(id: string,
+    prescriptionReview: PrescriptionReview, options?: HttpClientResponseOptions): Observable<AngularHttpResponse<TData>>;
+  adminReviewPrescription<TData = AdminPrescription>(
+    id: string,
+    prescriptionReview: PrescriptionReview, options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.patch<TData>(
+      `/v1/admin/prescriptions/${id}`,
+      prescriptionReview,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+      }
+    );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.patch<TData>(
+      `/v1/admin/prescriptions/${id}`,
+      prescriptionReview,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+      }
+    );
+    }
+
+    return this.http.patch<TData>(
+      `/v1/admin/prescriptions/${id}`,
+      prescriptionReview,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+      }
+    );
+  }
+/**
  * @summary Crea una marca
  */
  adminCreateBrand<TData = Brand>(brandInput: BrandInput, options?: HttpClientBodyOptions): Observable<TData>;
@@ -1057,6 +1377,14 @@ export type ListAddressesClientResult = NonNullable<ListAddresses200>
 export type CreateAddressClientResult = NonNullable<Address>
 export type UpdateAddressClientResult = NonNullable<Address>
 export type DeleteAddressClientResult = NonNullable<void>
+export type CreateCheckoutClientResult = NonNullable<CheckoutResult>
+export type GetOrderClientResult = NonNullable<Order>
+export type MercadoPagoWebhookClientResult = NonNullable<void>
+export type CreatePrescriptionUploadUrlClientResult = NonNullable<PrescriptionUpload>
+export type ListPrescriptionsClientResult = NonNullable<ListPrescriptions200>
+export type CreatePrescriptionClientResult = NonNullable<Prescription>
+export type AdminListPrescriptionsClientResult = NonNullable<AdminListPrescriptions200>
+export type AdminReviewPrescriptionClientResult = NonNullable<AdminPrescription>
 export type AdminCreateBrandClientResult = NonNullable<Brand>
 export type AdminListProductsClientResult = NonNullable<AdminListProducts200>
 export type AdminCreateProductClientResult = NonNullable<AdminProduct>

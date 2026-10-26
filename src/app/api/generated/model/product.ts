@@ -24,4 +24,15 @@ export interface Product {
   /** @nullable */
   water_content_pct?: number | null;
   requires_prescription: boolean;
+  /**
+     * Precio mínimo (centavos MXN) entre las variantes activas con existencia disponible (stock - reserved > 0).
+     * `null` si el modelo no tiene ninguna disponible (agotado).
+     * @nullable
+     */
+  from_price_cents: number | null;
+  /**
+     * Imagen principal (la de menor posición); `null` si el modelo no tiene imágenes.
+     * @nullable
+     */
+  image_url: string | null;
 }

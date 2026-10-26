@@ -1,4 +1,4 @@
-// Mock PROVISIONAL de /v1/admin/orders y /v1/admin/prescriptions (ver openapi/provisional).
+// Mock PROVISIONAL de pedidos, imágenes, inventario y reportes (ver openapi/provisional); las recetas ya salen de la API real.
 // Solo desarrollo: `pnpm mock` en :8081. No valida auth.
 import { createServer } from 'node:http';
 
@@ -25,33 +25,6 @@ const orders = [
   mk(101, 'pending_payment', 'beto@example.com', 1, [line('OAS-BW-2.00', 'Acuvue Oasys', 'Acuvue', 'both', 1, 52900, 'Esf -2.00')]),
   mk(100, 'cancelled', 'carla@example.com', 300, [line('AIR-AQ-4.00', 'Air Optix Aqua', 'Alcon', 'both', 1, 48900, 'Esf -4.00')]),
 ];
-
-const rx = (status, email, hours, od, os, extra = {}) => ({
-  id: id(), status, customer_email: email, od_sphere: od, od_cylinder: null, od_axis: null, od_addition: null,
-  os_sphere: os, os_cylinder: null, os_axis: null, os_addition: null, issued_at: '2026-09-15', expires_at: '2027-09-15',
-  doctor_name: 'Dra. Pérez', doctor_license: '12345678', file_url: 'https://example.com/receta-demo.pdf', reject_reason: null, created_at: ago(hours), ...extra,
-});
-const prescriptions = [
-  rx('pending', 'ana@example.com', 3, -2.0, -2.25),
-  rx('pending', 'luis@example.com', 26, -3.5, -3.25, { od_cylinder: -0.75, od_axis: 90 }),
-  rx('approved', 'sofia@example.com', 100, -1.0, -1.0),
-];
-
-// --- A4: imágenes (en memoria; los bytes se sirven en /uploads/<key>) ---
-const files = new Map(); // r2_key -> { type, buf }
-const galleries = new Map(); // product_id -> [{ id, r2_key, position }]
-const imgView = (g) => g.map((i, idx) => ({ id: i.id, r2_key: i.r2_key, url: `http://localhost:8081/uploads/${i.r2_key}`, position: idx }));
-
-// --- A5: inventario ---
-const stock = new Map(); // variant_id -> stock
-const adjustments = new Map(); // variant_id -> []
-const low = [
-  { variant_id: id(), sku: 'BIO-MON-2.00', product_id: id(), product_name: 'Biofinity', brand_name: 'CooperVision', stock: 3, reserved: 1 },
-  { variant_id: id(), sku: 'OAS-BW-3.50', product_id: id(), product_name: 'Acuvue Oasys', brand_name: 'Acuvue', stock: 2, reserved: 2 },
-  { variant_id: id(), sku: 'AIR-AQ-1.00', product_id: id(), product_name: 'Air Optix Aqua', brand_name: 'Alcon', stock: 12, reserved: 0 },
-];
-low.forEach((v) => stock.set(v.variant_id, v.stock));
-const stockOf = (vid) => (stock.has(vid) ? stock.get(vid) : 10);
 
 const readBody = (req) => new Promise((resolve) => { let b = ''; req.on('data', (c) => (b += c)); req.on('end', () => resolve(b ? JSON.parse(b) : {})); });
 const NEXT = { paid: ['preparing', 'cancelled'], preparing: ['shipped', 'cancelled'], shipped: ['delivered'] };
@@ -89,20 +62,6 @@ createServer(async (req, res) => {
       }
       return send(200, o);
     }
-  }
-  if (p === '/v1/admin/prescriptions' && req.method === 'GET') {
-    const st = q.get('status');
-    return send(200, { items: prescriptions.filter((r) => !st || r.status === st) });
-  }
-  m = p.match(/^\/v1\/admin\/prescriptions\/([^/]+)$/);
-  if (m && req.method === 'PATCH') {
-    const r = prescriptions.find((x) => x.id === m[1]);
-    if (!r) return problem(404, 'No encontrado');
-    if (r.status !== 'pending') return problem(409, 'Ya revisada');
-    const b = await readBody(req);
-    if (b.status === 'rejected' && !b.reject_reason?.trim()) return problem(400, 'Falta el motivo', 'El motivo es obligatorio al rechazar.');
-    r.status = b.status; r.reject_reason = b.status === 'rejected' ? b.reject_reason.trim() : null;
-    return send(200, r);
   }
   // --- A4 ---
   if (p === '/v1/admin/uploads/image-url' && req.method === 'POST') {

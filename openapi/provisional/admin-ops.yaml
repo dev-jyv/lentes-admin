@@ -69,46 +69,6 @@ paths:
           content:
             application/problem+json:
               schema: { $ref: "#/components/schemas/Problem" }
-  /v1/admin/prescriptions:
-    get:
-      operationId: adminListPrescriptions
-      tags: [prescriptions]
-      parameters:
-        - { name: status, in: query, schema: { $ref: "#/components/schemas/RxStatus" } }
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: object
-                required: [items]
-                properties:
-                  items:
-                    type: array
-                    items: { $ref: "#/components/schemas/AdminPrescription" }
-  /v1/admin/prescriptions/{id}:
-    patch:
-      operationId: adminReviewPrescription
-      tags: [prescriptions]
-      parameters:
-        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema: { $ref: "#/components/schemas/PrescriptionReview" }
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/AdminPrescription" }
-        "409":
-          description: Ya revisada
-          content:
-            application/problem+json:
-              schema: { $ref: "#/components/schemas/Problem" }
   /v1/admin/uploads/image-url:
     post:
       operationId: adminCreateImageUploadUrl
@@ -371,37 +331,6 @@ components:
         status: { $ref: "#/components/schemas/OrderStatus" }
         tracking_carrier: { type: string }
         tracking_number: { type: string }
-    RxStatus:
-      type: string
-      enum: [pending, approved, rejected]
-    AdminPrescription:
-      type: object
-      required: [id, status, customer_email, od_sphere, os_sphere, issued_at, expires_at, doctor_name, created_at]
-      properties:
-        id: { type: string, format: uuid }
-        status: { $ref: "#/components/schemas/RxStatus" }
-        customer_email: { type: string }
-        od_sphere: { type: number }
-        od_cylinder: { type: number, nullable: true }
-        od_axis: { type: integer, nullable: true }
-        od_addition: { type: string, nullable: true }
-        os_sphere: { type: number }
-        os_cylinder: { type: number, nullable: true }
-        os_axis: { type: integer, nullable: true }
-        os_addition: { type: string, nullable: true }
-        issued_at: { type: string, format: date }
-        expires_at: { type: string, format: date }
-        doctor_name: { type: string }
-        doctor_license: { type: string, nullable: true }
-        file_url: { type: string, nullable: true, description: "URL prefirmada de lectura de R2, de corta vida" }
-        reject_reason: { type: string, nullable: true }
-        created_at: { type: string, format: date-time }
-    PrescriptionReview:
-      type: object
-      required: [status]
-      properties:
-        status: { type: string, enum: [approved, rejected] }
-        reject_reason: { type: string, description: "Obligatorio al rechazar" }
     ProductImageAdmin:
       type: object
       required: [id, r2_key, url, position]

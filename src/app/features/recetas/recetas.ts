@@ -1,7 +1,7 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
-import type { AdminPrescription, RxStatus } from '../../api/provisional/model';
-import { PrescriptionsService } from '../../api/provisional/prescriptions/prescriptions.service';
+import { DefaultService } from '../../api/generated/default/default.service';
+import type { AdminPrescription, RxStatus } from '../../api/generated/model';
 import { formatDate, formatDateTime } from '../../core/format';
 import { problemMessage } from '../../core/problem';
 
@@ -64,7 +64,7 @@ const fmt = (n: number | null | undefined) => (n == null ? '—' : n > 0 ? `+${n
   `,
 })
 export default class Recetas implements OnInit {
-  private readonly api = inject(PrescriptionsService);
+  private readonly api = inject(DefaultService);
   protected readonly tabs = TABS;
   protected readonly tab = signal<RxStatus>('pending');
   protected readonly items = signal<AdminPrescription[]>([]);
