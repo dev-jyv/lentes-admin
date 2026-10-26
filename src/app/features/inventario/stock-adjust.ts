@@ -1,7 +1,7 @@
 import { Component, inject, input, output, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
-import type { StockAdjustment, StockReason } from '../../api/provisional/model';
-import { InventoryService } from '../../api/provisional/inventory/inventory.service';
+import { DefaultService } from '../../api/generated/default/default.service';
+import type { StockAdjustment, StockReason } from '../../api/generated/model';
 import { formatDateTime } from '../../core/format';
 import { problemMessage } from '../../core/problem';
 import { REASON_LABEL, validateAdjustment } from '../../core/stock';
@@ -61,7 +61,7 @@ export class StockAdjust {
   readonly adjusted = output<number>();
   readonly closed = output<void>();
 
-  private readonly api = inject(InventoryService);
+  private readonly api = inject(DefaultService);
   protected readonly delta = signal<number | null>(null);
   protected readonly reason = signal<StockReason>('receipt');
   protected readonly note = signal('');

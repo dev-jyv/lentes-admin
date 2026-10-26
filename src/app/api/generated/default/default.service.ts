@@ -27,6 +27,8 @@ import type {
   Address,
   AddressInput,
   AdminImportVariants200,
+  AdminListLowStock200,
+  AdminListLowStockParams,
   AdminListOrders200,
   AdminListOrdersParams,
   AdminListPrescriptions200,
@@ -34,6 +36,7 @@ import type {
   AdminListProductImages200,
   AdminListProducts200,
   AdminListProductsParams,
+  AdminListStockAdjustments200,
   AdminListVariants200,
   AdminListVariantsParams,
   AdminOrder,
@@ -73,6 +76,8 @@ import type {
   ProductDetail,
   ProductImageAdmin,
   ProductInput,
+  StockAdjustment,
+  StockAdjustmentInput,
   Variant,
   VariantInput
 } from '../model';
@@ -1379,6 +1384,119 @@ export class DefaultService {
     );
   }
 /**
+ * Los últimos 100, el más reciente primero.
+ * @summary Historial de ajustes de existencia de una variante
+ */
+ adminListStockAdjustments<TData = AdminListStockAdjustments200>(id: string, options?: HttpClientBodyOptions): Observable<TData>;
+ adminListStockAdjustments<TData = AdminListStockAdjustments200>(id: string, options?: HttpClientEventOptions): Observable<HttpEvent<TData>>;
+ adminListStockAdjustments<TData = AdminListStockAdjustments200>(id: string, options?: HttpClientResponseOptions): Observable<AngularHttpResponse<TData>>;
+  adminListStockAdjustments<TData = AdminListStockAdjustments200>(
+    id: string, options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.get<TData>(
+      `/v1/admin/variants/${id}/stock-adjustments`,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+      }
+    );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.get<TData>(
+      `/v1/admin/variants/${id}/stock-adjustments`,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+      }
+    );
+    }
+
+    return this.http.get<TData>(
+      `/v1/admin/variants/${id}/stock-adjustments`,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+      }
+    );
+  }
+/**
+ * `delta` con signo (suma o resta, distinto de 0, máx. 100,000). Queda en una bitácora de solo agregar con quién, cuándo y cuánto quedó.
+ * `409` si la existencia quedaría negativa o por debajo de lo apartado por pedidos sin pagar. Con motivo `other` la nota es obligatoria.
+ * La carga masiva por CSV y la edición de una variante fijan la existencia directamente y **no** pasan por esta bitácora.
+ * @summary Ajusta la existencia de una variante con motivo
+ */
+ adminCreateStockAdjustment<TData = StockAdjustment>(id: string,
+    stockAdjustmentInput: StockAdjustmentInput, options?: HttpClientBodyOptions): Observable<TData>;
+ adminCreateStockAdjustment<TData = StockAdjustment>(id: string,
+    stockAdjustmentInput: StockAdjustmentInput, options?: HttpClientEventOptions): Observable<HttpEvent<TData>>;
+ adminCreateStockAdjustment<TData = StockAdjustment>(id: string,
+    stockAdjustmentInput: StockAdjustmentInput, options?: HttpClientResponseOptions): Observable<AngularHttpResponse<TData>>;
+  adminCreateStockAdjustment<TData = StockAdjustment>(
+    id: string,
+    stockAdjustmentInput: StockAdjustmentInput, options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.post<TData>(
+      `/v1/admin/variants/${id}/stock-adjustments`,
+      stockAdjustmentInput,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+      }
+    );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.post<TData>(
+      `/v1/admin/variants/${id}/stock-adjustments`,
+      stockAdjustmentInput,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+      }
+    );
+    }
+
+    return this.http.post<TData>(
+      `/v1/admin/variants/${id}/stock-adjustments`,
+      stockAdjustmentInput,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+      }
+    );
+  }
+/**
+ * Disponible = existencia − apartado, menor o igual al umbral (0 a 10,000; 5 por defecto). Las más urgentes primero, máximo 500.
+ * @summary Variantes activas con poca existencia disponible
+ */
+ adminListLowStock<TData = AdminListLowStock200>(params?: AdminListLowStockParams, options?: HttpClientBodyOptions): Observable<TData>;
+ adminListLowStock<TData = AdminListLowStock200>(params?: AdminListLowStockParams, options?: HttpClientEventOptions): Observable<HttpEvent<TData>>;
+ adminListLowStock<TData = AdminListLowStock200>(params?: AdminListLowStockParams, options?: HttpClientResponseOptions): Observable<AngularHttpResponse<TData>>;
+  adminListLowStock<TData = AdminListLowStock200>(
+    params?: AdminListLowStockParams, options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    const filteredParams = filterParams({...params, ...options?.params}, new Set<string>([]));
+
+    if (options?.observe === 'events') {
+      return this.http.get<TData>(
+      `/v1/admin/inventory/low-stock`,{
+    ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+        params: filteredParams,}
+    );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.get<TData>(
+      `/v1/admin/inventory/low-stock`,{
+    ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+        params: filteredParams,}
+    );
+    }
+
+    return this.http.get<TData>(
+      `/v1/admin/inventory/low-stock`,{
+    ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+        params: filteredParams,}
+    );
+  }
+/**
  * @summary Crea una marca
  */
  adminCreateBrand<TData = Brand>(brandInput: BrandInput, options?: HttpClientBodyOptions): Observable<TData>;
@@ -1709,6 +1827,9 @@ export type AdminListProductImagesClientResult = NonNullable<AdminListProductIma
 export type AdminAddProductImageClientResult = NonNullable<ProductImageAdmin>
 export type AdminReorderProductImagesClientResult = NonNullable<AdminReorderProductImages200>
 export type AdminDeleteProductImageClientResult = NonNullable<void>
+export type AdminListStockAdjustmentsClientResult = NonNullable<AdminListStockAdjustments200>
+export type AdminCreateStockAdjustmentClientResult = NonNullable<StockAdjustment>
+export type AdminListLowStockClientResult = NonNullable<AdminListLowStock200>
 export type AdminCreateBrandClientResult = NonNullable<Brand>
 export type AdminListProductsClientResult = NonNullable<AdminListProducts200>
 export type AdminCreateProductClientResult = NonNullable<AdminProduct>

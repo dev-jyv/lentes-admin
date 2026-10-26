@@ -1,4 +1,4 @@
-import type { StockReason } from '../api/provisional/model';
+import type { StockReason } from '../api/generated/model';
 
 export const REASON_LABEL: Record<StockReason, string> = {
   receipt: 'Recepción de mercancía',

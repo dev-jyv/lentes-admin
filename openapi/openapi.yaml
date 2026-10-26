@@ -764,6 +764,82 @@ paths:
           description: Eliminada
         "404":
           $ref: "#/components/responses/Problem"
+  /v1/admin/variants/{id}/stock-adjustments:
+    get:
+      operationId: adminListStockAdjustments
+      summary: Historial de ajustes de existencia de una variante
+      description: Los últimos 100, el más reciente primero.
+      security:
+        - bearerAuth: [admin]
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Historial
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: "#/components/schemas/StockAdjustment" }
+        "404":
+          $ref: "#/components/responses/Problem"
+    post:
+      operationId: adminCreateStockAdjustment
+      summary: Ajusta la existencia de una variante con motivo
+      description: |
+        `delta` con signo (suma o resta, distinto de 0, máx. 100,000). Queda en una bitácora de solo agregar con quién, cuándo y cuánto quedó.
+        `409` si la existencia quedaría negativa o por debajo de lo apartado por pedidos sin pagar. Con motivo `other` la nota es obligatoria.
+        La carga masiva por CSV y la edición de una variante fijan la existencia directamente y **no** pasan por esta bitácora.
+      security:
+        - bearerAuth: [admin]
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/StockAdjustmentInput" }
+      responses:
+        "201":
+          description: Ajuste registrado
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StockAdjustment" }
+        "400":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+  /v1/admin/inventory/low-stock:
+    get:
+      operationId: adminListLowStock
+      summary: Variantes activas con poca existencia disponible
+      description: Disponible = existencia − apartado, menor o igual al umbral (0 a 10,000; 5 por defecto). Las más urgentes primero, máximo 500.
+      security:
+        - bearerAuth: [admin]
+      parameters:
+        - name: threshold
+          in: query
+          schema: { type: integer, minimum: 0, maximum: 10000, default: 5 }
+      responses:
+        "200":
+          description: Variantes por reponer
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: "#/components/schemas/LowStockItem" }
+        "400":
+          $ref: "#/components/responses/Problem"
   /v1/admin/brands:
     post:
       operationId: adminCreateBrand
@@ -1455,3 +1531,36 @@ components:
         image_ids:
           type: array
           items: { type: string, format: uuid }
+    StockReason:
+      type: string
+      enum: [receipt, count_correction, damage, return, other]
+    StockAdjustmentInput:
+      type: object
+      required: [delta, reason]
+      properties:
+        delta: { type: integer, description: "Positivo suma, negativo resta; no puede ser 0" }
+        reason: { $ref: "#/components/schemas/StockReason" }
+        note: { type: string, maxLength: 500, description: Obligatoria si reason=other }
+    StockAdjustment:
+      type: object
+      required: [id, delta, reason, note, stock_after, created_at, actor_email]
+      properties:
+        id: { type: string, format: uuid }
+        delta: { type: integer }
+        reason: { $ref: "#/components/schemas/StockReason" }
+        note: { type: string, nullable: true }
+        stock_after: { type: integer, description: Existencia resultante }
+        created_at: { type: string, format: date-time }
+        actor_email: { type: string }
+    LowStockItem:
+      type: object
+      required: [variant_id, sku, product_id, product_name, brand_name, stock, reserved, available]
+      properties:
+        variant_id: { type: string, format: uuid }
+        sku: { type: string }
+        product_id: { type: string, format: uuid }
+        product_name: { type: string }
+        brand_name: { type: string }
+        stock: { type: integer }
+        reserved: { type: integer }
+        available: { type: integer }

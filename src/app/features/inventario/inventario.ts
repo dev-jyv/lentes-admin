@@ -1,8 +1,8 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
-import type { LowStockItem } from '../../api/provisional/model';
-import { InventoryService } from '../../api/provisional/inventory/inventory.service';
+import { DefaultService } from '../../api/generated/default/default.service';
+import type { LowStockItem } from '../../api/generated/model';
 import { problemMessage } from '../../core/problem';
 import { StockAdjust } from './stock-adjust';
 
@@ -42,7 +42,7 @@ import { StockAdjust } from './stock-adjust';
   `,
 })
 export default class Inventario implements OnInit {
-  private readonly api = inject(InventoryService);
+  private readonly api = inject(DefaultService);
   protected readonly items = signal<LowStockItem[]>([]);
   protected readonly threshold = signal(5);
   protected readonly error = signal<string | null>(null);
