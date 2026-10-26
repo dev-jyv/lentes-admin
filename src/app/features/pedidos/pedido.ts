@@ -1,8 +1,8 @@
 import { Component, computed, inject, input, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
-import type { AdminOrder, OrderStatus } from '../../api/provisional/model';
-import { OrdersService } from '../../api/provisional/orders/orders.service';
+import { DefaultService } from '../../api/generated/default/default.service';
+import type { AdminOrder, OrderStatus } from '../../api/generated/model';
 import { formatDateTime } from '../../core/format';
 import { formatMxn } from '../../core/money';
 import { nextStatuses, orderFolio, requiresTracking, STATUS_LABEL } from '../../core/order-flow';
@@ -105,7 +105,7 @@ const CARRIERS = ['Estafeta', 'DHL', 'FedEx', 'Paquetexpress', 'Redpack', 'Corre
 export default class Pedido implements OnInit {
   /** :id de la ruta (withComponentInputBinding). */
   readonly id = input.required<string>();
-  private readonly api = inject(OrdersService);
+  private readonly api = inject(DefaultService);
   protected readonly order = signal<AdminOrder | null>(null);
   protected readonly loadError = signal<string | null>(null);
   protected readonly error = signal<string | null>(null);

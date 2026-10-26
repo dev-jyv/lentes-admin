@@ -1,8 +1,8 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
-import type { AdminOrderSummary, OrderStatus } from '../../api/provisional/model';
-import { OrdersService } from '../../api/provisional/orders/orders.service';
+import { DefaultService } from '../../api/generated/default/default.service';
+import type { AdminOrderSummary, OrderStatus } from '../../api/generated/model';
 import { formatDateTime } from '../../core/format';
 import { formatMxn } from '../../core/money';
 import { orderFolio, STATUS_LABEL } from '../../core/order-flow';
@@ -44,7 +44,7 @@ import { problemMessage } from '../../core/problem';
   `,
 })
 export default class Pedidos implements OnInit {
-  private readonly api = inject(OrdersService);
+  private readonly api = inject(DefaultService);
   protected readonly orders = signal<AdminOrderSummary[]>([]);
   protected readonly nextCursor = signal<string | null>(null);
   protected readonly error = signal<string | null>(null);

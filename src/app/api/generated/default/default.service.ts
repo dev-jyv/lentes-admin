@@ -27,12 +27,15 @@ import type {
   Address,
   AddressInput,
   AdminImportVariants200,
+  AdminListOrders200,
+  AdminListOrdersParams,
   AdminListPrescriptions200,
   AdminListPrescriptionsParams,
   AdminListProducts200,
   AdminListProductsParams,
   AdminListVariants200,
   AdminListVariantsParams,
+  AdminOrder,
   AdminPrescription,
   AdminProduct,
   AdminVariant,
@@ -55,6 +58,7 @@ import type {
   MercadoPagoWebhookBody,
   MercadoPagoWebhookParams,
   Order,
+  OrderUpdate,
   Prescription,
   PrescriptionInput,
   PrescriptionReview,
@@ -1063,6 +1067,119 @@ export class DefaultService {
     );
   }
 /**
+ * Filtra por estado y pagina por cursor (límite 1 a 100, 20 por defecto).
+ * @summary Pedidos, el más reciente primero
+ */
+ adminListOrders<TData = AdminListOrders200>(params?: AdminListOrdersParams, options?: HttpClientBodyOptions): Observable<TData>;
+ adminListOrders<TData = AdminListOrders200>(params?: AdminListOrdersParams, options?: HttpClientEventOptions): Observable<HttpEvent<TData>>;
+ adminListOrders<TData = AdminListOrders200>(params?: AdminListOrdersParams, options?: HttpClientResponseOptions): Observable<AngularHttpResponse<TData>>;
+  adminListOrders<TData = AdminListOrders200>(
+    params?: AdminListOrdersParams, options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    const filteredParams = filterParams({...params, ...options?.params}, new Set<string>([]));
+
+    if (options?.observe === 'events') {
+      return this.http.get<TData>(
+      `/v1/admin/orders`,{
+    ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+        params: filteredParams,}
+    );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.get<TData>(
+      `/v1/admin/orders`,{
+    ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+        params: filteredParams,}
+    );
+    }
+
+    return this.http.get<TData>(
+      `/v1/admin/orders`,{
+    ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+        params: filteredParams,}
+    );
+  }
+/**
+ * @summary Detalle de un pedido
+ */
+ adminGetOrder<TData = AdminOrder>(id: string, options?: HttpClientBodyOptions): Observable<TData>;
+ adminGetOrder<TData = AdminOrder>(id: string, options?: HttpClientEventOptions): Observable<HttpEvent<TData>>;
+ adminGetOrder<TData = AdminOrder>(id: string, options?: HttpClientResponseOptions): Observable<AngularHttpResponse<TData>>;
+  adminGetOrder<TData = AdminOrder>(
+    id: string, options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.get<TData>(
+      `/v1/admin/orders/${id}`,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+      }
+    );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.get<TData>(
+      `/v1/admin/orders/${id}`,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+      }
+    );
+    }
+
+    return this.http.get<TData>(
+      `/v1/admin/orders/${id}`,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+      }
+    );
+  }
+/**
+ * Transiciones: `paid` → `preparing` | `cancelled`; `preparing` → `shipped` | `cancelled`; `shipped` → `delivered`.
+ * `shipped` exige `tracking_carrier` y `tracking_number`. Con el pedido ya enviado se puede corregir la guía sin cambiar el estado.
+ * Cancelar un pedido que no salió devuelve su existencia al inventario; **no reembolsa**: el reembolso en Mercado Pago es manual (ver docs/ADMIN_ORDERS.md).
+ * `409` si la transición no es válida, falta la guía o el estado cambió mientras tanto.
+ * @summary Cambia el estado de un pedido o corrige su guía
+ */
+ adminUpdateOrder<TData = AdminOrder>(id: string,
+    orderUpdate: OrderUpdate, options?: HttpClientBodyOptions): Observable<TData>;
+ adminUpdateOrder<TData = AdminOrder>(id: string,
+    orderUpdate: OrderUpdate, options?: HttpClientEventOptions): Observable<HttpEvent<TData>>;
+ adminUpdateOrder<TData = AdminOrder>(id: string,
+    orderUpdate: OrderUpdate, options?: HttpClientResponseOptions): Observable<AngularHttpResponse<TData>>;
+  adminUpdateOrder<TData = AdminOrder>(
+    id: string,
+    orderUpdate: OrderUpdate, options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.patch<TData>(
+      `/v1/admin/orders/${id}`,
+      orderUpdate,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+      }
+    );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.patch<TData>(
+      `/v1/admin/orders/${id}`,
+      orderUpdate,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+      }
+    );
+    }
+
+    return this.http.patch<TData>(
+      `/v1/admin/orders/${id}`,
+      orderUpdate,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+      }
+    );
+  }
+/**
  * @summary Crea una marca
  */
  adminCreateBrand<TData = Brand>(brandInput: BrandInput, options?: HttpClientBodyOptions): Observable<TData>;
@@ -1385,6 +1502,9 @@ export type ListPrescriptionsClientResult = NonNullable<ListPrescriptions200>
 export type CreatePrescriptionClientResult = NonNullable<Prescription>
 export type AdminListPrescriptionsClientResult = NonNullable<AdminListPrescriptions200>
 export type AdminReviewPrescriptionClientResult = NonNullable<AdminPrescription>
+export type AdminListOrdersClientResult = NonNullable<AdminListOrders200>
+export type AdminGetOrderClientResult = NonNullable<AdminOrder>
+export type AdminUpdateOrderClientResult = NonNullable<AdminOrder>
 export type AdminCreateBrandClientResult = NonNullable<Brand>
 export type AdminListProductsClientResult = NonNullable<AdminListProducts200>
 export type AdminCreateProductClientResult = NonNullable<AdminProduct>

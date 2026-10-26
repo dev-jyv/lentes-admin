@@ -35,7 +35,7 @@ Sin SSR: es un SPA interno, no necesita SEO.
 | Fase | Contenido | Estado | Depende de la API |
 |---|---|---|---|
 | A1 | Marcas, productos, variantes (precio, existencia, activo), carga masiva por CSV | Hecha | Existe (`/v1/admin/brands`, `products`, `variants`, `variants/import`) |
-| A2 | Pedidos: lista con filtro por estado, detalle, cambio de estado, guía de envío (paquetería + número) | UI hecha contra contrato **provisional** | Faltan `GET /v1/admin/orders`, `GET/PATCH /v1/admin/orders/{id}` |
+| A2 | Pedidos: lista con filtro por estado, detalle, cambio de estado, guía de envío (paquetería + número) | **Hecha contra el contrato real** (`lentes-api` B7) | Existe (`GET/PATCH /v1/admin/orders`) |
 | A3 | Recetas: pendientes/aprobadas/rechazadas, ver archivo (URL prefirmada de R2), aprobar o rechazar con motivo | **Hecha contra el contrato real** (`lentes-api` B6) | Existe (`GET/PATCH /v1/admin/prescriptions`) |
 | A4 | Fotos de producto: subida a R2 con URL prefirmada, orden de galería, eliminar | UI hecha contra contrato **provisional** | Faltan `POST /v1/admin/uploads/image-url`, `GET/POST /v1/admin/products/{id}/images`, `PUT .../images/order`, `DELETE .../images/{imageId}` |
 | A5 | Inventario (ajustes con motivo e historial, stock bajo) y reportes (ventas, recompra) | UI hecha contra contrato **provisional** | Faltan `POST/GET /v1/admin/variants/{id}/stock-adjustments`, `GET /v1/admin/inventory/low-stock`, `GET /v1/admin/reports/sales`, `GET /v1/admin/reports/repurchase` |
@@ -43,15 +43,15 @@ Sin SSR: es un SPA interno, no necesita SEO.
 Regla: una fase se **cierra** cuando su endpoint existe en `lentes-api/api/openapi.yaml`. Si el endpoint aún no existe, la UI se construye
 contra un contrato provisional (ver siguiente sección) para no frenar al admin y para dejarle a la API una propuesta concreta.
 
-### Contrato provisional (A2, A4 y A5; las recetas ya son reales)
+### Contrato provisional (A4 y A5; pedidos y recetas ya son reales)
 
 - `openapi/provisional/admin-ops.yaml` es la **propuesta del admin** para `lentes-api`; no es el contrato real. Genera `src/app/api/provisional/` (`pnpm api:gen`).
-- En desarrollo, `core/api.interceptor.ts` desvía `/v1/admin/orders*`, `uploads*`, `inventory*`, `reports*`, `products/{id}/images*` y `variants/{id}/stock-adjustments*` a `environment.provisionalApiUrl` (mock en `:8081`, `pnpm mock`).
+- En desarrollo, `core/api.interceptor.ts` desvía `uploads*`, `inventory*`, `reports*`, `products/{id}/images*` y `variants/{id}/stock-adjustments*` a `environment.provisionalApiUrl` (mock en `:8081`, `pnpm mock`).
   En producción ese valor va vacío: todo va a la API real.
 - **Al publicarse los endpoints reales:** `pnpm api:sync`, cambiar los imports de `api/provisional/*` por `api/generated/*`, borrar `openapi/provisional`,
   `src/app/api/provisional`, `scripts/mock-api.mjs`, el desvío del interceptor y `provisionalApiUrl`. Los nombres de operación (`adminListOrders`, etc.) se
   conservaron para que el cambio sea casi mecánico; si la API usa otros, se ajustan ahí.
-- Pedir a la API además: `PATCH /orders/{id}` debe responder 409 si la transición no es válida.
+- **Pedidos (ya publicados):** las transiciones, la guía obligatoria al enviar, la corrección de guía y el `409` ante un cambio inválido o concurrente siguen el contrato real. Cancelar repone el inventario pero **no reembolsa** (reglas y pendientes: `lentes-api/docs/ADMIN_ORDERS.md`). La pantalla de pedido ya avisa de la cancelación; falta decidir el flujo de reembolso.
 - **Recetas (ya publicadas):** la revisión sigue el contrato real. Rechazar exige `reject_reason` (lo ve el cliente), aprobar una receta vencida o revisar dos veces responde 409, y la cola trae el correo del cliente y `file_url` (lectura prefirmada de 10 min). Reglas y pendientes legales: `lentes-api/docs/PRESCRIPTIONS.md`.
 
 ## Decisiones tomadas

@@ -560,6 +560,85 @@ paths:
           $ref: "#/components/responses/Problem"
         "409":
           $ref: "#/components/responses/Problem"
+  /v1/admin/orders:
+    get:
+      operationId: adminListOrders
+      summary: Pedidos, el más reciente primero
+      description: Filtra por estado y pagina por cursor (límite 1 a 100, 20 por defecto).
+      security:
+        - bearerAuth: [admin]
+      parameters:
+        - name: status
+          in: query
+          schema: { $ref: "#/components/schemas/OrderStatus" }
+        - name: cursor
+          in: query
+          schema: { type: string }
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+      responses:
+        "200":
+          description: Página de pedidos
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: "#/components/schemas/AdminOrderSummary" }
+                  next_cursor:
+                    type: string
+                    nullable: true
+        "400":
+          $ref: "#/components/responses/Problem"
+  /v1/admin/orders/{id}:
+    get:
+      operationId: adminGetOrder
+      summary: Detalle de un pedido
+      security:
+        - bearerAuth: [admin]
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Pedido
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminOrder" }
+        "404":
+          $ref: "#/components/responses/Problem"
+    patch:
+      operationId: adminUpdateOrder
+      summary: Cambia el estado de un pedido o corrige su guía
+      description: |
+        Transiciones: `paid` → `preparing` | `cancelled`; `preparing` → `shipped` | `cancelled`; `shipped` → `delivered`.
+        `shipped` exige `tracking_carrier` y `tracking_number`. Con el pedido ya enviado se puede corregir la guía sin cambiar el estado.
+        Cancelar un pedido que no salió devuelve su existencia al inventario; **no reembolsa**: el reembolso en Mercado Pago es manual (ver docs/ADMIN_ORDERS.md).
+        `409` si la transición no es válida, falta la guía o el estado cambió mientras tanto.
+      security:
+        - bearerAuth: [admin]
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/OrderUpdate" }
+      responses:
+        "200":
+          description: Pedido actualizado
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminOrder" }
+        "400":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
   /v1/admin/brands:
     post:
       operationId: adminCreateBrand
@@ -1159,3 +1238,62 @@ components:
       properties:
         status: { type: string, enum: [approved, rejected] }
         reject_reason: { type: string, maxLength: 500, description: Obligatorio al rechazar }
+    AdminOrderSummary:
+      type: object
+      required: [id, number, status, total_cents, customer_email, created_at, paid_at]
+      properties:
+        id: { type: string, format: uuid }
+        number: { type: integer, format: int64, description: "Folio visible (LC-000123)" }
+        status: { $ref: "#/components/schemas/OrderStatus" }
+        total_cents: { type: integer, format: int64 }
+        customer_email: { type: string }
+        created_at: { type: string, format: date-time }
+        paid_at: { type: string, format: date-time, nullable: true }
+    AdminOrderLine:
+      type: object
+      required: [sku, product_name, brand_name, eye, quantity, unit_price_cents, description]
+      properties:
+        sku: { type: string }
+        product_name: { type: string }
+        brand_name: { type: string }
+        eye: { $ref: "#/components/schemas/Eye" }
+        quantity: { type: integer }
+        unit_price_cents: { type: integer, format: int64 }
+        description: { type: string, description: "Parámetros al comprar, p. ej. Esf -2.00 · CB 8.6 · Diám 14.2" }
+    ShippingAddress:
+      type: object
+      required: [recipient, street, ext_number, neighborhood, city, state, postal_code, phone]
+      properties:
+        recipient: { type: string }
+        street: { type: string }
+        ext_number: { type: string }
+        int_number: { type: string, nullable: true }
+        neighborhood: { type: string }
+        city: { type: string }
+        state: { type: string }
+        postal_code: { type: string }
+        phone: { type: string }
+    AdminOrder:
+      allOf:
+        - $ref: "#/components/schemas/AdminOrderSummary"
+        - type: object
+          required: [items, subtotal_cents, shipping_cents, discount_cents, shipping_address, prescription_id, mp_payment_id, tracking_carrier, tracking_number, shipped_at]
+          properties:
+            items:
+              type: array
+              items: { $ref: "#/components/schemas/AdminOrderLine" }
+            subtotal_cents: { type: integer, format: int64 }
+            shipping_cents: { type: integer, format: int64 }
+            discount_cents: { type: integer, format: int64 }
+            shipping_address: { $ref: "#/components/schemas/ShippingAddress" }
+            prescription_id: { type: string, format: uuid, nullable: true }
+            mp_payment_id: { type: string, nullable: true }
+            tracking_carrier: { type: string, nullable: true }
+            tracking_number: { type: string, nullable: true }
+            shipped_at: { type: string, format: date-time, nullable: true }
+    OrderUpdate:
+      type: object
+      properties:
+        status: { $ref: "#/components/schemas/OrderStatus" }
+        tracking_carrier: { type: string, maxLength: 60 }
+        tracking_number: { type: string, maxLength: 80 }

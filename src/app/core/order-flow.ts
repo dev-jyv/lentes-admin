@@ -1,4 +1,4 @@
-import type { OrderStatus } from '../api/provisional/model';
+import type { OrderStatus } from '../api/generated/model';
 
 export const STATUS_LABEL: Record<OrderStatus, string> = {
   pending_payment: 'Pago pendiente',
