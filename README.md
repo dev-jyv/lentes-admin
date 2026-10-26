@@ -5,7 +5,7 @@ Las decisiones de administración están en [`docs/ADMIN.md`](docs/ADMIN.md); la
 
 ```bash
 pnpm install
-pnpm start -- --port 4301
+pnpm start --port 4301
 pnpm test
 ```
 

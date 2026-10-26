@@ -8,9 +8,9 @@ Admin panel (internal SPA, no SSR) for a contact-lens store. Angular 22, zoneles
 
 ## Commands
 
-- `pnpm start -- --port 4301` — dev server (uses `environment.development.ts`)
+- `pnpm start --port 4301` — dev server (uses `environment.development.ts`)
 - `pnpm build` / `pnpm test` (Vitest via `ng test`)
-- Single test: `pnpm test -- --include src/app/core/money.spec.ts`
+- Single test: `pnpm test --include src/app/core/money.spec.ts`
 - `pnpm mock` — mock server on :8081 for provisional endpoints (`scripts/mock-api.mjs`, no auth)
 - `pnpm api:gen` — regenerate API clients with orval; `pnpm api:sync` — first copies `../lentes-api/api/openapi.yaml` into `openapi/openapi.yaml`
 
