@@ -35,12 +35,23 @@ Sin SSR: es un SPA interno, no necesita SEO.
 | Fase | Contenido | Estado | Depende de la API |
 |---|---|---|---|
 | A1 | Marcas, productos, variantes (precio, existencia, activo), carga masiva por CSV | Hecha | Existe (`/v1/admin/brands`, `products`, `variants`, `variants/import`) |
-| A2 | Pedidos: lista con filtro por estado, detalle, cambio de estado, guía de envío (paquetería + número) | Pendiente | Falta `GET /v1/admin/orders`, `PATCH /v1/admin/orders/{id}` |
-| A3 | Recetas: cola de pendientes, ver archivo (URL prefirmada de R2), aprobar/rechazar con motivo | Pendiente | Faltan `GET /v1/admin/prescriptions`, `PATCH /v1/admin/prescriptions/{id}` |
+| A2 | Pedidos: lista con filtro por estado, detalle, cambio de estado, guía de envío (paquetería + número) | UI hecha contra contrato **provisional** | Faltan `GET /v1/admin/orders`, `GET/PATCH /v1/admin/orders/{id}` |
+| A3 | Recetas: pendientes/aprobadas/rechazadas, ver archivo (URL prefirmada de R2), aprobar o rechazar con motivo | UI hecha contra contrato **provisional** | Faltan `GET /v1/admin/prescriptions`, `PATCH /v1/admin/prescriptions/{id}` |
 | A4 | Subida de fotos de producto a R2 y orden de galería | Pendiente | Falta `POST /v1/admin/uploads/image-url` |
 | A5 | Inventario: ajustes con motivo, historial, alertas de stock bajo; reportes de ventas y recompra | Pendiente | Por definir |
 
-Una fase no empieza hasta que su endpoint exista en `lentes-api/api/openapi.yaml`.
+Regla: una fase se **cierra** cuando su endpoint existe en `lentes-api/api/openapi.yaml`. Si el endpoint aún no existe, la UI se construye
+contra un contrato provisional (ver siguiente sección) para no frenar al admin y para dejarle a la API una propuesta concreta.
+
+### Contrato provisional (A2 y A3)
+
+- `openapi/provisional/admin-ops.yaml` es la **propuesta del admin** para `lentes-api`; no es el contrato real. Genera `src/app/api/provisional/` (`pnpm api:gen`).
+- En desarrollo, `core/api.interceptor.ts` desvía `/v1/admin/orders*` y `/v1/admin/prescriptions*` a `environment.provisionalApiUrl` (mock en `:8081`, `pnpm mock`).
+  En producción ese valor va vacío: todo va a la API real.
+- **Al publicarse los endpoints reales:** `pnpm api:sync`, cambiar los imports de `api/provisional/*` por `api/generated/*`, borrar `openapi/provisional`,
+  `src/app/api/provisional`, `scripts/mock-api.mjs`, el desvío del interceptor y `provisionalApiUrl`. Los nombres de operación (`adminListOrders`, etc.) se
+  conservaron para que el cambio sea casi mecánico; si la API usa otros, se ajustan ahí.
+- Pedir a la API además: el motivo de rechazo debe llegar al cliente (`reject_reason`), y `PATCH /orders/{id}` debe responder 409 si la transición no es válida.
 
 ## Decisiones tomadas
 
@@ -49,7 +60,12 @@ Una fase no empieza hasta que su endpoint exista en `lentes-api/api/openapi.yaml
 3. **Retirar = `active=false`**, no borrar. Preserva historial de pedidos (`order_items` referencia variantes).
 4. **CSV todo o nada:** si una fila falla no se aplica nada y se muestran los errores por fila. Un archivo, máx. 5 MB / 5,000 filas.
 5. **Slug automático** a partir del nombre al crear; al editar no cambia (rompería URLs e indexación).
-6. **Sin datos de recetas en analítica ni en logs del panel.** Las recetas son datos de salud; se ven solo en la pantalla de revisión (fase A3).
+6. **Estados de pedido (A2):** el panel ofrece paid→preparing|cancelled, preparing→shipped|cancelled, shipped→delivered (`core/order-flow.ts`, con pruebas).
+   `pending_payment` y `expired` los maneja el sistema (webhook y tarea de expiración), no el panel. **Reembolsos no se hacen desde el panel** (decisión pendiente abajo).
+7. **Enviar exige guía:** paquetería y número de guía obligatorios para pasar a `shipped`. La paquetería es texto libre con sugerencias (Estafeta, DHL, FedEx, Paquetexpress, Redpack, Correos de México).
+8. **Cancelar pide confirmación** (libera el inventario apartado; no se deshace).
+9. **Rechazar una receta exige motivo** (se le muestra al cliente). Aprobar/rechazar solo aplica a recetas pendientes; una vez revisadas quedan de solo lectura.
+10. **Sin datos de recetas en analítica ni en logs del panel.** Las recetas son datos de salud; se ven solo en la pantalla de revisión (fase A3).
 
 ## Pendientes de decisión (necesitan tu confirmación)
 
@@ -77,6 +93,7 @@ La API debe permitir el origen del panel en `CORS_ALLOWED_ORIGINS` (p. ej. `http
 pnpm install
 pnpm start            # ng serve (usa --port si 4200 está ocupado)
 pnpm test             # ng test (Vitest)
+pnpm mock             # mock provisional de pedidos/recetas en :8081
 pnpm build            # dist/lentes-admin/browser
 pnpm api:sync         # copia ../lentes-api/api/openapi.yaml y regenera el cliente
 ```

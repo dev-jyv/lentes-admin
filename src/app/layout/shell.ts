@@ -19,7 +19,6 @@ import { AuthService } from '../core/auth.service';
             >
           }
         </nav>
-        <p class="mt-8 px-3 text-xs text-slate-500">Próximamente: pedidos, recetas y envíos.</p>
       </aside>
       <div class="flex min-w-0 flex-1 flex-col">
         <header class="flex items-center justify-end gap-3 border-b border-slate-200 px-6 py-3 text-sm">
@@ -37,6 +36,8 @@ export default class Shell {
   protected readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   protected readonly nav = [
+    { path: '/pedidos', label: 'Pedidos' },
+    { path: '/recetas', label: 'Recetas' },
     { path: '/productos', label: 'Productos' },
     { path: '/marcas', label: 'Marcas' },
   ];

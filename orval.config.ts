@@ -1,15 +1,16 @@
 import { defineConfig } from 'orval';
 
-// Contrato: copia de lentes-api/api/openapi.yaml (fuente de verdad). `pnpm api:sync` la actualiza.
+const output = (dir: string) => ({
+  mode: 'tags-split' as const,
+  target: `./src/app/api/${dir}`,
+  schemas: `./src/app/api/${dir}/model`,
+  client: 'angular' as const,
+  clean: true,
+});
+
 export default defineConfig({
-  lentes: {
-    input: './openapi/openapi.yaml',
-    output: {
-      mode: 'tags-split',
-      target: './src/app/api/generated',
-      schemas: './src/app/api/generated/model',
-      client: 'angular',
-      clean: true,
-    },
-  },
+  // Contrato real: copia de lentes-api/api/openapi.yaml (fuente de verdad). `pnpm api:sync` la actualiza.
+  lentes: { input: './openapi/openapi.yaml', output: output('generated') },
+  // PROVISIONAL: lo que el admin necesita y la API aún no publica. Se elimina al llegar los endpoints reales.
+  provisional: { input: './openapi/provisional/admin-ops.yaml', output: output('provisional') },
 });

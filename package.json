@@ -8,7 +8,8 @@
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "api:sync": "cp ../lentes-api/api/openapi.yaml openapi/openapi.yaml && orval",
-    "api:gen": "orval"
+    "api:gen": "orval",
+    "mock": "node scripts/mock-api.mjs"
   },
   "private": true,
   "packageManager": "pnpm@11.1.3",
