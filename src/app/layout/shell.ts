@@ -39,6 +39,8 @@ export default class Shell {
     { path: '/pedidos', label: 'Pedidos' },
     { path: '/recetas', label: 'Recetas' },
     { path: '/productos', label: 'Productos' },
+    { path: '/inventario', label: 'Inventario' },
+    { path: '/reportes', label: 'Reportes' },
     { path: '/marcas', label: 'Marcas' },
   ];
 

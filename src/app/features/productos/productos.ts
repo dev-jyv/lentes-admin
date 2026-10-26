@@ -114,6 +114,7 @@ const empty = (): ProductForm => ({
             <td>{{ p.active ? 'Activo' : 'Inactivo' }}</td>
             <td class="space-x-3 text-right">
               <a class="underline" [routerLink]="['/productos', p.id, 'variantes']">Variantes</a>
+              <a class="underline" [routerLink]="['/productos', p.id, 'imagenes']">Imágenes</a>
               <button type="button" class="underline" (click)="startEdit(p)">Editar</button>
             </td>
           </tr>

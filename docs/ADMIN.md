@@ -37,16 +37,16 @@ Sin SSR: es un SPA interno, no necesita SEO.
 | A1 | Marcas, productos, variantes (precio, existencia, activo), carga masiva por CSV | Hecha | Existe (`/v1/admin/brands`, `products`, `variants`, `variants/import`) |
 | A2 | Pedidos: lista con filtro por estado, detalle, cambio de estado, guía de envío (paquetería + número) | UI hecha contra contrato **provisional** | Faltan `GET /v1/admin/orders`, `GET/PATCH /v1/admin/orders/{id}` |
 | A3 | Recetas: pendientes/aprobadas/rechazadas, ver archivo (URL prefirmada de R2), aprobar o rechazar con motivo | UI hecha contra contrato **provisional** | Faltan `GET /v1/admin/prescriptions`, `PATCH /v1/admin/prescriptions/{id}` |
-| A4 | Subida de fotos de producto a R2 y orden de galería | Pendiente | Falta `POST /v1/admin/uploads/image-url` |
-| A5 | Inventario: ajustes con motivo, historial, alertas de stock bajo; reportes de ventas y recompra | Pendiente | Por definir |
+| A4 | Fotos de producto: subida a R2 con URL prefirmada, orden de galería, eliminar | UI hecha contra contrato **provisional** | Faltan `POST /v1/admin/uploads/image-url`, `GET/POST /v1/admin/products/{id}/images`, `PUT .../images/order`, `DELETE .../images/{imageId}` |
+| A5 | Inventario (ajustes con motivo e historial, stock bajo) y reportes (ventas, recompra) | UI hecha contra contrato **provisional** | Faltan `POST/GET /v1/admin/variants/{id}/stock-adjustments`, `GET /v1/admin/inventory/low-stock`, `GET /v1/admin/reports/sales`, `GET /v1/admin/reports/repurchase` |
 
 Regla: una fase se **cierra** cuando su endpoint existe en `lentes-api/api/openapi.yaml`. Si el endpoint aún no existe, la UI se construye
 contra un contrato provisional (ver siguiente sección) para no frenar al admin y para dejarle a la API una propuesta concreta.
 
-### Contrato provisional (A2 y A3)
+### Contrato provisional (A2 a A5)
 
 - `openapi/provisional/admin-ops.yaml` es la **propuesta del admin** para `lentes-api`; no es el contrato real. Genera `src/app/api/provisional/` (`pnpm api:gen`).
-- En desarrollo, `core/api.interceptor.ts` desvía `/v1/admin/orders*` y `/v1/admin/prescriptions*` a `environment.provisionalApiUrl` (mock en `:8081`, `pnpm mock`).
+- En desarrollo, `core/api.interceptor.ts` desvía `/v1/admin/orders*`, `prescriptions*`, `uploads*`, `inventory*`, `reports*`, `products/{id}/images*` y `variants/{id}/stock-adjustments*` a `environment.provisionalApiUrl` (mock en `:8081`, `pnpm mock`).
   En producción ese valor va vacío: todo va a la API real.
 - **Al publicarse los endpoints reales:** `pnpm api:sync`, cambiar los imports de `api/provisional/*` por `api/generated/*`, borrar `openapi/provisional`,
   `src/app/api/provisional`, `scripts/mock-api.mjs`, el desvío del interceptor y `provisionalApiUrl`. Los nombres de operación (`adminListOrders`, etc.) se
@@ -65,10 +65,22 @@ contra un contrato provisional (ver siguiente sección) para no frenar al admin 
 7. **Enviar exige guía:** paquetería y número de guía obligatorios para pasar a `shipped`. La paquetería es texto libre con sugerencias (Estafeta, DHL, FedEx, Paquetexpress, Redpack, Correos de México).
 8. **Cancelar pide confirmación** (libera el inventario apartado; no se deshace).
 9. **Rechazar una receta exige motivo** (se le muestra al cliente). Aprobar/rechazar solo aplica a recetas pendientes; una vez revisadas quedan de solo lectura.
-10. **Sin datos de recetas en analítica ni en logs del panel.** Las recetas son datos de salud; se ven solo en la pantalla de revisión (fase A3).
+10. **La existencia no se edita directo (A5).** Al editar una variante, `stock` queda bloqueado; se cambia con "Ajustar existencia": cantidad con signo, motivo
+    (recepción, corrección por conteo, merma, devolución, otro) y nota (obligatoria con "otro"). Cada ajuste queda en una bitácora de solo agregar con quién, cuándo y
+    cuánto quedó. No se puede dejar la existencia negativa. **Excepciones conocidas:** la carga masiva por CSV y la creación de una variante fijan `stock` directamente.
+11. **Stock bajo = disponible (stock − apartado) ≤ umbral**, 5 por defecto y editable en pantalla. Lo apartado por pedidos sin pagar cuenta como no disponible.
+12. **Imágenes (A4):** JPG, PNG o WebP, máx. 5 MB cada una; la primera es la principal. Se ordena con botones (no arrastrar: es accesible por teclado). Eliminar pide confirmación.
+    El archivo en R2 no se borra desde el panel; eso lo decide la API (ver pendientes).
+13. **Reportes (A5):** ventas cuentan pedidos pagados en adelante (sin cancelados ni reembolsados), fechas en America/Mexico_City. "Recompra" = clientes que repiten
+    y conversión de recordatorios (pedidos que vinieron del enlace ÷ recordatorios enviados). Si no hay base, se muestra "—" en vez de 0%.
+14. **Sin datos de recetas en analítica ni en logs del panel.** Las recetas son datos de salud; se ven solo en la pantalla de revisión (fase A3).
 
 ## Pendientes de decisión (necesitan tu confirmación)
 
+- **Bitácora de ajustes:** que la API la haga transaccional (ajuste + stock en la misma transacción) y que guarde el correo de quien lo hizo.
+- **Imágenes eliminadas:** ¿se borra el objeto de R2 al eliminar, o se conserva (pedidos viejos podrían referenciarlo)?
+- **Umbral de stock bajo:** 5 es un valor por defecto; ¿distinto por producto (diarios vs. mensuales)?
+- **Reportes:** confirmar la zona horaria de corte (America/Mexico_City) y si el ingreso incluye envío.
 - Reglas para **aprobar/rechazar recetas** (qué valida el revisor, vigencia máxima, si exige cédula) — validar con el abogado, según el SPEC.
 - **Quién puede qué:** hoy un solo rol `admin`. ¿Hace falta separar `operador` (pedidos/envíos) de `catalogo`?
 - **Reembolsos y cancelaciones:** ¿se hacen desde el panel (llamando a Mercado Pago vía API) o directo en Mercado Pago?

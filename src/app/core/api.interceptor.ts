@@ -4,7 +4,8 @@ import { environment } from '../../environments/environment';
 import { AuthService } from './auth.service';
 
 // PROVISIONAL: rutas que la API real aún no publica se desvían al mock (ver docs/ADMIN.md).
-const PROVISIONAL = /^\/v1\/admin\/(orders|prescriptions)/;
+const PROVISIONAL =
+  /^\/v1\/admin\/(orders|prescriptions|uploads|inventory|reports|products\/[^/]+\/images|variants\/[^/]+\/stock-adjustments)/;
 
 // Las rutas generadas por orval son relativas (/v1/...): se les antepone la URL de la API y el Bearer.
 export const apiInterceptor: HttpInterceptorFn = (req, next) => {

@@ -1,11 +1,12 @@
 import { Component, inject, input, OnInit, signal } from '@angular/core';
-import { form, FormField, min, required } from '@angular/forms/signals';
+import { disabled, form, FormField, min, required } from '@angular/forms/signals';
 import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { DefaultService } from '../../api/generated/default/default.service';
 import type { AdminVariant, VariantInput } from '../../api/generated/model';
 import { centsToPesos, formatMxn, pesosToCents } from '../../core/money';
 import { importErrors, problemMessage } from '../../core/problem';
+import { StockAdjust } from '../inventario/stock-adjust';
 
 interface VariantForm {
   sku: string;
@@ -31,7 +32,7 @@ const fmt = (n: number | null | undefined) => (n == null ? '—' : String(n));
 
 @Component({
   selector: 'app-variantes',
-  imports: [FormField, RouterLink],
+  imports: [FormField, RouterLink, StockAdjust],
   template: `
     <a routerLink="/productos" class="text-sm underline">← Productos</a>
     <div class="my-4 flex items-center justify-between">
@@ -84,7 +85,7 @@ const fmt = (n: number | null | undefined) => (n == null ? '—' : String(n));
             <input id="cmp" type="number" step="0.01" class="w-full rounded border border-slate-300 px-3 py-2" [formField]="model.compare_at_pesos" />
           </div>
           <div>
-            <label for="stock" class="mb-1 block text-sm">Existencia</label>
+            <label for="stock" class="mb-1 block text-sm">Existencia @if (editingId()) { <span class="text-xs text-slate-500">(usa “Ajustar”)</span> }</label>
             <input id="stock" type="number" class="w-full rounded border border-slate-300 px-3 py-2" [formField]="model.stock" />
           </div>
           <label class="flex items-center gap-2 text-sm sm:col-span-3"><input type="checkbox" [formField]="model.active" /> Activa (a la venta)</label>
@@ -95,6 +96,12 @@ const fmt = (n: number | null | undefined) => (n == null ? '—' : String(n));
           </div>
         </form>
       </section>
+    }
+
+    @if (adjusting(); as v) {
+      <div class="mb-8 max-w-3xl">
+        <app-stock-adjust [variantId]="v.id" [sku]="v.sku" [stock]="v.stock" (adjusted)="onAdjusted()" (closed)="adjusting.set(null)" />
+      </div>
     }
 
     <section class="mb-8 max-w-3xl rounded border border-slate-200 p-4" aria-labelledby="imp">
@@ -130,7 +137,10 @@ const fmt = (n: number | null | undefined) => (n == null ? '—' : String(n));
             <td>{{ v.addition ?? '—' }}</td><td>{{ v.base_curve }}</td><td>{{ v.diameter }}</td>
             <td>{{ money(v.price_cents) }}</td><td>{{ v.stock }}</td><td>{{ v.reserved }}</td>
             <td>{{ v.active ? 'Activa' : 'Inactiva' }}</td>
-            <td class="text-right"><button type="button" class="underline" (click)="startEdit(v)">Editar</button></td>
+            <td class="space-x-3 text-right">
+              <button type="button" class="underline" (click)="startEdit(v)">Editar</button>
+              <button type="button" class="underline" (click)="adjusting.set(v)">Ajustar existencia</button>
+            </td>
           </tr>
         } @empty {
           <tr><td colspan="12" class="py-4 text-slate-500">Este producto aún no tiene variantes.</td></tr>
@@ -146,6 +156,7 @@ export default class Variantes implements OnInit {
   protected readonly variants = signal<AdminVariant[]>([]);
   protected readonly editing = signal(false);
   protected readonly editingId = signal<string | null>(null);
+  protected readonly adjusting = signal<AdminVariant | null>(null);
   protected readonly busy = signal(false);
   protected readonly error = signal<string | null>(null);
   protected readonly loadError = signal<string | null>(null);
@@ -167,6 +178,8 @@ export default class Variantes implements OnInit {
     required(p.price_pesos);
     min(p.price_pesos, 0.01);
     min(p.stock, 0);
+    // Al editar, la existencia solo cambia con "Ajustar existencia" (queda motivo e historial).
+    disabled(p.stock, () => this.editingId() !== null);
   });
 
   ngOnInit() {
@@ -227,6 +240,12 @@ export default class Variantes implements OnInit {
     } finally {
       this.busy.set(false);
     }
+  }
+
+  protected async onAdjusted() {
+    const id = this.adjusting()?.id;
+    await this.load();
+    this.adjusting.set(this.variants().find((v) => v.id === id) ?? null);
   }
 
   protected pickFile(event: Event) {
