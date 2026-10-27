@@ -1,0 +1,7 @@
+# pnpm 11 exige decidir qué dependencias pueden ejecutar scripts de instalación. Ninguna es necesaria:
+# esbuild, lmdb, msgpackr-extract y @parcel/watcher traen binarios precompilados.
+allowBuilds:
+  "@parcel/watcher": false
+  esbuild: false
+  lmdb: false
+  msgpackr-extract: false
