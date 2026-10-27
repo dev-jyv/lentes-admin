@@ -38,19 +38,16 @@ Sin SSR: es un SPA interno, no necesita SEO.
 | A2 | Pedidos: lista con filtro por estado, detalle, cambio de estado, guía de envío (paquetería + número) | **Hecha contra el contrato real** (`lentes-api` B7) | Existe (`GET/PATCH /v1/admin/orders`) |
 | A3 | Recetas: pendientes/aprobadas/rechazadas, ver archivo (URL prefirmada de R2), aprobar o rechazar con motivo | **Hecha contra el contrato real** (`lentes-api` B6) | Existe (`GET/PATCH /v1/admin/prescriptions`) |
 | A4 | Fotos de producto: subida a R2 con URL prefirmada, orden de galería, eliminar | **Hecha contra el contrato real** (`lentes-api` B8) | Existe (`/v1/admin/uploads/image-url`, `/v1/admin/products/{id}/images*`) |
-| A5 | Inventario (ajustes con motivo e historial, stock bajo) y reportes (ventas, recompra) | Inventario **real** (`lentes-api` B9); reportes aún **provisionales** | Inventario existe (`/v1/admin/variants/{id}/stock-adjustments`, `/v1/admin/inventory/low-stock`); faltan `GET /v1/admin/reports/sales` y `/repurchase` |
+| A5 | Inventario (ajustes con motivo e historial, stock bajo) y reportes (ventas, recompra) | **Real** (`lentes-api`: inventario B9, reportes B10) | `/v1/admin/variants/{id}/stock-adjustments`, `/v1/admin/inventory/low-stock`, `/v1/admin/reports/sales` y `/repurchase` |
 
 Regla: una fase se **cierra** cuando su endpoint existe en `lentes-api/api/openapi.yaml`. Si el endpoint aún no existe, la UI se construye
-contra un contrato provisional (ver siguiente sección) para no frenar al admin y para dejarle a la API una propuesta concreta.
+contra una propuesta de contrato (que pasa a `lentes-api` al publicarse) para no frenar al admin.
 
-### Contrato provisional (solo los reportes de A5; pedidos, recetas, imágenes e inventario ya son reales)
+### Contrato
 
-- `openapi/provisional/admin-ops.yaml` es la **propuesta del admin** para `lentes-api`; no es el contrato real. Genera `src/app/api/provisional/` (`pnpm api:gen`).
-- En desarrollo, `core/api.interceptor.ts` desvía `reports*` a `environment.provisionalApiUrl` (mock en `:8081`, `pnpm mock`).
-  En producción ese valor va vacío: todo va a la API real.
-- **Al publicarse los endpoints reales:** `pnpm api:sync`, cambiar los imports de `api/provisional/*` por `api/generated/*`, borrar `openapi/provisional`,
-  `src/app/api/provisional`, `scripts/mock-api.mjs`, el desvío del interceptor y `provisionalApiUrl`. Los nombres de operación (`adminListOrders`, etc.) se
-  conservaron para que el cambio sea casi mecánico; si la API usa otros, se ajustan ahí.
+Todo el admin usa el contrato real (`openapi/openapi.yaml`, copia de `lentes-api`; `pnpm api:sync`). Ya no hay contrato provisional ni mock.
+
+- **Reportes (publicados):** reglas y pendientes en `lentes-api/docs/ADMIN_REPORTS.md`. La conversión del recordatorio se atribuye **por tiempo** (otra compra después del recordatorio), no por clic en el enlace.
 - **Pedidos (ya publicados):** las transiciones, la guía obligatoria al enviar, la corrección de guía y el `409` ante un cambio inválido o concurrente siguen el contrato real. Cancelar repone el inventario pero **no reembolsa** (reglas y pendientes: `lentes-api/docs/ADMIN_ORDERS.md`). La confirmación de cancelar avisa que el reembolso es manual; falta decidir el flujo de reembolso.
 - **Recetas (ya publicadas):** la revisión sigue el contrato real. Rechazar exige `reject_reason` (lo ve el cliente), aprobar una receta vencida o revisar dos veces responde 409, y la cola trae el correo del cliente y `file_url` (lectura prefirmada de 10 min). Reglas y pendientes legales: `lentes-api/docs/PRESCRIPTIONS.md`.
 
@@ -106,7 +103,6 @@ La API debe permitir el origen del panel en `CORS_ALLOWED_ORIGINS` (p. ej. `http
 pnpm install
 pnpm start            # ng serve (usa --port si 4200 está ocupado)
 pnpm test             # ng test (Vitest)
-pnpm mock             # mock provisional de pedidos/recetas en :8081
 pnpm build            # dist/lentes-admin/browser
 pnpm api:sync         # copia ../lentes-api/api/openapi.yaml y regenera el cliente
 ```

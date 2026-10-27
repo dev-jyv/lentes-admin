@@ -5,7 +5,5 @@ export const environment = {
   apiUrl: 'https://api.tutienda.com',
   supabaseUrl: '',
   supabaseKey: '',
-  // PROVISIONAL: URL del mock para /v1/admin/orders y /v1/admin/prescriptions hasta que lentes-api los publique. Vacío = usar apiUrl.
-  provisionalApiUrl: '',
   imgUrl: 'https://img.tutienda.com',
 };

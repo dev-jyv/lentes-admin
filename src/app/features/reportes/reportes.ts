@@ -1,7 +1,7 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
-import type { RepurchaseReport, SalesReport } from '../../api/provisional/model';
-import { ReportsService } from '../../api/provisional/reports/reports.service';
+import type { RepurchaseReport, SalesReport } from '../../api/generated/model';
+import { DefaultService } from '../../api/generated/default/default.service';
 import { formatDate } from '../../core/format';
 import { formatMxn } from '../../core/money';
 import { problemMessage } from '../../core/problem';
@@ -77,7 +77,7 @@ import { lastDays, pct } from '../../core/stats';
   `,
 })
 export default class Reportes implements OnInit {
-  private readonly api = inject(ReportsService);
+  private readonly api = inject(DefaultService);
   protected readonly from = signal(lastDays(30).from);
   protected readonly to = signal(lastDays(30).to);
   protected readonly sales = signal<SalesReport | null>(null);

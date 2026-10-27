@@ -43,6 +43,8 @@ import type {
   AdminPrescription,
   AdminProduct,
   AdminReorderProductImages200,
+  AdminRepurchaseReportParams,
+  AdminSalesReportParams,
   AdminVariant,
   Brand,
   BrandInput,
@@ -76,6 +78,9 @@ import type {
   ProductDetail,
   ProductImageAdmin,
   ProductInput,
+  ReorderResult,
+  RepurchaseReport,
+  SalesReport,
   StockAdjustment,
   StockAdjustmentInput,
   Variant,
@@ -846,6 +851,45 @@ export class DefaultService {
     );
   }
 /**
+ * Deja cada renglón del pedido en el carrito del cliente con **al menos** la cantidad pedida (no suma, así que repetir la acción no duplica).
+ * Es todo o nada por renglón: si la existencia no alcanza o el producto ya no se vende, no se agrega y se lista en `unavailable`.
+ * Se usa el precio vigente, no el que se pagó. No lleva la receta: se elige al pagar. Un pedido ajeno es `404`.
+ * @summary Copia al carrito los artículos de un pedido anterior
+ */
+ reorderOrder<TData = ReorderResult>(id: string, options?: HttpClientBodyOptions): Observable<TData>;
+ reorderOrder<TData = ReorderResult>(id: string, options?: HttpClientEventOptions): Observable<HttpEvent<TData>>;
+ reorderOrder<TData = ReorderResult>(id: string, options?: HttpClientResponseOptions): Observable<AngularHttpResponse<TData>>;
+  reorderOrder<TData = ReorderResult>(
+    id: string, options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.post<TData>(
+      `/v1/me/orders/${id}/reorder`,
+      undefined,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+      }
+    );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.post<TData>(
+      `/v1/me/orders/${id}/reorder`,
+      undefined,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+      }
+    );
+    }
+
+    return this.http.post<TData>(
+      `/v1/me/orders/${id}/reorder`,
+      undefined,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+      }
+    );
+  }
+/**
  * Sin sesión: se autentica con la firma `x-signature` (HMAC-SHA256 con el secreto del webhook, con tolerancia de reloj).
  * El cuerpo nunca se usa para decidir: se consulta el pago a Mercado Pago y se valida referencia, monto y moneda.
  * Es idempotente por id de notificación. Responde 200 aunque la notificación no cambie nada; 401 si la firma es inválida.
@@ -1497,6 +1541,78 @@ export class DefaultService {
     );
   }
 /**
+ * Pedidos pagados en adelante (paid, preparing, shipped, delivered; sin cancelados, reembolsados ni expirados) cuyo pago cae en el rango. Días calendario en America/Mexico_City, `to` inclusivo, máximo 366 días. El ingreso es el total cobrado (incluye envío). `daily` trae un renglón por día, con ceros; `top_products` los 10 más vendidos por cajas.
+ * @summary Ventas del rango
+ */
+ adminSalesReport<TData = SalesReport>(params: AdminSalesReportParams, options?: HttpClientBodyOptions): Observable<TData>;
+ adminSalesReport<TData = SalesReport>(params: AdminSalesReportParams, options?: HttpClientEventOptions): Observable<HttpEvent<TData>>;
+ adminSalesReport<TData = SalesReport>(params: AdminSalesReportParams, options?: HttpClientResponseOptions): Observable<AngularHttpResponse<TData>>;
+  adminSalesReport<TData = SalesReport>(
+    params: AdminSalesReportParams, options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    const filteredParams = filterParams({...params, ...options?.params}, new Set<string>([]));
+
+    if (options?.observe === 'events') {
+      return this.http.get<TData>(
+      `/v1/admin/reports/sales`,{
+    ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+        params: filteredParams,}
+    );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.get<TData>(
+      `/v1/admin/reports/sales`,{
+    ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+        params: filteredParams,}
+    );
+    }
+
+    return this.http.get<TData>(
+      `/v1/admin/reports/sales`,{
+    ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+        params: filteredParams,}
+    );
+  }
+/**
+ * Mismas reglas de fechas que ventas. `customers`: clientes con compra pagada en el rango; `repeat_customers`: de ellos, los que ya habían comprado antes del rango. `reminders_sent`: recordatorios enviados en el rango; `reorders_from_reminder`: de esos, los de clientes que pagaron otro pedido después del recordatorio. El pedido no guarda de qué enlace vino, así que la atribución es por tiempo, no por clic.
+ * @summary Recompra del rango
+ */
+ adminRepurchaseReport<TData = RepurchaseReport>(params: AdminRepurchaseReportParams, options?: HttpClientBodyOptions): Observable<TData>;
+ adminRepurchaseReport<TData = RepurchaseReport>(params: AdminRepurchaseReportParams, options?: HttpClientEventOptions): Observable<HttpEvent<TData>>;
+ adminRepurchaseReport<TData = RepurchaseReport>(params: AdminRepurchaseReportParams, options?: HttpClientResponseOptions): Observable<AngularHttpResponse<TData>>;
+  adminRepurchaseReport<TData = RepurchaseReport>(
+    params: AdminRepurchaseReportParams, options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    const filteredParams = filterParams({...params, ...options?.params}, new Set<string>([]));
+
+    if (options?.observe === 'events') {
+      return this.http.get<TData>(
+      `/v1/admin/reports/repurchase`,{
+    ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+        params: filteredParams,}
+    );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.get<TData>(
+      `/v1/admin/reports/repurchase`,{
+    ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+        params: filteredParams,}
+    );
+    }
+
+    return this.http.get<TData>(
+      `/v1/admin/reports/repurchase`,{
+    ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+        params: filteredParams,}
+    );
+  }
+/**
  * @summary Crea una marca
  */
  adminCreateBrand<TData = Brand>(brandInput: BrandInput, options?: HttpClientBodyOptions): Observable<TData>;
@@ -1813,6 +1929,7 @@ export type UpdateAddressClientResult = NonNullable<Address>
 export type DeleteAddressClientResult = NonNullable<void>
 export type CreateCheckoutClientResult = NonNullable<CheckoutResult>
 export type GetOrderClientResult = NonNullable<Order>
+export type ReorderOrderClientResult = NonNullable<ReorderResult>
 export type MercadoPagoWebhookClientResult = NonNullable<void>
 export type CreatePrescriptionUploadUrlClientResult = NonNullable<PrescriptionUpload>
 export type ListPrescriptionsClientResult = NonNullable<ListPrescriptions200>
@@ -1830,6 +1947,8 @@ export type AdminDeleteProductImageClientResult = NonNullable<void>
 export type AdminListStockAdjustmentsClientResult = NonNullable<AdminListStockAdjustments200>
 export type AdminCreateStockAdjustmentClientResult = NonNullable<StockAdjustment>
 export type AdminListLowStockClientResult = NonNullable<AdminListLowStock200>
+export type AdminSalesReportClientResult = NonNullable<SalesReport>
+export type AdminRepurchaseReportClientResult = NonNullable<RepurchaseReport>
 export type AdminCreateBrandClientResult = NonNullable<Brand>
 export type AdminListProductsClientResult = NonNullable<AdminListProducts200>
 export type AdminCreateProductClientResult = NonNullable<AdminProduct>

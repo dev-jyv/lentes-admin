@@ -11,6 +11,4 @@ const output = (dir: string) => ({
 export default defineConfig({
   // Contrato real: copia de lentes-api/api/openapi.yaml (fuente de verdad). `pnpm api:sync` la actualiza.
   lentes: { input: './openapi/openapi.yaml', output: output('generated') },
-  // PROVISIONAL: lo que el admin necesita y la API aún no publica. Se elimina al llegar los endpoints reales.
-  provisional: { input: './openapi/provisional/admin-ops.yaml', output: output('provisional') },
 });

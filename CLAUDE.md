@@ -11,13 +11,12 @@ Admin panel (internal SPA, no SSR) for a contact-lens store. Angular 22, zoneles
 - `pnpm start --port 4301` — dev server (uses `environment.development.ts`)
 - `pnpm build` / `pnpm test` (Vitest via `ng test`)
 - Single test: `pnpm test --include src/app/core/money.spec.ts`
-- `pnpm mock` — mock server on :8081 for provisional endpoints (`scripts/mock-api.mjs`, no auth)
 - `pnpm api:gen` — regenerate API clients with orval; `pnpm api:sync` — first copies `../lentes-api/api/openapi.yaml` into `openapi/openapi.yaml`
 
 ## Architecture
 
-- **Two generated API clients** (`orval.config.ts`, `clean: true`, so never hand-edit): `src/app/api/generated` from `openapi/openapi.yaml` (real contract, source of truth is `lentes-api`) and `src/app/api/provisional` from `openapi/provisional/admin-ops.yaml` (endpoints the API does not publish yet: orders, prescriptions, uploads, inventory, reports, product images). When the API ships a provisional endpoint, move it into the real contract and delete it from the provisional spec/mock.
-- **`core/api.interceptor.ts`**: generated URLs are relative (`/v1/...`). Interceptor prefixes `environment.apiUrl` and adds the Supabase Bearer. Paths matching the `PROVISIONAL` regex go to `environment.provisionalApiUrl` (the mock) when set. New provisional routes must be added to that regex.
+- **Generated API client** (`orval.config.ts`, `clean: true`, so never hand-edit): `src/app/api/generated` from `openapi/openapi.yaml` (copy of `lentes-api`'s contract, the source of truth; `pnpm api:sync`). The API has no tags, so every operation lives on `DefaultService`.
+- **`core/api.interceptor.ts`**: generated URLs are relative (`/v1/...`). Interceptor prefixes `environment.apiUrl` and adds the Supabase Bearer.
 - **Auth** (`core/auth.service.ts`, `core/guards.ts`): Supabase session in signals; admin only if `app_metadata.role === 'admin'` (never `user_metadata`). Guard is UX only; API enforces 403. Empty `supabaseUrl` makes app open at `/login` instead of crashing. Supabase URL/key are blank in `environment*.ts`; fill locally, no secrets in repo.
 - **Routing**: all feature routes lazy-load default-exported components under `features/<area>/`, nested in `layout/shell` behind `adminGuard` (`app.routes.ts`).
 - **`core/`** holds pure helpers with specs: `money.ts` (money is integer cents; UI captures pesos, convert here, never floats), `problem.ts` (RFC 9457 `problem+json` errors to messages), `order-flow.ts` (allowed order status transitions), `stock.ts`, `slug.ts`, etc.
