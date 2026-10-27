@@ -384,6 +384,35 @@ paths:
           $ref: "#/components/responses/Problem"
         "502":
           $ref: "#/components/responses/Problem"
+  /v1/me/orders:
+    get:
+      operationId: listMyOrders
+      summary: Historial de pedidos del cliente
+      description: Del más reciente al más antiguo, paginado por cursor. No incluye pedidos vencidos (`expired`).
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: cursor
+          in: query
+          schema: { type: string }
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+      responses:
+        "200":
+          description: Página de pedidos
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: "#/components/schemas/OrderSummary" }
+                  next_cursor: { type: string }
+        "400":
+          $ref: "#/components/responses/Problem"
   /v1/me/orders/{id}:
     get:
       operationId: getOrder
@@ -1422,10 +1451,25 @@ components:
         base_curve: { type: number, format: double }
         diameter: { type: number, format: double }
         color: { type: string, nullable: true }
+    OrderSummary:
+      type: object
+      required: [id, number, status, total_cents, units, created_at, paid_at, tracking_carrier, tracking_number]
+      properties:
+        id: { type: string, format: uuid }
+        number: { type: integer, format: int64 }
+        status: { $ref: "#/components/schemas/OrderStatus" }
+        total_cents: { type: integer, format: int64 }
+        units: { type: integer, description: "Cajas en el pedido" }
+        created_at: { type: string, format: date-time }
+        paid_at: { type: string, format: date-time, nullable: true }
+        tracking_carrier: { type: string, nullable: true }
+        tracking_number: { type: string, nullable: true }
     Order:
       type: object
       required: [id, number, status, subtotal_cents, shipping_cents, discount_cents, total_cents, created_at, items]
       properties:
+        tracking_carrier: { type: string, nullable: true }
+        tracking_number: { type: string, nullable: true }
         id: { type: string, format: uuid }
         number: { type: integer, format: int64 }
         status: { $ref: "#/components/schemas/OrderStatus" }
@@ -1593,15 +1637,19 @@ components:
         image_ids:
           type: array
           items: { type: string, format: uuid }
-    StockReason:
+    ManualStockReason:
       type: string
       enum: [receipt, count_correction, damage, return, other]
+    StockReason:
+      type: string
+      description: "Los cinco manuales más los que registra el sistema (initial = alta de variante, edit = edición directa, import = carga masiva)."
+      enum: [receipt, count_correction, damage, return, other, initial, edit, import]
     StockAdjustmentInput:
       type: object
       required: [delta, reason]
       properties:
         delta: { type: integer, description: "Positivo suma, negativo resta; no puede ser 0" }
-        reason: { $ref: "#/components/schemas/StockReason" }
+        reason: { $ref: "#/components/schemas/ManualStockReason" }
         note: { type: string, maxLength: 500, description: Obligatoria si reason=other }
     StockAdjustment:
       type: object

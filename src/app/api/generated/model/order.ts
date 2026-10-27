@@ -9,6 +9,10 @@ import type { OrderItem } from './orderItem';
 import type { OrderStatus } from './orderStatus';
 
 export interface Order {
+  /** @nullable */
+  tracking_carrier?: string | null;
+  /** @nullable */
+  tracking_number?: string | null;
   id: string;
   number: number;
   status: OrderStatus;

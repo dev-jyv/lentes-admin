@@ -5,12 +5,12 @@
  * API de la tienda en línea de lentes de contacto. Fuente de verdad del contrato con lentes-web.
  * OpenAPI spec version: 0.1.0
  */
-import type { StockReason } from './stockReason';
+import type { ManualStockReason } from './manualStockReason';
 
 export interface StockAdjustmentInput {
   /** Positivo suma, negativo resta; no puede ser 0 */
   delta: number;
-  reason: StockReason;
+  reason: ManualStockReason;
   /**
      * Obligatoria si reason=other
      * @maxLength 500

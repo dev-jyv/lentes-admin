@@ -63,6 +63,8 @@ import type {
   ImageUploadInput,
   ListAddresses200,
   ListBrands200,
+  ListMyOrders200,
+  ListMyOrdersParams,
   ListPrescriptions200,
   ListProducts200,
   ListProductsParams,
@@ -815,6 +817,42 @@ export class DefaultService {
         ...(options as Omit<NonNullable<typeof options>, 'observe'>),
         observe: 'body',
       }
+    );
+  }
+/**
+ * Del más reciente al más antiguo, paginado por cursor. No incluye pedidos vencidos (`expired`).
+ * @summary Historial de pedidos del cliente
+ */
+ listMyOrders<TData = ListMyOrders200>(params?: ListMyOrdersParams, options?: HttpClientBodyOptions): Observable<TData>;
+ listMyOrders<TData = ListMyOrders200>(params?: ListMyOrdersParams, options?: HttpClientEventOptions): Observable<HttpEvent<TData>>;
+ listMyOrders<TData = ListMyOrders200>(params?: ListMyOrdersParams, options?: HttpClientResponseOptions): Observable<AngularHttpResponse<TData>>;
+  listMyOrders<TData = ListMyOrders200>(
+    params?: ListMyOrdersParams, options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    const filteredParams = filterParams({...params, ...options?.params}, new Set<string>([]));
+
+    if (options?.observe === 'events') {
+      return this.http.get<TData>(
+      `/v1/me/orders`,{
+    ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+        params: filteredParams,}
+    );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.get<TData>(
+      `/v1/me/orders`,{
+    ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+        params: filteredParams,}
+    );
+    }
+
+    return this.http.get<TData>(
+      `/v1/me/orders`,{
+    ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+        params: filteredParams,}
     );
   }
 /**
@@ -1928,6 +1966,7 @@ export type CreateAddressClientResult = NonNullable<Address>
 export type UpdateAddressClientResult = NonNullable<Address>
 export type DeleteAddressClientResult = NonNullable<void>
 export type CreateCheckoutClientResult = NonNullable<CheckoutResult>
+export type ListMyOrdersClientResult = NonNullable<ListMyOrders200>
 export type GetOrderClientResult = NonNullable<Order>
 export type ReorderOrderClientResult = NonNullable<ReorderResult>
 export type MercadoPagoWebhookClientResult = NonNullable<void>

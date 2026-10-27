@@ -1,10 +1,10 @@
 import { Component, inject, input, output, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { DefaultService } from '../../api/generated/default/default.service';
-import type { StockAdjustment, StockReason } from '../../api/generated/model';
+import type { ManualStockReason, StockAdjustment, StockReason } from '../../api/generated/model';
 import { formatDateTime } from '../../core/format';
 import { problemMessage } from '../../core/problem';
-import { REASON_LABEL, validateAdjustment } from '../../core/stock';
+import { MANUAL_REASONS, REASON_LABEL, validateAdjustment } from '../../core/stock';
 
 @Component({
   selector: 'app-stock-adjust',
@@ -63,7 +63,7 @@ export class StockAdjust {
 
   private readonly api = inject(DefaultService);
   protected readonly delta = signal<number | null>(null);
-  protected readonly reason = signal<StockReason>('receipt');
+  protected readonly reason = signal<ManualStockReason>('receipt');
   protected readonly note = signal('');
   protected readonly busy = signal(false);
   protected readonly error = signal<string | null>(null);
@@ -71,11 +71,11 @@ export class StockAdjust {
   protected readonly showHistory = signal(false);
   protected readonly history = signal<StockAdjustment[]>([]);
 
-  protected readonly reasons = (Object.keys(REASON_LABEL) as StockReason[]).map((value) => ({ value, label: REASON_LABEL[value] }));
+  protected readonly reasons = MANUAL_REASONS.map((value) => ({ value, label: REASON_LABEL[value] }));
   protected label = (r: StockReason) => REASON_LABEL[r];
   protected dt = formatDateTime;
   protected val = (e: Event) => (e.target as HTMLInputElement).value;
-  protected asReason = (e: Event) => (e.target as HTMLSelectElement).value as StockReason;
+  protected asReason = (e: Event) => (e.target as HTMLSelectElement).value as ManualStockReason;
 
   protected setDelta(e: Event) {
     const v = this.val(e);

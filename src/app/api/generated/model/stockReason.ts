@@ -6,6 +6,9 @@
  * OpenAPI spec version: 0.1.0
  */
 
+/**
+ * Los cinco manuales más los que registra el sistema (initial = alta de variante, edit = edición directa, import = carga masiva).
+ */
 export type StockReason = typeof StockReason[keyof typeof StockReason];
 
 
@@ -15,4 +18,7 @@ export const StockReason = {
   damage: 'damage',
   return: 'return',
   other: 'other',
+  initial: 'initial',
+  edit: 'edit',
+  import: 'import',
 } as const;

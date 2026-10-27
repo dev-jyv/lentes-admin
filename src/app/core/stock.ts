@@ -1,4 +1,4 @@
-import type { StockReason } from '../api/generated/model';
+import type { ManualStockReason, StockReason } from '../api/generated/model';
 
 export const REASON_LABEL: Record<StockReason, string> = {
   receipt: 'Recepción de mercancía',
@@ -6,12 +6,18 @@ export const REASON_LABEL: Record<StockReason, string> = {
   damage: 'Merma o daño',
   return: 'Devolución',
   other: 'Otro (explicar en la nota)',
+  initial: 'Alta de la variante',
+  edit: 'Edición de la variante',
+  import: 'Carga masiva (CSV)',
 };
+
+/** Motivos que el admin puede elegir en un ajuste; el resto los registra el sistema. */
+export const MANUAL_REASONS: ManualStockReason[] = ['receipt', 'count_correction', 'damage', 'return', 'other'];
 
 /** Mensaje de error para un ajuste de existencia, o null si es válido. La API vuelve a validar. */
 export function validateAdjustment(
   delta: number | null,
-  reason: StockReason,
+  reason: ManualStockReason,
   note: string,
   currentStock: number,
 ): string | null {

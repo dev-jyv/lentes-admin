@@ -65,7 +65,7 @@ Todo el admin usa el contrato real (`openapi/openapi.yaml`, copia de `lentes-api
 9. **Rechazar una receta exige motivo** (se le muestra al cliente). Aprobar/rechazar solo aplica a recetas pendientes; una vez revisadas quedan de solo lectura.
 10. **La existencia no se edita directo (A5).** Al editar una variante, `stock` queda bloqueado; se cambia con "Ajustar existencia": cantidad con signo, motivo
     (recepción, corrección por conteo, merma, devolución, otro) y nota (obligatoria con "otro"). Cada ajuste queda en una bitácora de solo agregar con quién, cuándo y
-    cuánto quedó. No se puede dejar la existencia negativa. **Excepciones conocidas:** la carga masiva por CSV y la creación de una variante fijan `stock` directamente.
+    cuánto quedó. No se puede dejar la existencia negativa. Alta, edición y carga masiva de variantes también dejan su renglón (motivos `initial`, `edit`, `import`; los pone el sistema, no se eligen).
 11. **Stock bajo = disponible (stock − apartado) ≤ umbral**, 5 por defecto y editable en pantalla. Lo apartado por pedidos sin pagar cuenta como no disponible.
 12. **Imágenes (A4):** JPG, PNG o WebP, máx. 5 MB cada una; la primera es la principal. Se ordena con botones (no arrastrar: es accesible por teclado). Eliminar pide confirmación.
     El archivo en R2 no se borra desde el panel; eso lo decide la API (ver pendientes).
@@ -75,7 +75,7 @@ Todo el admin usa el contrato real (`openapi/openapi.yaml`, copia de `lentes-api
 
 ## Pendientes de decisión (necesitan tu confirmación)
 
-- **Bitácora de ajustes (resuelto en la API):** ajuste + stock en una transacción con la fila bloqueada, de solo agregar (trigger en la base) y con el correo de quien lo hizo. **Hueco abierto:** la carga masiva por CSV y la edición de una variante fijan `stock` sin dejar huella; ver `lentes-api/docs/ADMIN_INVENTORY.md`.
+- **Bitácora de ajustes (resuelto en la API):** ajuste + stock en una transacción con la fila bloqueada, de solo agregar (trigger en la base) y con el correo de quien lo hizo. **Cerrado:** alta, edición y CSV escriben su diferencia en la bitácora (y rechazan dejar menos que lo apartado); ver `lentes-api/docs/ADMIN_INVENTORY.md`.
 - **Imágenes eliminadas:** la API borra el registro y **conserva** el archivo en R2 (no destructivo); ver `lentes-api/docs/ADMIN_IMAGES.md` para decidir si se borra el objeto y si se purga la caché de Cloudflare (los cambios tardan hasta 5 min en verse en la tienda).
 - **Umbral de stock bajo:** 5 es un valor por defecto; ¿distinto por producto (diarios vs. mensuales)?
 - **Reportes:** confirmar la zona horaria de corte (America/Mexico_City) y si el ingreso incluye envío.
