@@ -43,10 +43,6 @@ __screenshots__/
 .DS_Store
 Thumbs.db
 
-# Firebase
-.firebase/
-firebase-debug.log*
-
 # Local worktrees
 .worktrees/
 .claude/settings.local.json
