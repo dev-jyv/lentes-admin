@@ -26,7 +26,14 @@ import type {
 import type {
   Address,
   AddressInput,
+  AdminCreateBannerImageUploadUrlBody,
+  AdminHomeBanner,
   AdminImportVariants200,
+  AdminLensPackage,
+  AdminListHomeBanners200,
+  AdminListHomeFeatured200,
+  AdminListHomeFeaturedParams,
+  AdminListLensPackages200,
   AdminListLowStock200,
   AdminListLowStockParams,
   AdminListOrders200,
@@ -42,27 +49,39 @@ import type {
   AdminOrder,
   AdminPrescription,
   AdminProduct,
+  AdminReorderHomeBanners200,
+  AdminReorderHomeBannersBody,
+  AdminReorderLensPackages200,
+  AdminReorderLensPackagesBody,
   AdminReorderProductImages200,
   AdminRepurchaseReportParams,
   AdminSalesReportParams,
+  AdminSetHomeFeatured200,
+  AdminSetHomeFeaturedBody,
   AdminVariant,
   Brand,
   BrandInput,
   Cart,
   CartItemInput,
   CartItemUpdate,
+  CatalogFacets,
   CheckoutInput,
   CheckoutResult,
   Customer,
   CustomerUpdate,
+  GetCatalogFacetsParams,
   GetHealth200,
   GetProductVariantParams,
+  HomeBannerInput,
+  HomeContent,
   ImageAddInput,
   ImageOrderInput,
   ImageUpload,
   ImageUploadInput,
+  LensPackageInput,
   ListAddresses200,
   ListBrands200,
+  ListBrandsParams,
   ListMyOrders200,
   ListMyOrdersParams,
   ListPrescriptions200,
@@ -284,14 +303,84 @@ export class DefaultService {
 /**
  * @summary Lista de marcas
  */
- listBrands<TData = ListBrands200>( options?: HttpClientBodyOptions): Observable<TData>;
- listBrands<TData = ListBrands200>( options?: HttpClientEventOptions): Observable<HttpEvent<TData>>;
- listBrands<TData = ListBrands200>( options?: HttpClientResponseOptions): Observable<AngularHttpResponse<TData>>;
+ listBrands<TData = ListBrands200>(params?: ListBrandsParams, options?: HttpClientBodyOptions): Observable<TData>;
+ listBrands<TData = ListBrands200>(params?: ListBrandsParams, options?: HttpClientEventOptions): Observable<HttpEvent<TData>>;
+ listBrands<TData = ListBrands200>(params?: ListBrandsParams, options?: HttpClientResponseOptions): Observable<AngularHttpResponse<TData>>;
   listBrands<TData = ListBrands200>(
-     options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    params?: ListBrandsParams, options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    const filteredParams = filterParams({...params, ...options?.params}, new Set<string>([]));
+
     if (options?.observe === 'events') {
       return this.http.get<TData>(
       `/v1/brands`,{
+    ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+        params: filteredParams,}
+    );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.get<TData>(
+      `/v1/brands`,{
+    ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+        params: filteredParams,}
+    );
+    }
+
+    return this.http.get<TData>(
+      `/v1/brands`,{
+    ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+        params: filteredParams,}
+    );
+  }
+/**
+ * @summary Valores de filtro con productos activos en una categoría
+ */
+ getCatalogFacets<TData = CatalogFacets>(params: GetCatalogFacetsParams, options?: HttpClientBodyOptions): Observable<TData>;
+ getCatalogFacets<TData = CatalogFacets>(params: GetCatalogFacetsParams, options?: HttpClientEventOptions): Observable<HttpEvent<TData>>;
+ getCatalogFacets<TData = CatalogFacets>(params: GetCatalogFacetsParams, options?: HttpClientResponseOptions): Observable<AngularHttpResponse<TData>>;
+  getCatalogFacets<TData = CatalogFacets>(
+    params: GetCatalogFacetsParams, options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    const filteredParams = filterParams({...params, ...options?.params}, new Set<string>([]));
+
+    if (options?.observe === 'events') {
+      return this.http.get<TData>(
+      `/v1/catalog/facets`,{
+    ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+        params: filteredParams,}
+    );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.get<TData>(
+      `/v1/catalog/facets`,{
+    ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+        params: filteredParams,}
+    );
+    }
+
+    return this.http.get<TData>(
+      `/v1/catalog/facets`,{
+    ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+        params: filteredParams,}
+    );
+  }
+/**
+ * @summary Contenido vigente del home
+ */
+ getHome<TData = HomeContent>( options?: HttpClientBodyOptions): Observable<TData>;
+ getHome<TData = HomeContent>( options?: HttpClientEventOptions): Observable<HttpEvent<TData>>;
+ getHome<TData = HomeContent>( options?: HttpClientResponseOptions): Observable<AngularHttpResponse<TData>>;
+  getHome<TData = HomeContent>(
+     options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.get<TData>(
+      `/v1/home`,{
         ...(options as Omit<NonNullable<typeof options>, 'observe'>),
         observe: 'events',
       }
@@ -300,7 +389,7 @@ export class DefaultService {
 
     if (options?.observe === 'response') {
       return this.http.get<TData>(
-      `/v1/brands`,{
+      `/v1/home`,{
         ...(options as Omit<NonNullable<typeof options>, 'observe'>),
         observe: 'response',
       }
@@ -308,7 +397,7 @@ export class DefaultService {
     }
 
     return this.http.get<TData>(
-      `/v1/brands`,{
+      `/v1/home`,{
         ...(options as Omit<NonNullable<typeof options>, 'observe'>),
         observe: 'body',
       }
@@ -1233,7 +1322,8 @@ export class DefaultService {
  * Transiciones: `paid` → `preparing` | `cancelled`; `preparing` → `shipped` | `cancelled`; `shipped` → `delivered`.
  * `shipped` exige `tracking_carrier` y `tracking_number`. Con el pedido ya enviado se puede corregir la guía sin cambiar el estado.
  * Cancelar un pedido que no salió devuelve su existencia al inventario; **no reembolsa**: el reembolso en Mercado Pago es manual (ver docs/ADMIN_ORDERS.md).
- * `409` si la transición no es válida, falta la guía o el estado cambió mientras tanto.
+ * Un pedido con micas graduadas no pasa a `preparing` sin receta de armazones aprobada y con distancia pupilar.
+ * `409` si la transición no es válida, falta la guía, la receta no está lista o el estado cambió mientras tanto.
  * @summary Cambia el estado de un pedido o corrige su guía
  */
  adminUpdateOrder<TData = AdminOrder>(id: string,
@@ -1651,6 +1741,437 @@ export class DefaultService {
     );
   }
 /**
+ * @summary Todos los banners, vigentes o no
+ */
+ adminListHomeBanners<TData = AdminListHomeBanners200>( options?: HttpClientBodyOptions): Observable<TData>;
+ adminListHomeBanners<TData = AdminListHomeBanners200>( options?: HttpClientEventOptions): Observable<HttpEvent<TData>>;
+ adminListHomeBanners<TData = AdminListHomeBanners200>( options?: HttpClientResponseOptions): Observable<AngularHttpResponse<TData>>;
+  adminListHomeBanners<TData = AdminListHomeBanners200>(
+     options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.get<TData>(
+      `/v1/admin/home/banners`,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+      }
+    );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.get<TData>(
+      `/v1/admin/home/banners`,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+      }
+    );
+    }
+
+    return this.http.get<TData>(
+      `/v1/admin/home/banners`,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+      }
+    );
+  }
+/**
+ * @summary Crea un banner al final de su ubicación
+ */
+ adminCreateHomeBanner<TData = AdminHomeBanner>(homeBannerInput: HomeBannerInput, options?: HttpClientBodyOptions): Observable<TData>;
+ adminCreateHomeBanner<TData = AdminHomeBanner>(homeBannerInput: HomeBannerInput, options?: HttpClientEventOptions): Observable<HttpEvent<TData>>;
+ adminCreateHomeBanner<TData = AdminHomeBanner>(homeBannerInput: HomeBannerInput, options?: HttpClientResponseOptions): Observable<AngularHttpResponse<TData>>;
+  adminCreateHomeBanner<TData = AdminHomeBanner>(
+    homeBannerInput: HomeBannerInput, options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.post<TData>(
+      `/v1/admin/home/banners`,
+      homeBannerInput,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+      }
+    );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.post<TData>(
+      `/v1/admin/home/banners`,
+      homeBannerInput,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+      }
+    );
+    }
+
+    return this.http.post<TData>(
+      `/v1/admin/home/banners`,
+      homeBannerInput,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+      }
+    );
+  }
+/**
+ * @summary Fija el orden completo de una ubicación
+ */
+ adminReorderHomeBanners<TData = AdminReorderHomeBanners200>(adminReorderHomeBannersBody: AdminReorderHomeBannersBody, options?: HttpClientBodyOptions): Observable<TData>;
+ adminReorderHomeBanners<TData = AdminReorderHomeBanners200>(adminReorderHomeBannersBody: AdminReorderHomeBannersBody, options?: HttpClientEventOptions): Observable<HttpEvent<TData>>;
+ adminReorderHomeBanners<TData = AdminReorderHomeBanners200>(adminReorderHomeBannersBody: AdminReorderHomeBannersBody, options?: HttpClientResponseOptions): Observable<AngularHttpResponse<TData>>;
+  adminReorderHomeBanners<TData = AdminReorderHomeBanners200>(
+    adminReorderHomeBannersBody: AdminReorderHomeBannersBody, options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.put<TData>(
+      `/v1/admin/home/banners/order`,
+      adminReorderHomeBannersBody,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+      }
+    );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.put<TData>(
+      `/v1/admin/home/banners/order`,
+      adminReorderHomeBannersBody,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+      }
+    );
+    }
+
+    return this.http.put<TData>(
+      `/v1/admin/home/banners/order`,
+      adminReorderHomeBannersBody,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+      }
+    );
+  }
+/**
+ * PUT directo al bucket público, 10 minutos, tamaño y tipo firmados. Solo JPG, PNG o WebP, máx. 5 MB.
+ * @summary URL prefirmada de R2 para subir la imagen de un banner
+ */
+ adminCreateBannerImageUploadUrl<TData = ImageUpload>(adminCreateBannerImageUploadUrlBody: AdminCreateBannerImageUploadUrlBody, options?: HttpClientBodyOptions): Observable<TData>;
+ adminCreateBannerImageUploadUrl<TData = ImageUpload>(adminCreateBannerImageUploadUrlBody: AdminCreateBannerImageUploadUrlBody, options?: HttpClientEventOptions): Observable<HttpEvent<TData>>;
+ adminCreateBannerImageUploadUrl<TData = ImageUpload>(adminCreateBannerImageUploadUrlBody: AdminCreateBannerImageUploadUrlBody, options?: HttpClientResponseOptions): Observable<AngularHttpResponse<TData>>;
+  adminCreateBannerImageUploadUrl<TData = ImageUpload>(
+    adminCreateBannerImageUploadUrlBody: AdminCreateBannerImageUploadUrlBody, options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.post<TData>(
+      `/v1/admin/home/banners/image-url`,
+      adminCreateBannerImageUploadUrlBody,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+      }
+    );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.post<TData>(
+      `/v1/admin/home/banners/image-url`,
+      adminCreateBannerImageUploadUrlBody,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+      }
+    );
+    }
+
+    return this.http.post<TData>(
+      `/v1/admin/home/banners/image-url`,
+      adminCreateBannerImageUploadUrlBody,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+      }
+    );
+  }
+/**
+ * @summary Reemplaza los datos de un banner
+ */
+ adminUpdateHomeBanner<TData = AdminHomeBanner>(id: string,
+    homeBannerInput: HomeBannerInput, options?: HttpClientBodyOptions): Observable<TData>;
+ adminUpdateHomeBanner<TData = AdminHomeBanner>(id: string,
+    homeBannerInput: HomeBannerInput, options?: HttpClientEventOptions): Observable<HttpEvent<TData>>;
+ adminUpdateHomeBanner<TData = AdminHomeBanner>(id: string,
+    homeBannerInput: HomeBannerInput, options?: HttpClientResponseOptions): Observable<AngularHttpResponse<TData>>;
+  adminUpdateHomeBanner<TData = AdminHomeBanner>(
+    id: string,
+    homeBannerInput: HomeBannerInput, options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.put<TData>(
+      `/v1/admin/home/banners/${id}`,
+      homeBannerInput,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+      }
+    );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.put<TData>(
+      `/v1/admin/home/banners/${id}`,
+      homeBannerInput,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+      }
+    );
+    }
+
+    return this.http.put<TData>(
+      `/v1/admin/home/banners/${id}`,
+      homeBannerInput,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+      }
+    );
+  }
+/**
+ * @summary Borra un banner; el archivo en R2 se conserva
+ */
+ adminDeleteHomeBanner<TData = void>(id: string, options?: HttpClientBodyOptions): Observable<TData>;
+ adminDeleteHomeBanner<TData = void>(id: string, options?: HttpClientEventOptions): Observable<HttpEvent<TData>>;
+ adminDeleteHomeBanner<TData = void>(id: string, options?: HttpClientResponseOptions): Observable<AngularHttpResponse<TData>>;
+  adminDeleteHomeBanner<TData = void>(
+    id: string, options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.delete<TData>(
+      `/v1/admin/home/banners/${id}`,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+      }
+    );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.delete<TData>(
+      `/v1/admin/home/banners/${id}`,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+      }
+    );
+    }
+
+    return this.http.delete<TData>(
+      `/v1/admin/home/banners/${id}`,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+      }
+    );
+  }
+/**
+ * @summary Destacados de una categoría, incluidos inactivos y agotados
+ */
+ adminListHomeFeatured<TData = AdminListHomeFeatured200>(params: AdminListHomeFeaturedParams, options?: HttpClientBodyOptions): Observable<TData>;
+ adminListHomeFeatured<TData = AdminListHomeFeatured200>(params: AdminListHomeFeaturedParams, options?: HttpClientEventOptions): Observable<HttpEvent<TData>>;
+ adminListHomeFeatured<TData = AdminListHomeFeatured200>(params: AdminListHomeFeaturedParams, options?: HttpClientResponseOptions): Observable<AngularHttpResponse<TData>>;
+  adminListHomeFeatured<TData = AdminListHomeFeatured200>(
+    params: AdminListHomeFeaturedParams, options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    const filteredParams = filterParams({...params, ...options?.params}, new Set<string>([]));
+
+    if (options?.observe === 'events') {
+      return this.http.get<TData>(
+      `/v1/admin/home/featured`,{
+    ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+        params: filteredParams,}
+    );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.get<TData>(
+      `/v1/admin/home/featured`,{
+    ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+        params: filteredParams,}
+    );
+    }
+
+    return this.http.get<TData>(
+      `/v1/admin/home/featured`,{
+    ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+        params: filteredParams,}
+    );
+  }
+/**
+ * @summary Reemplaza la lista de destacados de una categoría y fija su orden
+ */
+ adminSetHomeFeatured<TData = AdminSetHomeFeatured200>(adminSetHomeFeaturedBody: AdminSetHomeFeaturedBody, options?: HttpClientBodyOptions): Observable<TData>;
+ adminSetHomeFeatured<TData = AdminSetHomeFeatured200>(adminSetHomeFeaturedBody: AdminSetHomeFeaturedBody, options?: HttpClientEventOptions): Observable<HttpEvent<TData>>;
+ adminSetHomeFeatured<TData = AdminSetHomeFeatured200>(adminSetHomeFeaturedBody: AdminSetHomeFeaturedBody, options?: HttpClientResponseOptions): Observable<AngularHttpResponse<TData>>;
+  adminSetHomeFeatured<TData = AdminSetHomeFeatured200>(
+    adminSetHomeFeaturedBody: AdminSetHomeFeaturedBody, options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.put<TData>(
+      `/v1/admin/home/featured`,
+      adminSetHomeFeaturedBody,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+      }
+    );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.put<TData>(
+      `/v1/admin/home/featured`,
+      adminSetHomeFeaturedBody,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+      }
+    );
+    }
+
+    return this.http.put<TData>(
+      `/v1/admin/home/featured`,
+      adminSetHomeFeaturedBody,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+      }
+    );
+  }
+/**
+ * @summary Todos los paquetes de micas, activos o no
+ */
+ adminListLensPackages<TData = AdminListLensPackages200>( options?: HttpClientBodyOptions): Observable<TData>;
+ adminListLensPackages<TData = AdminListLensPackages200>( options?: HttpClientEventOptions): Observable<HttpEvent<TData>>;
+ adminListLensPackages<TData = AdminListLensPackages200>( options?: HttpClientResponseOptions): Observable<AngularHttpResponse<TData>>;
+  adminListLensPackages<TData = AdminListLensPackages200>(
+     options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.get<TData>(
+      `/v1/admin/lens-packages`,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+      }
+    );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.get<TData>(
+      `/v1/admin/lens-packages`,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+      }
+    );
+    }
+
+    return this.http.get<TData>(
+      `/v1/admin/lens-packages`,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+      }
+    );
+  }
+/**
+ * @summary Crea un paquete de micas
+ */
+ adminCreateLensPackage<TData = AdminLensPackage>(lensPackageInput: LensPackageInput, options?: HttpClientBodyOptions): Observable<TData>;
+ adminCreateLensPackage<TData = AdminLensPackage>(lensPackageInput: LensPackageInput, options?: HttpClientEventOptions): Observable<HttpEvent<TData>>;
+ adminCreateLensPackage<TData = AdminLensPackage>(lensPackageInput: LensPackageInput, options?: HttpClientResponseOptions): Observable<AngularHttpResponse<TData>>;
+  adminCreateLensPackage<TData = AdminLensPackage>(
+    lensPackageInput: LensPackageInput, options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.post<TData>(
+      `/v1/admin/lens-packages`,
+      lensPackageInput,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+      }
+    );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.post<TData>(
+      `/v1/admin/lens-packages`,
+      lensPackageInput,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+      }
+    );
+    }
+
+    return this.http.post<TData>(
+      `/v1/admin/lens-packages`,
+      lensPackageInput,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+      }
+    );
+  }
+/**
+ * @summary Fija el orden completo de los paquetes
+ */
+ adminReorderLensPackages<TData = AdminReorderLensPackages200>(adminReorderLensPackagesBody: AdminReorderLensPackagesBody, options?: HttpClientBodyOptions): Observable<TData>;
+ adminReorderLensPackages<TData = AdminReorderLensPackages200>(adminReorderLensPackagesBody: AdminReorderLensPackagesBody, options?: HttpClientEventOptions): Observable<HttpEvent<TData>>;
+ adminReorderLensPackages<TData = AdminReorderLensPackages200>(adminReorderLensPackagesBody: AdminReorderLensPackagesBody, options?: HttpClientResponseOptions): Observable<AngularHttpResponse<TData>>;
+  adminReorderLensPackages<TData = AdminReorderLensPackages200>(
+    adminReorderLensPackagesBody: AdminReorderLensPackagesBody, options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.put<TData>(
+      `/v1/admin/lens-packages/order`,
+      adminReorderLensPackagesBody,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+      }
+    );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.put<TData>(
+      `/v1/admin/lens-packages/order`,
+      adminReorderLensPackagesBody,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+      }
+    );
+    }
+
+    return this.http.put<TData>(
+      `/v1/admin/lens-packages/order`,
+      adminReorderLensPackagesBody,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+      }
+    );
+  }
+/**
+ * @summary Reemplaza los datos de un paquete; se desactiva, no se borra
+ */
+ adminUpdateLensPackage<TData = AdminLensPackage>(id: string,
+    lensPackageInput: LensPackageInput, options?: HttpClientBodyOptions): Observable<TData>;
+ adminUpdateLensPackage<TData = AdminLensPackage>(id: string,
+    lensPackageInput: LensPackageInput, options?: HttpClientEventOptions): Observable<HttpEvent<TData>>;
+ adminUpdateLensPackage<TData = AdminLensPackage>(id: string,
+    lensPackageInput: LensPackageInput, options?: HttpClientResponseOptions): Observable<AngularHttpResponse<TData>>;
+  adminUpdateLensPackage<TData = AdminLensPackage>(
+    id: string,
+    lensPackageInput: LensPackageInput, options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.put<TData>(
+      `/v1/admin/lens-packages/${id}`,
+      lensPackageInput,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+      }
+    );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.put<TData>(
+      `/v1/admin/lens-packages/${id}`,
+      lensPackageInput,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+      }
+    );
+    }
+
+    return this.http.put<TData>(
+      `/v1/admin/lens-packages/${id}`,
+      lensPackageInput,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+      }
+    );
+  }
+/**
  * @summary Crea una marca
  */
  adminCreateBrand<TData = Brand>(brandInput: BrandInput, options?: HttpClientBodyOptions): Observable<TData>;
@@ -1952,6 +2473,8 @@ export class DefaultService {
 export type GetHealthClientResult = NonNullable<GetHealth200>
 export type ListProductsClientResult = NonNullable<ListProducts200>
 export type ListBrandsClientResult = NonNullable<ListBrands200>
+export type GetCatalogFacetsClientResult = NonNullable<CatalogFacets>
+export type GetHomeClientResult = NonNullable<HomeContent>
 export type GetProductClientResult = NonNullable<ProductDetail>
 export type GetProductVariantClientResult = NonNullable<Variant>
 export type GetCartClientResult = NonNullable<Cart>
@@ -1988,6 +2511,18 @@ export type AdminCreateStockAdjustmentClientResult = NonNullable<StockAdjustment
 export type AdminListLowStockClientResult = NonNullable<AdminListLowStock200>
 export type AdminSalesReportClientResult = NonNullable<SalesReport>
 export type AdminRepurchaseReportClientResult = NonNullable<RepurchaseReport>
+export type AdminListHomeBannersClientResult = NonNullable<AdminListHomeBanners200>
+export type AdminCreateHomeBannerClientResult = NonNullable<AdminHomeBanner>
+export type AdminReorderHomeBannersClientResult = NonNullable<AdminReorderHomeBanners200>
+export type AdminCreateBannerImageUploadUrlClientResult = NonNullable<ImageUpload>
+export type AdminUpdateHomeBannerClientResult = NonNullable<AdminHomeBanner>
+export type AdminDeleteHomeBannerClientResult = NonNullable<void>
+export type AdminListHomeFeaturedClientResult = NonNullable<AdminListHomeFeatured200>
+export type AdminSetHomeFeaturedClientResult = NonNullable<AdminSetHomeFeatured200>
+export type AdminListLensPackagesClientResult = NonNullable<AdminListLensPackages200>
+export type AdminCreateLensPackageClientResult = NonNullable<AdminLensPackage>
+export type AdminReorderLensPackagesClientResult = NonNullable<AdminReorderLensPackages200>
+export type AdminUpdateLensPackageClientResult = NonNullable<AdminLensPackage>
 export type AdminCreateBrandClientResult = NonNullable<Brand>
 export type AdminListProductsClientResult = NonNullable<AdminListProducts200>
 export type AdminCreateProductClientResult = NonNullable<AdminProduct>

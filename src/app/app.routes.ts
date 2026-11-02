@@ -16,6 +16,8 @@ export const routes: Routes = [
       { path: 'reportes', loadComponent: () => import('./features/reportes/reportes') },
       { path: 'productos/:productId/imagenes', loadComponent: () => import('./features/imagenes/imagenes') },
       { path: 'marcas', loadComponent: () => import('./features/marcas/marcas') },
+      { path: 'home', loadComponent: () => import('./features/home/home') },
+      { path: 'micas', loadComponent: () => import('./features/micas/micas') },
       { path: 'productos', loadComponent: () => import('./features/productos/productos') },
       { path: 'productos/:productId/variantes', loadComponent: () => import('./features/variantes/variantes') },
     ],

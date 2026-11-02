@@ -5,7 +5,13 @@
  * API de la tienda en línea de lentes de contacto. Fuente de verdad del contrato con lentes-web.
  * OpenAPI spec version: 0.1.0
  */
+import type { FrameColor } from './frameColor';
+import type { FrameGender } from './frameGender';
+import type { FrameMaterial } from './frameMaterial';
+import type { FrameRim } from './frameRim';
+import type { FrameShape } from './frameShape';
 import type { LensType } from './lensType';
+import type { ProductCategory } from './productCategory';
 import type { Replacement } from './replacement';
 
 export type ListProductsParams = {
@@ -15,6 +21,29 @@ export type ListProductsParams = {
 brand?: string;
 lens_type?: LensType;
 replacement?: Replacement;
+/**
+ * Sin este parámetro se devuelven todas las categorías.
+ */
+category?: ProductCategory;
+/**
+ * Busca en nombre de producto y de marca, sin distinguir mayúsculas ni acentos. De 2 a 80 caracteres tras recortar.
+ */
+q?: string;
+shape?: FrameShape;
+frame_material?: FrameMaterial;
+rim?: FrameRim;
+gender?: FrameGender;
+color?: FrameColor;
+/**
+ * Se aplica sobre `from_price_cents`; excluye agotados.
+ * @minimum 0
+ */
+min_price_cents?: number;
+/**
+ * Se aplica sobre `from_price_cents`; excluye agotados.
+ * @minimum 0
+ */
+max_price_cents?: number;
 /**
  * Cursor opaco devuelto en `next_cursor`
  */

@@ -28,7 +28,7 @@ const fmt = (n: number | null | undefined) => (n == null ? '—' : n > 0 ? `+${n
         <li class="space-y-2 p-4 text-sm">
           <div class="flex flex-wrap justify-between gap-2">
             <div>
-              <p class="font-medium">{{ r.customer_email }}</p>
+              <p class="font-medium">{{ r.customer_email }} <span class="font-normal text-muted-foreground">· {{ r.kind === 'glasses' ? 'Armazones' : 'Lentes de contacto' }}</span></p>
               <p class="text-muted-foreground">Dr(a). {{ r.doctor_name }}@if (r.doctor_license) { · Cédula {{ r.doctor_license }} } · emitida {{ d(r.issued_at) }} · vigente hasta {{ d(r.expires_at) }}</p>
               <p class="text-xs text-muted-foreground">Subida {{ dt(r.created_at) }}</p>
             </div>
@@ -38,6 +38,16 @@ const fmt = (n: number | null | undefined) => (n == null ? '—' : n > 0 ? `+${n
             OD: esf {{ f(r.od_sphere) }} cil {{ f(r.od_cylinder) }} eje {{ r.od_axis ?? '—' }} add {{ r.od_addition ?? '—' }}<br />
             OI: esf {{ f(r.os_sphere) }} cil {{ f(r.os_cylinder) }} eje {{ r.os_axis ?? '—' }} add {{ r.os_addition ?? '—' }}
           </p>
+          @if (r.kind === 'glasses') {
+            <form class="flex flex-wrap items-end gap-2" (submit)="savePd($event, r)">
+              <div>
+                <label [attr.for]="'pd-' + r.id" class="mb-1 block">Distancia pupilar (mm)</label>
+                <input [id]="'pd-' + r.id" type="number" step="0.1" min="40" max="80" class="w-28 rounded-lg border border-input px-3 py-2" [value]="r.pd_mm ?? ''" (input)="pd.set(val($event))" />
+              </div>
+              <button type="submit" class="rounded-lg border border-input px-3 py-2 disabled:opacity-50" [disabled]="busy()">Guardar</button>
+              @if (!r.pd_mm) { <span class="text-xs text-muted-foreground">Obligatoria para mandar a laboratorio.</span> }
+            </form>
+          }
           @if (r.status === 'rejected' && r.reject_reason) { <p class="text-destructive">Motivo: {{ r.reject_reason }}</p> }
           @if (r.status === 'pending') {
             @if (rejecting() === r.id) {
@@ -94,6 +104,25 @@ export default class Recetas implements OnInit {
       this.error.set(null);
     } catch (e) {
       this.error.set(problemMessage(e, 'No se pudieron cargar las recetas.'));
+    }
+  }
+
+  protected readonly pd = signal('');
+
+  protected async savePd(event: Event, r: AdminPrescription) {
+    event.preventDefault();
+    const value = Number(this.pd());
+    if (!this.pd() || Number.isNaN(value)) return this.error.set('Captura la distancia pupilar.');
+    this.busy.set(true);
+    this.error.set(null);
+    try {
+      await firstValueFrom(this.api.adminReviewPrescription(r.id, { pd_mm: value }));
+      this.pd.set('');
+      await this.load();
+    } catch (e) {
+      this.error.set(problemMessage(e, 'No se pudo guardar la distancia pupilar.'));
+    } finally {
+      this.busy.set(false);
     }
   }
 

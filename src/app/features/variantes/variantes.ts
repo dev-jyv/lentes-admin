@@ -1,9 +1,10 @@
-import { Component, inject, input, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, input, OnInit, signal } from '@angular/core';
 import { disabled, form, FormField, min, required } from '@angular/forms/signals';
 import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { DefaultService } from '../../api/generated/default/default.service';
 import type { AdminVariant, VariantInput } from '../../api/generated/model';
+import { COLOR_LABEL, toOptions } from '../../core/frame-labels';
 import { centsToPesos, formatMxn, pesosToCents } from '../../core/money';
 import { importErrors, problemMessage } from '../../core/problem';
 import { StockAdjust } from '../inventario/stock-adjust';
@@ -48,6 +49,15 @@ const fmt = (n: number | null | undefined) => (n == null ? '—' : String(n));
             <label for="sku" class="mb-1 block text-sm">SKU</label>
             <input id="sku" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.sku" />
           </div>
+          @if (isFrame()) {
+            <div>
+              <label for="fcolor" class="mb-1 block text-sm">Color</label>
+              <select id="fcolor" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.color">
+                <option value="">Elegir…</option>
+                @for (o of frameColors; track o.value) { <option [value]="o.value">{{ o.label }}</option> }
+              </select>
+            </div>
+          } @else {
           <div>
             <label for="sphere" class="mb-1 block text-sm">Esfera</label>
             <input id="sphere" type="number" step="0.25" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.sphere" />
@@ -76,6 +86,7 @@ const fmt = (n: number | null | undefined) => (n == null ? '—' : String(n));
             <label for="color" class="mb-1 block text-sm">Color (cosméticos)</label>
             <input id="color" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.color" />
           </div>
+          }
           <div>
             <label for="price" class="mb-1 block text-sm">Precio (MXN)</label>
             <input id="price" type="number" step="0.01" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.price_pesos" />
@@ -104,6 +115,7 @@ const fmt = (n: number | null | undefined) => (n == null ? '—' : String(n));
       </div>
     }
 
+    @if (!isFrame()) {
     <section class="mb-8 max-w-3xl rounded-lg border border-border p-4" aria-labelledby="imp">
       <h2 id="imp" class="mb-1 font-medium">Carga masiva por CSV</h2>
       <p class="mb-3 text-sm text-muted-foreground">
@@ -123,18 +135,25 @@ const fmt = (n: number | null | undefined) => (n == null ? '—' : String(n));
         </ul>
       }
     </section>
+    }
 
     @if (loadError()) { <p role="alert" class="mb-4 text-sm text-destructive">{{ loadError() }}</p> }
     <table class="w-full text-sm">
       <thead><tr class="border-b text-left">
-        <th class="py-2">SKU</th><th>Esf</th><th>Cil</th><th>Eje</th><th>Add</th><th>CB</th><th>Diám</th>
+        <th class="py-2">SKU</th>
+        @if (isFrame()) { <th>Color</th> } @else { <th>Esf</th><th>Cil</th><th>Eje</th><th>Add</th><th>CB</th><th>Diám</th> }
         <th>Precio</th><th>Existencia</th><th>Apartado</th><th>Estado</th><th></th>
       </tr></thead>
       <tbody>
         @for (v of variants(); track v.id) {
           <tr class="border-b">
-            <td class="py-2">{{ v.sku }}</td><td>{{ f(v.sphere) }}</td><td>{{ f(v.cylinder) }}</td><td>{{ f(v.axis) }}</td>
-            <td>{{ v.addition ?? '—' }}</td><td>{{ v.base_curve }}</td><td>{{ v.diameter }}</td>
+            <td class="py-2">{{ v.sku }}</td>
+            @if (isFrame()) {
+              <td>{{ colorLabel(v.color) }}</td>
+            } @else {
+              <td>{{ f(v.sphere) }}</td><td>{{ f(v.cylinder) }}</td><td>{{ f(v.axis) }}</td>
+              <td>{{ v.addition ?? '—' }}</td><td>{{ f(v.base_curve) }}</td><td>{{ f(v.diameter) }}</td>
+            }
             <td>{{ money(v.price_cents) }}</td><td>{{ v.stock }}</td><td>{{ v.reserved }}</td>
             <td>{{ v.active ? 'Activa' : 'Inactiva' }}</td>
             <td class="space-x-3 text-right">
@@ -152,6 +171,11 @@ const fmt = (n: number | null | undefined) => (n == null ? '—' : String(n));
 export default class Variantes implements OnInit {
   /** :productId de la ruta (withComponentInputBinding). */
   readonly productId = input.required<string>();
+  /** ?categoria= del enlace en Productos (withComponentInputBinding). Sin ella se asume lente de contacto; la API valida de todos modos. */
+  readonly categoria = input<string>();
+  protected readonly isFrame = computed(() => this.categoria() === 'frame');
+  protected readonly frameColors = toOptions(COLOR_LABEL);
+  protected colorLabel = (c: string | null | undefined) => (c ? (COLOR_LABEL[c as keyof typeof COLOR_LABEL] ?? c) : '—');
   private readonly api = inject(DefaultService);
   protected readonly variants = signal<AdminVariant[]>([]);
   protected readonly editing = signal(false);
@@ -173,8 +197,9 @@ export default class Variantes implements OnInit {
   private readonly state = signal<VariantForm>(empty());
   protected readonly model = form(this.state, (p) => {
     required(p.sku);
-    required(p.base_curve);
-    required(p.diameter);
+    required(p.base_curve, { when: () => !this.isFrame() });
+    required(p.diameter, { when: () => !this.isFrame() });
+    required(p.color, { when: () => this.isFrame() });
     required(p.price_pesos);
     min(p.price_pesos, 0.01);
     min(p.stock, 0);
@@ -207,7 +232,7 @@ export default class Variantes implements OnInit {
     this.editingId.set(v.id);
     this.state.set({
       sku: v.sku, sphere: v.sphere ?? null, cylinder: v.cylinder ?? null, axis: v.axis ?? null,
-      addition: v.addition ?? '', base_curve: v.base_curve, diameter: v.diameter, color: v.color ?? '',
+      addition: v.addition ?? '', base_curve: v.base_curve ?? null, diameter: v.diameter ?? null, color: v.color ?? '',
       price_pesos: centsToPesos(v.price_cents),
       compare_at_pesos: v.compare_at_cents == null ? null : centsToPesos(v.compare_at_cents),
       stock: v.stock, active: v.active,
@@ -222,8 +247,13 @@ export default class Variantes implements OnInit {
     const s = this.state();
     const body: VariantInput = {
       product_id: this.productId(), sku: s.sku.trim(),
-      sphere: s.sphere, cylinder: s.cylinder, axis: s.axis, addition: s.addition.trim() || null,
-      base_curve: s.base_curve!, diameter: s.diameter!, color: s.color.trim() || null,
+      ...(this.isFrame()
+        ? {}
+        : {
+            sphere: s.sphere, cylinder: s.cylinder, axis: s.axis, addition: s.addition.trim() || null,
+            base_curve: s.base_curve, diameter: s.diameter,
+          }),
+      color: s.color.trim() || null,
       price_cents: pesosToCents(s.price_pesos!),
       compare_at_cents: s.compare_at_pesos == null ? null : pesosToCents(s.compare_at_pesos),
       stock: s.stock, active: s.active,

@@ -31,8 +31,10 @@ const CARRIERS = ['Estafeta', 'DHL', 'FedEx', 'Paquetexpress', 'Redpack', 'Corre
             <tbody>
               @for (l of o.items; track $index) {
                 <tr class="border-b">
-                  <td class="py-2">{{ l.product_name }} <span class="text-muted-foreground">· {{ l.brand_name }}</span><br /><span class="text-xs text-muted-foreground">{{ l.sku }} {{ l.description }}</span></td>
-                  <td>{{ eye(l.eye) }}</td><td>{{ l.quantity }}</td><td class="text-right">{{ money(l.unit_price_cents) }}</td>
+                  <td class="py-2">{{ l.product_name }} <span class="text-muted-foreground">· {{ l.brand_name }}</span><br /><span class="text-xs text-muted-foreground">{{ l.sku }} {{ l.description }}</span>
+                    @if (l.vision_type) { <br /><span class="text-xs text-muted-foreground">Visión: {{ vision(l.vision_type) }}</span> }
+                  </td>
+                  <td>{{ l.category === 'frame' ? 'Par completo' : eye(l.eye) }}</td><td>{{ l.quantity }}</td><td class="text-right">{{ money(l.unit_price_cents) }}</td>
                 </tr>
               }
             </tbody>
@@ -46,6 +48,32 @@ const CARRIERS = ['Estafeta', 'DHL', 'FedEx', 'Paquetexpress', 'Redpack', 'Corre
         </section>
 
         <aside class="space-y-6">
+          @if (o.refund_required) {
+            <p role="alert" class="rounded-lg border border-destructive p-3 text-sm text-destructive">
+              <strong>Requiere reembolso manual.</strong> La receta de armazones fue rechazada: reembolsa el pago en Mercado Pago y cancela el pedido.
+            </p>
+          }
+          @if (o.prescription_id || o.glasses_prescription_id) {
+            <section aria-labelledby="rx" class="space-y-2 text-sm">
+              <h2 id="rx" class="font-medium">Recetas</h2>
+              @if (o.prescription_id) {
+                <p>Lentes de contacto @if (o.prescription_file_url) { · <a [href]="o.prescription_file_url" target="_blank" rel="noopener noreferrer" class="underline">Ver archivo</a> }</p>
+              }
+              @if (o.glasses_prescription_id) {
+                <p>
+                  Armazones · {{ rxLabel(o.glasses_prescription_status) }}
+                  @if (o.glasses_prescription_file_url) { · <a [href]="o.glasses_prescription_file_url" target="_blank" rel="noopener noreferrer" class="underline">Ver archivo</a> }
+                </p>
+                <p>Distancia pupilar: {{ o.pd_mm != null ? o.pd_mm + ' mm' : 'Falta' }}</p>
+              }
+            </section>
+          }
+          @if (o.lab_blockers.length) {
+            <section aria-labelledby="lab" class="rounded-lg border border-border p-3 text-sm">
+              <h2 id="lab" class="mb-1 font-medium">Antes de mandar a laboratorio</h2>
+              <ul class="list-disc pl-4">@for (b of o.lab_blockers; track b) { <li>{{ b }}</li> }</ul>
+            </section>
+          }
           <section aria-labelledby="dir">
             <h2 id="dir" class="mb-2 font-medium">Envío a</h2>
             <address class="text-sm not-italic">
@@ -130,6 +158,8 @@ export default class Pedido implements OnInit {
   protected eye = (e: string) => ({ right: 'Derecho', left: 'Izquierdo', both: 'Ambos' })[e] ?? e;
   protected action = (s: OrderStatus) =>
     ({ preparing: 'Marcar en preparación', shipped: 'Marcar enviado', delivered: 'Marcar entregado', cancelled: 'Cancelar pedido' })[s as string] ?? STATUS_LABEL[s];
+  protected vision = (v: string) => ({ none: 'Sin graduación', single_vision: 'Monofocal', progressive: 'Progresiva' })[v] ?? v;
+  protected rxLabel = (s: string | null | undefined) => ({ pending: 'En revisión', approved: 'Aprobada', rejected: 'Rechazada' })[s ?? ''] ?? '—';
   protected val = (e: Event) => (e.target as HTMLInputElement).value;
 
   async ngOnInit() {

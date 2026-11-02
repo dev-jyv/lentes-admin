@@ -17,9 +17,20 @@ export interface VariantInput {
   axis?: number | null;
   /** @nullable */
   addition?: string | null;
-  base_curve: number;
-  diameter: number;
-  /** @nullable */
+  /**
+     * Requerido en lentes de contacto; prohibido en armazones.
+     * @nullable
+     */
+  base_curve?: number | null;
+  /**
+     * Requerido en lentes de contacto; prohibido en armazones.
+     * @nullable
+     */
+  diameter?: number | null;
+  /**
+     * En armazones es requerido y debe ser un FrameColor.
+     * @nullable
+     */
   color?: string | null;
   price_cents: number;
   /** @nullable */

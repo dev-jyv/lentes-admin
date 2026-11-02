@@ -8,6 +8,10 @@
 import type { OrderStatus } from './orderStatus';
 
 export interface OrderSummary {
+  /** Falso si el pedido solo trae armazones con micas, que no se repiten. */
+  reorderable: boolean;
+  /** Armazones del pedido, p. ej. Lía · Negro · Monofocal básica. */
+  frame_lines: string[];
   id: string;
   number: number;
   status: OrderStatus;

@@ -5,8 +5,10 @@
  * API de la tienda en línea de lentes de contacto. Fuente de verdad del contrato con lentes-web.
  * OpenAPI spec version: 0.1.0
  */
+import type { CartItemLensPackage } from './cartItemLensPackage';
 import type { CartItemProduct } from './cartItemProduct';
 import type { Eye } from './eye';
+import type { ProductCategory } from './productCategory';
 
 export interface CartItem {
   id: string;
@@ -18,8 +20,15 @@ export interface CartItem {
   line_total_cents: number;
   /** stock - reserved ahora mismo */
   available: number;
-  /** false si la variante o el producto ya no están activos */
+  /** false si la variante, el producto o el paquete de micas ya no están activos */
   purchasable: boolean;
+  category: ProductCategory;
+  /** @nullable */
+  lens_package: CartItemLensPackage;
+  /** @nullable */
+  frame_price_cents: number | null;
+  /** @nullable */
+  package_price_cents: number | null;
   product: CartItemProduct;
   /** @nullable */
   sphere?: number | null;
@@ -29,8 +38,16 @@ export interface CartItem {
   axis?: number | null;
   /** @nullable */
   addition?: string | null;
-  base_curve: number;
-  diameter: number;
+  /**
+     * `null` en armazones
+     * @nullable
+     */
+  base_curve: number | null;
+  /**
+     * `null` en armazones
+     * @nullable
+     */
+  diameter: number | null;
   /** @nullable */
   color?: string | null;
 }

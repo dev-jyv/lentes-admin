@@ -6,8 +6,16 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { Eye } from './eye';
+import type { ProductCategory } from './productCategory';
+import type { VisionType } from './visionType';
 
 export interface AdminOrderLine {
+  category: ProductCategory;
+  /** @nullable */
+  color: string | null;
+  /** @nullable */
+  lens_package_name: string | null;
+  vision_type: VisionType | null;
   sku: string;
   product_name: string;
   brand_name: string;

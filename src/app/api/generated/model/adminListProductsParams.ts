@@ -5,8 +5,10 @@
  * API de la tienda en línea de lentes de contacto. Fuente de verdad del contrato con lentes-web.
  * OpenAPI spec version: 0.1.0
  */
+import type { ProductCategory } from './productCategory';
 
 export type AdminListProductsParams = {
+category?: ProductCategory;
 cursor?: string;
 /**
  * @minimum 1
