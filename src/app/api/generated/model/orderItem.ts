@@ -6,8 +6,12 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { Eye } from './eye';
+import type { ProductCategory } from './productCategory';
 
 export interface OrderItem {
+  category: ProductCategory;
+  /** @nullable */
+  lens_package_name: string | null;
   product_name: string;
   brand_name: string;
   product_slug: string;
@@ -24,8 +28,16 @@ export interface OrderItem {
   axis?: number | null;
   /** @nullable */
   addition?: string | null;
-  base_curve: number;
-  diameter: number;
+  /**
+     * `null` en armazones
+     * @nullable
+     */
+  base_curve: number | null;
+  /**
+     * `null` en armazones
+     * @nullable
+     */
+  diameter: number | null;
   /** @nullable */
   color?: string | null;
 }

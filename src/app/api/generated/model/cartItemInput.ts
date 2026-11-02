@@ -15,4 +15,9 @@ export interface CartItemInput {
      * @maximum 12
      */
   quantity: number;
+  /**
+     * Requerido en armazones, con eye = both; prohibido en lentes de contacto.
+     * @nullable
+     */
+  lens_package_id?: string | null;
 }

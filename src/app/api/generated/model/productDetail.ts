@@ -5,11 +5,22 @@
  * API de la tienda en línea de lentes de contacto. Fuente de verdad del contrato con lentes-web.
  * OpenAPI spec version: 0.1.0
  */
+import type { FrameVariant } from './frameVariant';
+import type { LensPackage } from './lensPackage';
 import type { Product } from './product';
 import type { ProductImage } from './productImage';
 import type { ProductOptions } from './productOptions';
 
-export type ProductDetail = Product & {
+export type ProductDetail = Product & ({
+  /** Paquetes de micas activos; vacío en lentes de contacto o con la venta de armazones desactivada. */
+  lens_packages: LensPackage[];
+  /**
+     * Días estimados de entrega; `null` con la venta de armazones desactivada.
+     * @nullable
+     */
+  frame_lead_time_days: number | null;
   images: ProductImage[];
   options: ProductOptions;
-};
+  /** Colores a la venta del armazón; vacío en lentes de contacto. */
+  frame_variants: FrameVariant[];
+});

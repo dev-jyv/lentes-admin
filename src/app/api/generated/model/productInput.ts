@@ -5,18 +5,30 @@
  * API de la tienda en línea de lentes de contacto. Fuente de verdad del contrato con lentes-web.
  * OpenAPI spec version: 0.1.0
  */
+import type { FrameDetails } from './frameDetails';
 import type { LensType } from './lensType';
+import type { ProductCategory } from './productCategory';
 import type { Replacement } from './replacement';
 
 export interface ProductInput {
+  /** Al crear, por defecto `contact_lens`. No se puede cambiar después (`409`). */
+  category?: ProductCategory;
   brand_id: string;
   name: string;
   slug: string;
   /** @nullable */
   description?: string | null;
-  lens_type: LensType;
-  replacement: Replacement;
-  pieces_per_box: number;
+  /** Requerido en lentes de contacto; prohibido en armazones. */
+  lens_type?: LensType | null;
+  /** Requerido en lentes de contacto; prohibido en armazones. */
+  replacement?: Replacement | null;
+  /**
+     * Requerido en lentes de contacto; prohibido en armazones.
+     * @nullable
+     */
+  pieces_per_box?: number | null;
+  /** Requerido en armazones; prohibido en lentes de contacto. */
+  frame?: FrameDetails | null;
   /** @nullable */
   material?: string | null;
   /** @nullable */

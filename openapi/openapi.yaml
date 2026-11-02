@@ -42,6 +42,37 @@ paths:
         - name: replacement
           in: query
           schema: { $ref: "#/components/schemas/Replacement" }
+        - name: category
+          in: query
+          description: Sin este parámetro se devuelven todas las categorías.
+          schema: { $ref: "#/components/schemas/ProductCategory" }
+        - name: q
+          in: query
+          description: Busca en nombre de producto y de marca, sin distinguir mayúsculas ni acentos. De 2 a 80 caracteres tras recortar.
+          schema: { type: string }
+        - name: shape
+          in: query
+          schema: { $ref: "#/components/schemas/FrameShape" }
+        - name: frame_material
+          in: query
+          schema: { $ref: "#/components/schemas/FrameMaterial" }
+        - name: rim
+          in: query
+          schema: { $ref: "#/components/schemas/FrameRim" }
+        - name: gender
+          in: query
+          schema: { $ref: "#/components/schemas/FrameGender" }
+        - name: color
+          in: query
+          schema: { $ref: "#/components/schemas/FrameColor" }
+        - name: min_price_cents
+          in: query
+          description: Se aplica sobre `from_price_cents`; excluye agotados.
+          schema: { type: integer, format: int64, minimum: 0 }
+        - name: max_price_cents
+          in: query
+          description: Se aplica sobre `from_price_cents`; excluye agotados.
+          schema: { type: integer, format: int64, minimum: 0 }
         - name: cursor
           in: query
           description: Cursor opaco devuelto en `next_cursor`
@@ -73,6 +104,11 @@ paths:
     get:
       operationId: listBrands
       summary: Lista de marcas
+      parameters:
+        - name: category
+          in: query
+          description: Devuelve solo marcas con al menos un producto activo de esa categoría.
+          schema: { $ref: "#/components/schemas/ProductCategory" }
       responses:
         "200":
           description: Marcas ordenadas por nombre
@@ -88,6 +124,41 @@ paths:
                   items:
                     type: array
                     items: { $ref: "#/components/schemas/Brand" }
+        "400":
+          $ref: "#/components/responses/Problem"
+  /v1/catalog/facets:
+    get:
+      operationId: getCatalogFacets
+      summary: Valores de filtro con productos activos en una categoría
+      parameters:
+        - name: category
+          in: query
+          required: true
+          schema: { $ref: "#/components/schemas/ProductCategory" }
+      responses:
+        "200":
+          description: Facetas con su conteo
+          headers:
+            Cache-Control:
+              schema: { type: string, example: "public, s-maxage=300" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CatalogFacets" }
+        "400":
+          $ref: "#/components/responses/Problem"
+  /v1/home:
+    get:
+      operationId: getHome
+      summary: Contenido vigente del home
+      responses:
+        "200":
+          description: Barra promocional, banners y destacados vigentes
+          headers:
+            Cache-Control:
+              schema: { type: string, example: "public, s-maxage=60" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/HomeContent" }
   /v1/products/{slug}:
     get:
       operationId: getProduct
@@ -466,7 +537,8 @@ paths:
           schema: { type: string }
         - name: x-request-id
           in: header
-          required: true
+          required: false
+          description: Si Mercado Pago no lo manda, se omite del manifiesto firmado.
           schema: { type: string }
         - name: data.id
           in: query
@@ -666,7 +738,8 @@ paths:
         Transiciones: `paid` → `preparing` | `cancelled`; `preparing` → `shipped` | `cancelled`; `shipped` → `delivered`.
         `shipped` exige `tracking_carrier` y `tracking_number`. Con el pedido ya enviado se puede corregir la guía sin cambiar el estado.
         Cancelar un pedido que no salió devuelve su existencia al inventario; **no reembolsa**: el reembolso en Mercado Pago es manual (ver docs/ADMIN_ORDERS.md).
-        `409` si la transición no es válida, falta la guía o el estado cambió mientras tanto.
+        Un pedido con micas graduadas no pasa a `preparing` sin receta de armazones aprobada y con distancia pupilar.
+        `409` si la transición no es válida, falta la guía, la receta no está lista o el estado cambió mientras tanto.
       security:
         - bearerAuth: [admin]
       parameters:
@@ -931,6 +1004,294 @@ paths:
               schema: { $ref: "#/components/schemas/RepurchaseReport" }
         "400":
           $ref: "#/components/responses/Problem"
+  /v1/admin/home/banners:
+    get:
+      operationId: adminListHomeBanners
+      summary: Todos los banners, vigentes o no
+      security:
+        - bearerAuth: [admin]
+      responses:
+        "200":
+          description: Banners por ubicación y posición
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: "#/components/schemas/AdminHomeBanner" }
+    post:
+      operationId: adminCreateHomeBanner
+      summary: Crea un banner al final de su ubicación
+      security:
+        - bearerAuth: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/HomeBannerInput" }
+      responses:
+        "201":
+          description: Banner creado
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminHomeBanner" }
+        "400":
+          $ref: "#/components/responses/Problem"
+  /v1/admin/home/banners/order:
+    put:
+      operationId: adminReorderHomeBanners
+      summary: Fija el orden completo de una ubicación
+      security:
+        - bearerAuth: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [placement, banner_ids]
+              properties:
+                placement: { $ref: "#/components/schemas/BannerPlacement" }
+                banner_ids:
+                  type: array
+                  items: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Banners de la ubicación en su nuevo orden
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: "#/components/schemas/AdminHomeBanner" }
+        "400":
+          $ref: "#/components/responses/Problem"
+  /v1/admin/home/banners/image-url:
+    post:
+      operationId: adminCreateBannerImageUploadUrl
+      summary: URL prefirmada de R2 para subir la imagen de un banner
+      description: PUT directo al bucket público, 10 minutos, tamaño y tipo firmados. Solo JPG, PNG o WebP, máx. 5 MB.
+      security:
+        - bearerAuth: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [content_type, size_bytes]
+              properties:
+                content_type: { type: string, enum: [image/jpeg, image/png, image/webp] }
+                size_bytes: { type: integer, format: int64, minimum: 1, maximum: 5242880 }
+      responses:
+        "200":
+          description: URL de subida
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ImageUpload" }
+        "400":
+          $ref: "#/components/responses/Problem"
+        "502":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Problem"
+  /v1/admin/home/banners/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    put:
+      operationId: adminUpdateHomeBanner
+      summary: Reemplaza los datos de un banner
+      security:
+        - bearerAuth: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/HomeBannerInput" }
+      responses:
+        "200":
+          description: Banner actualizado
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminHomeBanner" }
+        "400":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+    delete:
+      operationId: adminDeleteHomeBanner
+      summary: Borra un banner; el archivo en R2 se conserva
+      security:
+        - bearerAuth: [admin]
+      responses:
+        "204":
+          description: Eliminado
+        "404":
+          $ref: "#/components/responses/Problem"
+  /v1/admin/home/featured:
+    get:
+      operationId: adminListHomeFeatured
+      summary: Destacados de una categoría, incluidos inactivos y agotados
+      security:
+        - bearerAuth: [admin]
+      parameters:
+        - name: category
+          in: query
+          required: true
+          schema: { $ref: "#/components/schemas/ProductCategory" }
+      responses:
+        "200":
+          description: Destacados en su orden
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: "#/components/schemas/AdminProduct" }
+        "400":
+          $ref: "#/components/responses/Problem"
+    put:
+      operationId: adminSetHomeFeatured
+      summary: Reemplaza la lista de destacados de una categoría y fija su orden
+      security:
+        - bearerAuth: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [category, product_ids]
+              properties:
+                category: { $ref: "#/components/schemas/ProductCategory" }
+                product_ids:
+                  type: array
+                  items: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Destacados en su orden
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: "#/components/schemas/AdminProduct" }
+        "400":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+  /v1/admin/lens-packages:
+    get:
+      operationId: adminListLensPackages
+      summary: Todos los paquetes de micas, activos o no
+      security:
+        - bearerAuth: [admin]
+      responses:
+        "200":
+          description: Paquetes en su orden
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: "#/components/schemas/AdminLensPackage" }
+    post:
+      operationId: adminCreateLensPackage
+      summary: Crea un paquete de micas
+      security:
+        - bearerAuth: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LensPackageInput" }
+      responses:
+        "201":
+          description: Paquete creado
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminLensPackage" }
+        "400":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+  /v1/admin/lens-packages/order:
+    put:
+      operationId: adminReorderLensPackages
+      summary: Fija el orden completo de los paquetes
+      security:
+        - bearerAuth: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [package_ids]
+              properties:
+                package_ids:
+                  type: array
+                  items: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Paquetes en su nuevo orden
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: "#/components/schemas/AdminLensPackage" }
+        "400":
+          $ref: "#/components/responses/Problem"
+  /v1/admin/lens-packages/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    put:
+      operationId: adminUpdateLensPackage
+      summary: Reemplaza los datos de un paquete; se desactiva, no se borra
+      security:
+        - bearerAuth: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LensPackageInput" }
+      responses:
+        "200":
+          description: Paquete actualizado
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminLensPackage" }
+        "400":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
   /v1/admin/brands:
     post:
       operationId: adminCreateBrand
@@ -959,6 +1320,9 @@ paths:
       security:
         - bearerAuth: [admin]
       parameters:
+        - name: category
+          in: query
+          schema: { $ref: "#/components/schemas/ProductCategory" }
         - name: cursor
           in: query
           schema: { type: string }
@@ -1173,6 +1537,170 @@ components:
     Replacement:
       type: string
       enum: [daily, biweekly, monthly, quarterly, yearly]
+    BannerPlacement:
+      type: string
+      enum: [promo_bar, hero, secondary]
+    HomeBanner:
+      type: object
+      required: [id, placement, title, subtitle, cta_label, cta_href, image_url, image_alt]
+      properties:
+        id: { type: string, format: uuid }
+        placement: { $ref: "#/components/schemas/BannerPlacement" }
+        title: { type: string, maxLength: 120 }
+        subtitle: { type: string, maxLength: 240, nullable: true }
+        cta_label: { type: string, maxLength: 40, nullable: true }
+        cta_href: { type: string, maxLength: 200, nullable: true, description: Ruta interna; empieza con una sola diagonal. }
+        image_url: { type: string, format: uri, nullable: true }
+        image_alt: { type: string, maxLength: 160, nullable: true }
+    AdminHomeBanner:
+      allOf:
+        - $ref: "#/components/schemas/HomeBanner"
+        - type: object
+          required: [image_key, position, active, starts_at, ends_at]
+          properties:
+            image_key: { type: string, nullable: true }
+            position: { type: integer }
+            active: { type: boolean }
+            starts_at: { type: string, format: date-time, nullable: true }
+            ends_at: { type: string, format: date-time, nullable: true }
+    HomeBannerInput:
+      type: object
+      required: [placement, title, active]
+      properties:
+        placement: { $ref: "#/components/schemas/BannerPlacement" }
+        title: { type: string }
+        subtitle: { type: string, nullable: true }
+        cta_label: { type: string, nullable: true }
+        cta_href: { type: string, nullable: true }
+        image_key: { type: string, nullable: true }
+        image_alt: { type: string, nullable: true }
+        active: { type: boolean }
+        starts_at: { type: string, format: date-time, nullable: true }
+        ends_at: { type: string, format: date-time, nullable: true }
+    HomeContent:
+      type: object
+      required: [promo_bar, hero, secondary, featured]
+      properties:
+        promo_bar: { allOf: [{ $ref: "#/components/schemas/HomeBanner" }], nullable: true }
+        hero: { allOf: [{ $ref: "#/components/schemas/HomeBanner" }], nullable: true }
+        secondary:
+          type: array
+          maxItems: 3
+          items: { $ref: "#/components/schemas/HomeBanner" }
+        featured:
+          type: object
+          required: [contact_lens, frame]
+          properties:
+            contact_lens:
+              type: array
+              maxItems: 8
+              items: { $ref: "#/components/schemas/Product" }
+            frame:
+              type: array
+              maxItems: 8
+              items: { $ref: "#/components/schemas/Product" }
+    VisionType:
+      type: string
+      enum: [none, single_vision, progressive]
+    PrescriptionKind:
+      type: string
+      enum: [contact_lens, glasses]
+    LensPackage:
+      type: object
+      required: [id, name, slug, description, vision_type, requires_prescription, price_cents]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        slug: { type: string }
+        description: { type: string, nullable: true }
+        vision_type: { $ref: "#/components/schemas/VisionType" }
+        requires_prescription: { type: boolean }
+        price_cents: { type: integer, format: int64, minimum: 0 }
+    AdminLensPackage:
+      allOf:
+        - $ref: "#/components/schemas/LensPackage"
+        - type: object
+          required: [position, active]
+          properties:
+            position: { type: integer }
+            active: { type: boolean }
+    LensPackageInput:
+      type: object
+      required: [name, slug, vision_type, price_cents, active]
+      properties:
+        name: { type: string }
+        slug: { type: string }
+        description: { type: string, nullable: true }
+        vision_type: { $ref: "#/components/schemas/VisionType" }
+        price_cents: { type: integer, format: int64, minimum: 0 }
+        active: { type: boolean }
+    ProductCategory:
+      type: string
+      enum: [contact_lens, frame]
+    FrameShape:
+      type: string
+      enum: [rectangular, square, round, oval, cat_eye, aviator, browline, geometric]
+    FrameMaterial:
+      type: string
+      enum: [acetate, metal, titanium, tr90, mixed]
+    FrameRim:
+      type: string
+      enum: [full, semi, rimless]
+    FrameGender:
+      type: string
+      enum: [women, men, unisex, kids]
+    FrameColor:
+      type: string
+      enum: [black, tortoise, brown, transparent, gray, blue, green, red, pink, purple, gold, silver, multicolor]
+    FrameDetails:
+      type: object
+      required: [shape, material, rim, gender, lens_width_mm, bridge_mm, temple_mm]
+      properties:
+        shape: { $ref: "#/components/schemas/FrameShape" }
+        material: { $ref: "#/components/schemas/FrameMaterial" }
+        rim: { $ref: "#/components/schemas/FrameRim" }
+        gender: { $ref: "#/components/schemas/FrameGender" }
+        lens_width_mm: { type: integer, minimum: 30, maximum: 80 }
+        bridge_mm: { type: integer, minimum: 10, maximum: 30 }
+        temple_mm: { type: integer, minimum: 100, maximum: 170 }
+    FrameVariant:
+      type: object
+      required: [id, sku, color, price_cents, available, in_stock]
+      properties:
+        id: { type: string, format: uuid }
+        sku: { type: string }
+        color: { $ref: "#/components/schemas/FrameColor" }
+        price_cents: { type: integer, format: int64 }
+        compare_at_cents: { type: integer, format: int64, nullable: true }
+        available: { type: integer }
+        in_stock: { type: boolean }
+    CatalogFacets:
+      type: object
+      required: [total, brands, min_price_cents, max_price_cents, values]
+      properties:
+        total: { type: integer }
+        brands:
+          type: array
+          items:
+            type: object
+            required: [slug, name, count]
+            properties:
+              slug: { type: string }
+              name: { type: string }
+              count: { type: integer }
+        min_price_cents: { type: integer, format: int64, nullable: true }
+        max_price_cents: { type: integer, format: int64, nullable: true }
+        values:
+          description: Llaves según la categoría. frame usa shape, material, rim, gender y color. contact_lens usa lens_type y replacement.
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: object
+              required: [value, count]
+              properties:
+                value: { type: string }
+                count: { type: integer }
     Brand:
       type: object
       required: [id, name, slug]
@@ -1182,16 +1710,19 @@ components:
         slug: { type: string }
     Product:
       type: object
-      required: [id, brand, name, slug, lens_type, replacement, pieces_per_box, requires_prescription, from_price_cents, image_url]
+      required: [id, category, brand, name, slug, lens_type, replacement, pieces_per_box, requires_prescription, from_price_cents, image_url, frame, color_count]
       properties:
         id: { type: string, format: uuid }
+        category: { $ref: "#/components/schemas/ProductCategory" }
         brand: { $ref: "#/components/schemas/Brand" }
         name: { type: string }
         slug: { type: string }
         description: { type: string, nullable: true }
-        lens_type: { $ref: "#/components/schemas/LensType" }
-        replacement: { $ref: "#/components/schemas/Replacement" }
-        pieces_per_box: { type: integer }
+        lens_type: { allOf: [{ $ref: "#/components/schemas/LensType" }], nullable: true, description: "`null` en armazones" }
+        replacement: { allOf: [{ $ref: "#/components/schemas/Replacement" }], nullable: true, description: "`null` en armazones" }
+        pieces_per_box: { type: integer, nullable: true, description: "`null` en armazones" }
+        frame: { allOf: [{ $ref: "#/components/schemas/FrameDetails" }], nullable: true, description: "`null` en lentes de contacto" }
+        color_count: { type: integer, description: Colores distintos en variantes activas }
         material: { type: string, nullable: true }
         water_content_pct: { type: number, nullable: true }
         requires_prescription: { type: boolean }
@@ -1229,15 +1760,27 @@ components:
       allOf:
         - $ref: "#/components/schemas/Product"
         - type: object
-          required: [images, options]
+          required: [images, options, frame_variants, lens_packages, frame_lead_time_days]
           properties:
+            lens_packages:
+              description: Paquetes de micas activos; vacío en lentes de contacto o con la venta de armazones desactivada.
+              type: array
+              items: { $ref: "#/components/schemas/LensPackage" }
+            frame_lead_time_days:
+              type: integer
+              nullable: true
+              description: Días estimados de entrega; `null` con la venta de armazones desactivada.
             images:
               type: array
               items: { $ref: "#/components/schemas/ProductImage" }
             options: { $ref: "#/components/schemas/ProductOptions" }
+            frame_variants:
+              description: Colores a la venta del armazón; vacío en lentes de contacto.
+              type: array
+              items: { $ref: "#/components/schemas/FrameVariant" }
     Variant:
       type: object
-      required: [id, sku, base_curve, diameter, price_cents, available, in_stock]
+      required: [id, sku, price_cents, available, in_stock]
       properties:
         id: { type: string, format: uuid }
         sku: { type: string }
@@ -1245,8 +1788,8 @@ components:
         cylinder: { type: number, format: double, nullable: true }
         axis: { type: integer, nullable: true }
         addition: { type: string, nullable: true }
-        base_curve: { type: number, format: double }
-        diameter: { type: number, format: double }
+        base_curve: { type: number, format: double, nullable: true }
+        diameter: { type: number, format: double, nullable: true }
         color: { type: string, nullable: true }
         price_cents: { type: integer, format: int64, description: Centavos MXN }
         compare_at_cents: { type: integer, format: int64, nullable: true }
@@ -1311,15 +1854,19 @@ components:
         slug: { type: string }
     ProductInput:
       type: object
-      required: [brand_id, name, slug, lens_type, replacement, pieces_per_box, requires_prescription, active]
+      required: [brand_id, name, slug, requires_prescription, active]
       properties:
+        category:
+          allOf: [{ $ref: "#/components/schemas/ProductCategory" }]
+          description: Al crear, por defecto `contact_lens`. No se puede cambiar después (`409`).
         brand_id: { type: string, format: uuid }
         name: { type: string }
         slug: { type: string }
         description: { type: string, nullable: true }
-        lens_type: { $ref: "#/components/schemas/LensType" }
-        replacement: { $ref: "#/components/schemas/Replacement" }
-        pieces_per_box: { type: integer }
+        lens_type: { allOf: [{ $ref: "#/components/schemas/LensType" }], nullable: true, description: Requerido en lentes de contacto; prohibido en armazones. }
+        replacement: { allOf: [{ $ref: "#/components/schemas/Replacement" }], nullable: true, description: Requerido en lentes de contacto; prohibido en armazones. }
+        pieces_per_box: { type: integer, nullable: true, description: Requerido en lentes de contacto; prohibido en armazones. }
+        frame: { allOf: [{ $ref: "#/components/schemas/FrameDetails" }], nullable: true, description: Requerido en armazones; prohibido en lentes de contacto. }
         material: { type: string, nullable: true }
         water_content_pct: { type: number, nullable: true }
         requires_prescription: { type: boolean }
@@ -1333,7 +1880,7 @@ components:
             active: { type: boolean }
     VariantInput:
       type: object
-      required: [product_id, sku, base_curve, diameter, price_cents, stock, active]
+      required: [product_id, sku, price_cents, stock, active]
       properties:
         product_id: { type: string, format: uuid }
         sku: { type: string }
@@ -1341,9 +1888,9 @@ components:
         cylinder: { type: number, format: double, nullable: true }
         axis: { type: integer, nullable: true }
         addition: { type: string, nullable: true }
-        base_curve: { type: number, format: double }
-        diameter: { type: number, format: double }
-        color: { type: string, nullable: true }
+        base_curve: { type: number, format: double, nullable: true, description: Requerido en lentes de contacto; prohibido en armazones. }
+        diameter: { type: number, format: double, nullable: true, description: Requerido en lentes de contacto; prohibido en armazones. }
+        color: { type: string, nullable: true, description: En armazones es requerido y debe ser un FrameColor. }
         price_cents: { type: integer, format: int64 }
         compare_at_cents: { type: integer, format: int64, nullable: true }
         stock: { type: integer }
@@ -1365,6 +1912,7 @@ components:
         variant_id: { type: string, format: uuid }
         eye: { $ref: "#/components/schemas/Eye" }
         quantity: { type: integer, minimum: 1, maximum: 12 }
+        lens_package_id: { type: string, format: uuid, nullable: true, description: "Requerido en armazones, con eye = both; prohibido en lentes de contacto." }
     CartItemUpdate:
       type: object
       required: [quantity]
@@ -1375,7 +1923,7 @@ components:
       enum: [right, left, both]
     CartItem:
       type: object
-      required: [id, variant_id, sku, eye, quantity, unit_price_cents, line_total_cents, available, purchasable, product, base_curve, diameter]
+      required: [id, category, variant_id, sku, eye, quantity, unit_price_cents, line_total_cents, available, purchasable, product, base_curve, diameter, lens_package, frame_price_cents, package_price_cents]
       properties:
         id: { type: string, format: uuid }
         variant_id: { type: string, format: uuid }
@@ -1385,7 +1933,18 @@ components:
         unit_price_cents: { type: integer, format: int64 }
         line_total_cents: { type: integer, format: int64 }
         available: { type: integer, description: "stock - reserved ahora mismo" }
-        purchasable: { type: boolean, description: "false si la variante o el producto ya no están activos" }
+        purchasable: { type: boolean, description: "false si la variante, el producto o el paquete de micas ya no están activos" }
+        category: { $ref: "#/components/schemas/ProductCategory" }
+        lens_package:
+          type: object
+          nullable: true
+          required: [id, name, requires_prescription]
+          properties:
+            id: { type: string, format: uuid }
+            name: { type: string }
+            requires_prescription: { type: boolean }
+        frame_price_cents: { type: integer, format: int64, nullable: true }
+        package_price_cents: { type: integer, format: int64, nullable: true }
         product:
           type: object
           required: [name, slug, brand, requires_prescription]
@@ -1399,13 +1958,14 @@ components:
         cylinder: { type: number, format: double, nullable: true }
         axis: { type: integer, nullable: true }
         addition: { type: string, nullable: true }
-        base_curve: { type: number, format: double }
-        diameter: { type: number, format: double }
+        base_curve: { type: number, format: double, nullable: true, description: "`null` en armazones" }
+        diameter: { type: number, format: double, nullable: true, description: "`null` en armazones" }
         color: { type: string, nullable: true }
     Cart:
       type: object
-      required: [items, subtotal_cents, item_count]
+      required: [items, subtotal_cents, item_count, frame_lead_time_days]
       properties:
+        frame_lead_time_days: { type: integer, nullable: true, description: "Días estimados de entrega de armazones; `null` con la venta desactivada." }
         items:
           type: array
           items: { $ref: "#/components/schemas/CartItem" }
@@ -1420,7 +1980,8 @@ components:
       required: [address_id]
       properties:
         address_id: { type: string, format: uuid }
-        prescription_id: { type: string, format: uuid, nullable: true }
+        prescription_id: { type: string, format: uuid, nullable: true, description: Receta de lentes de contacto }
+        glasses_prescription_id: { type: string, format: uuid, nullable: true, description: Receta de armazones }
         turnstile_token: { type: string }
     CheckoutResult:
       type: object
@@ -1435,8 +1996,10 @@ components:
       enum: [pending_payment, paid, preparing, shipped, delivered, cancelled, refunded, expired]
     OrderItem:
       type: object
-      required: [product_name, brand_name, product_slug, sku, eye, quantity, unit_price_cents, base_curve, diameter]
+      required: [category, product_name, brand_name, product_slug, sku, eye, quantity, unit_price_cents, base_curve, diameter, lens_package_name]
       properties:
+        category: { $ref: "#/components/schemas/ProductCategory" }
+        lens_package_name: { type: string, nullable: true }
         product_name: { type: string }
         brand_name: { type: string }
         product_slug: { type: string }
@@ -1448,13 +2011,18 @@ components:
         cylinder: { type: number, format: double, nullable: true }
         axis: { type: integer, nullable: true }
         addition: { type: string, nullable: true }
-        base_curve: { type: number, format: double }
-        diameter: { type: number, format: double }
+        base_curve: { type: number, format: double, nullable: true, description: "`null` en armazones" }
+        diameter: { type: number, format: double, nullable: true, description: "`null` en armazones" }
         color: { type: string, nullable: true }
     OrderSummary:
       type: object
-      required: [id, number, status, total_cents, units, created_at, paid_at, tracking_carrier, tracking_number]
+      required: [id, number, status, total_cents, units, reorderable, frame_lines, created_at, paid_at, tracking_carrier, tracking_number]
       properties:
+        reorderable: { type: boolean, description: "Falso si el pedido solo trae armazones con micas, que no se repiten." }
+        frame_lines:
+          type: array
+          description: "Armazones del pedido, p. ej. Lía · Negro · Monofocal básica."
+          items: { type: string }
         id: { type: string, format: uuid }
         number: { type: integer, format: int64 }
         status: { $ref: "#/components/schemas/OrderStatus" }
@@ -1502,6 +2070,8 @@ components:
       type: object
       required: [od_sphere, os_sphere, issued_at, expires_at, doctor_name]
       properties:
+        kind: { allOf: [{ $ref: "#/components/schemas/PrescriptionKind" }], description: Por defecto `contact_lens`. }
+        pd_mm: { type: number, format: double, nullable: true, minimum: 40, maximum: 80, description: Distancia pupilar; solo recetas de armazones. }
         od_sphere: { type: number, format: double }
         od_cylinder: { type: number, format: double, nullable: true }
         od_axis: { type: integer, nullable: true }
@@ -1541,9 +2111,10 @@ components:
             customer_email: { type: string }
     PrescriptionReview:
       type: object
-      required: [status]
+      description: Revisa la receta, captura la distancia pupilar, o ambas. Debe traer al menos una.
       properties:
         status: { type: string, enum: [approved, rejected] }
+        pd_mm: { type: number, format: double, minimum: 40, maximum: 80, description: Solo recetas de armazones }
         reject_reason: { type: string, maxLength: 500, description: Obligatorio al rechazar }
     AdminOrderSummary:
       type: object
@@ -1558,8 +2129,12 @@ components:
         paid_at: { type: string, format: date-time, nullable: true }
     AdminOrderLine:
       type: object
-      required: [sku, product_name, brand_name, eye, quantity, unit_price_cents, description]
+      required: [category, sku, product_name, brand_name, eye, quantity, unit_price_cents, description, color, lens_package_name, vision_type]
       properties:
+        category: { $ref: "#/components/schemas/ProductCategory" }
+        color: { type: string, nullable: true }
+        lens_package_name: { type: string, nullable: true }
+        vision_type: { allOf: [{ $ref: "#/components/schemas/VisionType" }], nullable: true }
         sku: { type: string }
         product_name: { type: string }
         brand_name: { type: string }
@@ -1584,8 +2159,18 @@ components:
       allOf:
         - $ref: "#/components/schemas/AdminOrderSummary"
         - type: object
-          required: [items, subtotal_cents, shipping_cents, discount_cents, shipping_address, prescription_id, mp_payment_id, tracking_carrier, tracking_number, shipped_at]
+          required: [items, subtotal_cents, shipping_cents, discount_cents, shipping_address, prescription_id, mp_payment_id, tracking_carrier, tracking_number, shipped_at, glasses_prescription_id, glasses_prescription_status, pd_mm, refund_required, prescription_file_url, glasses_prescription_file_url, lab_blockers]
           properties:
+            glasses_prescription_id: { type: string, format: uuid, nullable: true }
+            glasses_prescription_status: { allOf: [{ $ref: "#/components/schemas/RxStatus" }], nullable: true }
+            pd_mm: { type: number, format: double, nullable: true }
+            refund_required: { type: boolean, description: "Pedido pagado con receta de armazones rechazada: requiere reembolso manual." }
+            prescription_file_url: { type: string, format: uri, nullable: true, description: "URL de lectura de corta vida" }
+            glasses_prescription_file_url: { type: string, format: uri, nullable: true, description: "URL de lectura de corta vida" }
+            lab_blockers:
+              type: array
+              description: Motivos por los que el pedido no puede pasar a `preparing`.
+              items: { type: string }
             items:
               type: array
               items: { $ref: "#/components/schemas/AdminOrderLine" }
@@ -1713,7 +2298,7 @@ components:
       required: [product_name, reason]
       properties:
         product_name: { type: string }
-        reason: { type: string, enum: [out_of_stock, discontinued] }
+        reason: { type: string, enum: [out_of_stock, discontinued, not_reorderable] }
     ReorderResult:
       type: object
       required: [added, unavailable]

@@ -5,8 +5,18 @@
  * API de la tienda en línea de lentes de contacto. Fuente de verdad del contrato con lentes-web.
  * OpenAPI spec version: 0.1.0
  */
+import type { PrescriptionKind } from './prescriptionKind';
 
 export interface PrescriptionFields {
+  /** Por defecto `contact_lens`. */
+  kind?: PrescriptionKind;
+  /**
+     * Distancia pupilar; solo recetas de armazones.
+     * @minimum 40
+     * @maximum 80
+     * @nullable
+     */
+  pd_mm?: number | null;
   od_sphere: number;
   /** @nullable */
   od_cylinder?: number | null;

@@ -8,7 +8,15 @@
 
 export interface CheckoutInput {
   address_id: string;
-  /** @nullable */
+  /**
+     * Receta de lentes de contacto
+     * @nullable
+     */
   prescription_id?: string | null;
+  /**
+     * Receta de armazones
+     * @nullable
+     */
+  glasses_prescription_id?: string | null;
   turnstile_token?: string;
 }

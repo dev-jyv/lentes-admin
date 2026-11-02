@@ -7,9 +7,29 @@
  */
 import type { AdminOrderLine } from './adminOrderLine';
 import type { AdminOrderSummary } from './adminOrderSummary';
+import type { RxStatus } from './rxStatus';
 import type { ShippingAddress } from './shippingAddress';
 
 export type AdminOrder = AdminOrderSummary & ({
+  /** @nullable */
+  glasses_prescription_id: string | null;
+  glasses_prescription_status: RxStatus | null;
+  /** @nullable */
+  pd_mm: number | null;
+  /** Pedido pagado con receta de armazones rechazada: requiere reembolso manual. */
+  refund_required: boolean;
+  /**
+     * URL de lectura de corta vida
+     * @nullable
+     */
+  prescription_file_url: string | null;
+  /**
+     * URL de lectura de corta vida
+     * @nullable
+     */
+  glasses_prescription_file_url: string | null;
+  /** Motivos por los que el pedido no puede pasar a `preparing`. */
+  lab_blockers: string[];
   items: AdminOrderLine[];
   subtotal_cents: number;
   shipping_cents: number;

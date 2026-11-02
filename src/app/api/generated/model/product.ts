@@ -6,19 +6,32 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { Brand } from './brand';
+import type { FrameDetails } from './frameDetails';
 import type { LensType } from './lensType';
+import type { ProductCategory } from './productCategory';
 import type { Replacement } from './replacement';
 
 export interface Product {
   id: string;
+  category: ProductCategory;
   brand: Brand;
   name: string;
   slug: string;
   /** @nullable */
   description?: string | null;
-  lens_type: LensType;
-  replacement: Replacement;
-  pieces_per_box: number;
+  /** `null` en armazones */
+  lens_type: LensType | null;
+  /** `null` en armazones */
+  replacement: Replacement | null;
+  /**
+     * `null` en armazones
+     * @nullable
+     */
+  pieces_per_box: number | null;
+  /** `null` en lentes de contacto */
+  frame: FrameDetails | null;
+  /** Colores distintos en variantes activas */
+  color_count: number;
   /** @nullable */
   material?: string | null;
   /** @nullable */

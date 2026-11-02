@@ -12,4 +12,5 @@ export type UnavailableItemReason = typeof UnavailableItemReason[keyof typeof Un
 export const UnavailableItemReason = {
   out_of_stock: 'out_of_stock',
   discontinued: 'discontinued',
+  not_reorderable: 'not_reorderable',
 } as const;

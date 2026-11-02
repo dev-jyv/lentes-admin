@@ -7,8 +7,17 @@
  */
 import type { PrescriptionReviewStatus } from './prescriptionReviewStatus';
 
+/**
+ * Revisa la receta, captura la distancia pupilar, o ambas. Debe traer al menos una.
+ */
 export interface PrescriptionReview {
-  status: PrescriptionReviewStatus;
+  status?: PrescriptionReviewStatus;
+  /**
+     * Solo recetas de armazones
+     * @minimum 40
+     * @maximum 80
+     */
+  pd_mm?: number;
   /**
      * Obligatorio al rechazar
      * @maxLength 500

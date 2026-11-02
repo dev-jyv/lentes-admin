@@ -17,8 +17,10 @@ export interface Variant {
   axis?: number | null;
   /** @nullable */
   addition?: string | null;
-  base_curve: number;
-  diameter: number;
+  /** @nullable */
+  base_curve?: number | null;
+  /** @nullable */
+  diameter?: number | null;
   /** @nullable */
   color?: string | null;
   /** Centavos MXN */

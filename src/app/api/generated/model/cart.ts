@@ -8,6 +8,11 @@
 import type { CartItem } from './cartItem';
 
 export interface Cart {
+  /**
+     * Días estimados de entrega de armazones; `null` con la venta desactivada.
+     * @nullable
+     */
+  frame_lead_time_days: number | null;
   items: CartItem[];
   /** Centavos MXN */
   subtotal_cents: number;

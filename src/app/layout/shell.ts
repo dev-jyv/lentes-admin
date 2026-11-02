@@ -59,6 +59,8 @@ export default class Shell {
     { path: '/inventario', label: 'Inventario' },
     { path: '/reportes', label: 'Reportes' },
     { path: '/marcas', label: 'Marcas' },
+    { path: '/micas', label: 'Micas' },
+    { path: '/home', label: 'Home' },
   ];
 
   protected readonly dark = signal(document.documentElement.dataset['theme'] === 'dark');
