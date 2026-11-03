@@ -18,5 +18,4 @@ export interface CheckoutInput {
      * @nullable
      */
   glasses_prescription_id?: string | null;
-  turnstile_token?: string;
 }
