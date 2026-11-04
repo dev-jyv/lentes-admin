@@ -14,6 +14,7 @@ export interface ProductOptions {
   cylinders: number[];
   axes: number[];
   additions: string[];
+  dominances: string[];
   base_curves: number[];
   diameters: number[];
   colors: string[];

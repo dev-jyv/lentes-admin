@@ -195,6 +195,10 @@ paths:
         - name: addition
           in: query
           schema: { type: string }
+        - name: dominance
+          in: query
+          description: "`D` o `N`; solo en multifocales que lo requieren."
+          schema: { type: string }
         - name: base_curve
           in: query
           required: true
@@ -1466,8 +1470,9 @@ paths:
       operationId: adminImportVariants
       summary: "Carga masiva de variantes por CSV (upsert por sku, todo o nada)"
       description: |
-        Columnas: `product_slug,sku,sphere,cylinder,axis,addition,base_curve,diameter,color,price_cents,compare_at_cents,stock,active`.
+        Columnas: `product_slug,sku,sphere,cylinder,axis,addition,dominance,base_curve,diameter,color,price_cents,compare_at_cents,stock,on_demand,active`.
         Requeridas: `product_slug`, `sku`, `base_curve`, `diameter`, `price_cents`, `stock`. Máximo 5 MB y 5,000 filas.
+        Una variante con `on_demand=true` debe llevar `stock=0`.
         El encabezado es la fila 1. Si hay errores no se aplica nada y se devuelven por fila.
       security:
         - bearerAuth: [admin]
@@ -1755,12 +1760,13 @@ components:
     ProductOptions:
       description: Valores que existen en variantes activas del modelo, ordenados.
       type: object
-      required: [spheres, cylinders, axes, additions, base_curves, diameters, colors]
+      required: [spheres, cylinders, axes, additions, dominances, base_curves, diameters, colors]
       properties:
         spheres: { type: array, items: { type: number, format: double } }
         cylinders: { type: array, items: { type: number, format: double } }
         axes: { type: array, items: { type: integer } }
         additions: { type: array, items: { type: string } }
+        dominances: { type: array, items: { type: string } }
         base_curves: { type: array, items: { type: number, format: double } }
         diameters: { type: array, items: { type: number, format: double } }
         colors: { type: array, items: { type: string } }
@@ -1788,7 +1794,7 @@ components:
               items: { $ref: "#/components/schemas/FrameVariant" }
     Variant:
       type: object
-      required: [id, sku, price_cents, available, in_stock]
+      required: [id, sku, price_cents, available, in_stock, on_demand]
       properties:
         id: { type: string, format: uuid }
         sku: { type: string }
@@ -1796,12 +1802,14 @@ components:
         cylinder: { type: number, format: double, nullable: true }
         axis: { type: integer, nullable: true }
         addition: { type: string, nullable: true }
+        dominance: { type: string, nullable: true, description: "`D` o `N` en multifocales que lo requieren" }
         base_curve: { type: number, format: double, nullable: true }
         diameter: { type: number, format: double, nullable: true }
         color: { type: string, nullable: true }
         price_cents: { type: integer, format: int64, description: Centavos MXN }
         compare_at_cents: { type: integer, format: int64, nullable: true }
-        available: { type: integer, description: "stock - reserved" }
+        on_demand: { type: boolean, description: "Se surte por pedido; no hay existencia física que mostrar" }
+        available: { type: integer, description: "stock - reserved; con `on_demand` es un tope técnico (9999), no una existencia" }
         in_stock: { type: boolean }
     ImportProblem:
       allOf:
@@ -1896,6 +1904,8 @@ components:
         cylinder: { type: number, format: double, nullable: true }
         axis: { type: integer, nullable: true }
         addition: { type: string, nullable: true }
+        dominance: { type: string, nullable: true, description: "`D` o `N`; solo en multifocales." }
+        on_demand: { type: boolean, default: false, description: "Solo en lentes de contacto; exige `stock` 0." }
         base_curve: { type: number, format: double, nullable: true, description: Requerido en lentes de contacto; prohibido en armazones. }
         diameter: { type: number, format: double, nullable: true, description: Requerido en lentes de contacto; prohibido en armazones. }
         color: { type: string, nullable: true, description: En armazones es requerido y debe ser un FrameColor. }
@@ -1931,7 +1941,7 @@ components:
       enum: [right, left, both]
     CartItem:
       type: object
-      required: [id, category, variant_id, sku, eye, quantity, unit_price_cents, line_total_cents, available, purchasable, product, base_curve, diameter, lens_package, frame_price_cents, package_price_cents]
+      required: [id, category, variant_id, sku, eye, quantity, unit_price_cents, line_total_cents, available, on_demand, purchasable, product, base_curve, diameter, lens_package, frame_price_cents, package_price_cents]
       properties:
         id: { type: string, format: uuid }
         variant_id: { type: string, format: uuid }
@@ -1940,7 +1950,8 @@ components:
         quantity: { type: integer }
         unit_price_cents: { type: integer, format: int64 }
         line_total_cents: { type: integer, format: int64 }
-        available: { type: integer, description: "stock - reserved ahora mismo" }
+        available: { type: integer, description: "stock - reserved ahora mismo; con `on_demand` es un tope técnico (9999)" }
+        on_demand: { type: boolean, description: "Se surte por pedido" }
         purchasable: { type: boolean, description: "false si la variante, el producto o el paquete de micas ya no están activos" }
         category: { $ref: "#/components/schemas/ProductCategory" }
         lens_package:
@@ -1966,6 +1977,7 @@ components:
         cylinder: { type: number, format: double, nullable: true }
         axis: { type: integer, nullable: true }
         addition: { type: string, nullable: true }
+        dominance: { type: string, nullable: true }
         base_curve: { type: number, format: double, nullable: true, description: "`null` en armazones" }
         diameter: { type: number, format: double, nullable: true, description: "`null` en armazones" }
         color: { type: string, nullable: true }
@@ -2018,6 +2030,7 @@ components:
         cylinder: { type: number, format: double, nullable: true }
         axis: { type: integer, nullable: true }
         addition: { type: string, nullable: true }
+        dominance: { type: string, nullable: true }
         base_curve: { type: number, format: double, nullable: true, description: "`null` en armazones" }
         diameter: { type: number, format: double, nullable: true, description: "`null` en armazones" }
         color: { type: string, nullable: true }

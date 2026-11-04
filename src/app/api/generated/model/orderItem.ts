@@ -28,6 +28,8 @@ export interface OrderItem {
   axis?: number | null;
   /** @nullable */
   addition?: string | null;
+  /** @nullable */
+  dominance?: string | null;
   /**
      * `null` en armazones
      * @nullable

@@ -18,6 +18,13 @@ export interface VariantInput {
   /** @nullable */
   addition?: string | null;
   /**
+     * `D` o `N`; solo en multifocales.
+     * @nullable
+     */
+  dominance?: string | null;
+  /** Solo en lentes de contacto; exige `stock` 0. */
+  on_demand?: boolean;
+  /**
      * Requerido en lentes de contacto; prohibido en armazones.
      * @nullable
      */

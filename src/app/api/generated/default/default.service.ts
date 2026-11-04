@@ -2430,8 +2430,9 @@ export class DefaultService {
     );
   }
 /**
- * Columnas: `product_slug,sku,sphere,cylinder,axis,addition,base_curve,diameter,color,price_cents,compare_at_cents,stock,active`.
+ * Columnas: `product_slug,sku,sphere,cylinder,axis,addition,dominance,base_curve,diameter,color,price_cents,compare_at_cents,stock,on_demand,active`.
  * Requeridas: `product_slug`, `sku`, `base_curve`, `diameter`, `price_cents`, `stock`. Máximo 5 MB y 5,000 filas.
+ * Una variante con `on_demand=true` debe llevar `stock=0`.
  * El encabezado es la fila 1. Si hay errores no se aplica nada y se devuelven por fila.
  * @summary Carga masiva de variantes por CSV (upsert por sku, todo o nada)
  */

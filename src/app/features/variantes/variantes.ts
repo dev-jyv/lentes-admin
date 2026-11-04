@@ -16,19 +16,24 @@ interface VariantForm {
   cylinder: number | null;
   axis: number | null;
   addition: string;
+  dominance: string;
   base_curve: number | null;
   diameter: number | null;
   color: string;
   price_pesos: number | null;
   compare_at_pesos: number | null;
   stock: number;
+  on_demand: boolean;
   active: boolean;
 }
 
 const empty = (): VariantForm => ({
-  sku: '', sphere: null, cylinder: null, axis: null, addition: '', base_curve: null, diameter: null,
-  color: '', price_pesos: null, compare_at_pesos: null, stock: 0, active: true,
+  sku: '', sphere: null, cylinder: null, axis: null, addition: '', dominance: '', base_curve: null, diameter: null,
+  color: '', price_pesos: null, compare_at_pesos: null, stock: 0, on_demand: false, active: true,
 });
+
+/** Una tabla con miles de filas congela el navegador: se pinta hasta este tope y se filtra por SKU. */
+const MAX_ROWS = 200;
 
 const fmt = (n: number | null | undefined) => (n == null ? '—' : String(n));
 
@@ -76,6 +81,14 @@ const fmt = (n: number | null | undefined) => (n == null ? '—' : String(n));
             <input id="add" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.addition" />
           </div>
           <div>
+            <label for="dom" class="mb-1 block text-sm">{{ 'variantes.dominance' | t }}</label>
+            <select id="dom" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.dominance">
+              <option value="">{{ 'variantes.noDominance' | t }}</option>
+              <option value="D">D</option>
+              <option value="N">N</option>
+            </select>
+          </div>
+          <div>
             <label for="bc" class="mb-1 block text-sm">{{ 'variantes.baseCurve' | t }}</label>
             <input id="bc" type="number" step="0.1" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.base_curve" />
           </div>
@@ -100,6 +113,9 @@ const fmt = (n: number | null | undefined) => (n == null ? '—' : String(n));
             <label for="stock" class="mb-1 block text-sm">{{ 'inventario.stock' | t }} @if (editingId()) { <span class="text-xs text-muted-foreground">{{ 'variantes.useAdjust' | t }}</span> }</label>
             <input id="stock" type="number" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.stock" />
           </div>
+          @if (!isFrame()) {
+            <label class="flex items-center gap-2 text-sm sm:col-span-3"><input type="checkbox" [formField]="model.on_demand" /> {{ 'variantes.onDemandHelp' | t }}</label>
+          }
           <label class="flex items-center gap-2 text-sm sm:col-span-3"><input type="checkbox" [formField]="model.active" /> {{ 'variantes.activeForSale' | t }}</label>
           @if (error()) { <p role="alert" class="text-sm text-destructive sm:col-span-3">{{ error() }}</p> }
           <div class="flex gap-2 sm:col-span-3">
@@ -138,31 +154,40 @@ const fmt = (n: number | null | undefined) => (n == null ? '—' : String(n));
     }
 
     @if (loadError()) { <p role="alert" class="mb-4 text-sm text-destructive">{{ loadError() }}</p> }
+    @if (variants().length > maxRows) {
+      <div class="mb-3 flex flex-wrap items-center gap-3">
+        <label for="vfilter" class="text-sm">{{ 'variantes.filterSku' | t }}</label>
+        <input id="vfilter" class="rounded-lg border border-input px-3 py-2 text-sm" [value]="filter()" (input)="filter.set($any($event.target).value)" />
+        <p role="status" class="text-sm text-muted-foreground">{{ 'variantes.showing' | t: { shown: visible().length, total: filtered().length } }}</p>
+      </div>
+    }
     <table class="w-full text-sm">
       <thead><tr class="border-b text-left">
         <th class="py-2">{{ 'common.sku' | t }}</th>
-        @if (isFrame()) { <th>{{ 'variantes.color' | t }}</th> } @else { <th>{{ 'variantes.abbr.sphere' | t }}</th><th>{{ 'variantes.abbr.cylinder' | t }}</th><th>{{ 'variantes.axis' | t }}</th><th>{{ 'variantes.abbr.addition' | t }}</th><th>{{ 'variantes.abbr.baseCurve' | t }}</th><th>{{ 'variantes.abbr.diameter' | t }}</th> }
+        @if (isFrame()) { <th>{{ 'variantes.color' | t }}</th> } @else { <th>{{ 'variantes.abbr.sphere' | t }}</th><th>{{ 'variantes.abbr.cylinder' | t }}</th><th>{{ 'variantes.axis' | t }}</th><th>{{ 'variantes.abbr.addition' | t }}</th><th>{{ 'variantes.abbr.dominance' | t }}</th><th>{{ 'variantes.abbr.baseCurve' | t }}</th><th>{{ 'variantes.abbr.diameter' | t }}</th> }
         <th>{{ 'common.price' | t }}</th><th>{{ 'inventario.stock' | t }}</th><th>{{ 'inventario.reserved' | t }}</th><th>{{ 'common.status' | t }}</th><th></th>
       </tr></thead>
       <tbody>
-        @for (v of variants(); track v.id) {
+        @for (v of visible(); track v.id) {
           <tr class="border-b">
             <td class="py-2">{{ v.sku }}</td>
             @if (isFrame()) {
               <td>{{ colorLabel(v.color) }}</td>
             } @else {
               <td>{{ f(v.sphere) }}</td><td>{{ f(v.cylinder) }}</td><td>{{ f(v.axis) }}</td>
-              <td>{{ v.addition ?? '—' }}</td><td>{{ f(v.base_curve) }}</td><td>{{ f(v.diameter) }}</td>
+              <td>{{ v.addition ?? '—' }}</td><td>{{ v.dominance ?? '—' }}</td><td>{{ f(v.base_curve) }}</td><td>{{ f(v.diameter) }}</td>
             }
-            <td>{{ money(v.price_cents) }}</td><td>{{ v.stock }}</td><td>{{ v.reserved }}</td>
+            <td>{{ money(v.price_cents) }}</td><td>{{ v.on_demand ? ('variantes.onDemand' | t) : v.stock }}</td><td>{{ v.reserved }}</td>
             <td>{{ v.active ? ('variantes.active' | t) : ('variantes.inactive' | t) }}</td>
             <td class="space-x-3 text-right">
               <button type="button" class="underline" (click)="startEdit(v)">{{ 'common.edit' | t }}</button>
-              <button type="button" class="underline" (click)="adjusting.set(v)">{{ 'variantes.adjustStock' | t }}</button>
+              @if (!v.on_demand) {
+                <button type="button" class="underline" (click)="adjusting.set(v)">{{ 'variantes.adjustStock' | t }}</button>
+              }
             </td>
           </tr>
         } @empty {
-          <tr><td colspan="12" class="py-4 text-muted-foreground">{{ 'variantes.empty' | t }}</td></tr>
+          <tr><td colspan="13" class="py-4 text-muted-foreground">{{ 'variantes.empty' | t }}</td></tr>
         }
       </tbody>
     </table>
@@ -178,6 +203,13 @@ export default class Variantes implements OnInit {
   protected colorLabel = (c: string | null | undefined) => (c ? (COLOR_LABEL[c as keyof typeof COLOR_LABEL] ?? c) : '—');
   private readonly api = inject(DefaultService);
   protected readonly variants = signal<AdminVariant[]>([]);
+  protected readonly maxRows = MAX_ROWS;
+  protected readonly filter = signal('');
+  protected readonly filtered = computed(() => {
+    const q = this.filter().trim().toLowerCase();
+    return q ? this.variants().filter((v) => v.sku.toLowerCase().includes(q)) : this.variants();
+  });
+  protected readonly visible = computed(() => this.filtered().slice(0, MAX_ROWS));
   protected readonly editing = signal(false);
   protected readonly editingId = signal<string | null>(null);
   protected readonly adjusting = signal<AdminVariant | null>(null);
@@ -204,7 +236,7 @@ export default class Variantes implements OnInit {
     min(p.price_pesos, 0.01);
     min(p.stock, 0);
     // Al editar, la existencia solo cambia con "Ajustar existencia" (queda motivo e historial).
-    disabled(p.stock, () => this.editingId() !== null);
+    disabled(p.stock, ({ valueOf }) => this.editingId() !== null || valueOf(p.on_demand));
   });
 
   ngOnInit() {
@@ -232,10 +264,10 @@ export default class Variantes implements OnInit {
     this.editingId.set(v.id);
     this.state.set({
       sku: v.sku, sphere: v.sphere ?? null, cylinder: v.cylinder ?? null, axis: v.axis ?? null,
-      addition: v.addition ?? '', base_curve: v.base_curve ?? null, diameter: v.diameter ?? null, color: v.color ?? '',
+      addition: v.addition ?? '', dominance: v.dominance ?? '', base_curve: v.base_curve ?? null, diameter: v.diameter ?? null, color: v.color ?? '',
       price_pesos: centsToPesos(v.price_cents),
       compare_at_pesos: v.compare_at_cents == null ? null : centsToPesos(v.compare_at_cents),
-      stock: v.stock, active: v.active,
+      stock: v.stock, on_demand: v.on_demand, active: v.active,
     });
     this.error.set(null);
     this.editing.set(true);
@@ -251,12 +283,13 @@ export default class Variantes implements OnInit {
         ? {}
         : {
             sphere: s.sphere, cylinder: s.cylinder, axis: s.axis, addition: s.addition.trim() || null,
+            dominance: s.dominance || null, on_demand: s.on_demand,
             base_curve: s.base_curve, diameter: s.diameter,
           }),
       color: s.color.trim() || null,
       price_cents: pesosToCents(s.price_pesos!),
       compare_at_cents: s.compare_at_pesos == null ? null : pesosToCents(s.compare_at_pesos),
-      stock: s.stock, active: s.active,
+      stock: s.on_demand ? 0 : s.stock, active: s.active,
     };
     this.busy.set(true);
     this.error.set(null);
