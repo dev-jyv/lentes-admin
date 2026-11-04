@@ -9,12 +9,9 @@ import { move } from '../../core/images';
 import { centsToPesos, formatMxn, pesosToCents } from '../../core/money';
 import { problemMessage } from '../../core/problem';
 import { slugify } from '../../core/slug';
+import { t, TPipe } from '../../core/i18n';
 
-const VISION_LABEL: Record<VisionType, string> = {
-  none: 'Sin graduación',
-  single_vision: 'Monofocal',
-  progressive: 'Progresiva',
-};
+const VISION_LABEL: Record<VisionType, string> = t('labels.vision', { returnObjects: true });
 
 interface PackageForm {
   name: string;
@@ -31,45 +28,45 @@ const empty = (): PackageForm => ({
 
 @Component({
   selector: 'app-micas',
-  imports: [FormField],
+  imports: [FormField, TPipe],
   template: `
     <div class="mb-6 flex items-center justify-between">
-      <h1 class="text-2xl">Micas</h1>
-      <button type="button" class="rounded-lg bg-primary px-3 py-2 text-sm text-primary-foreground" (click)="startCreate()">Nuevo paquete</button>
+      <h1 class="text-2xl">{{ 'nav.micas' | t }}</h1>
+      <button type="button" class="rounded-full bg-primary px-3 py-2 text-sm text-primary-foreground" (click)="startCreate()">{{ 'micas.new' | t }}</button>
     </div>
 
     @if (editing()) {
-      <section class="mb-8 max-w-3xl rounded-lg border border-border p-4" aria-labelledby="ptitle">
-        <h2 id="ptitle" class="mb-3 font-medium">{{ editingId() ? 'Editar paquete' : 'Nuevo paquete' }}</h2>
+      <section class="mb-8 max-w-3xl rounded-2xl border border-border bg-card p-4" aria-labelledby="ptitle">
+        <h2 id="ptitle" class="mb-3 font-medium">{{ editingId() ? ('micas.edit' | t) : ('micas.new' | t) }}</h2>
         <form class="grid gap-3 sm:grid-cols-2" (submit)="save($event)">
           <div>
-            <label for="pname" class="mb-1 block text-sm">Nombre</label>
+            <label for="pname" class="mb-1 block text-sm">{{ 'common.name' | t }}</label>
             <input id="pname" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.name" (input)="autoSlug()" />
           </div>
           <div>
-            <label for="pslug" class="mb-1 block text-sm">Slug</label>
+            <label for="pslug" class="mb-1 block text-sm">{{ 'common.slug' | t }}</label>
             <input id="pslug" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.slug" />
           </div>
           <div>
-            <label for="vision" class="mb-1 block text-sm">Tipo de visión</label>
+            <label for="vision" class="mb-1 block text-sm">{{ 'micas.visionType' | t }}</label>
             <select id="vision" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.vision_type">
               @for (o of visions; track o.value) { <option [value]="o.value">{{ o.label }}</option> }
             </select>
-            <p class="mt-1 text-xs text-muted-foreground">Solo “Sin graduación” se vende sin receta.</p>
+            <p class="mt-1 text-xs text-muted-foreground">{{ 'micas.visionHint' | t }}</p>
           </div>
           <div>
-            <label for="price" class="mb-1 block text-sm">Precio (MXN)</label>
+            <label for="price" class="mb-1 block text-sm">{{ 'micas.pricePesos' | t }}</label>
             <input id="price" type="number" step="0.01" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.price_pesos" />
           </div>
           <div class="sm:col-span-2">
-            <label for="desc" class="mb-1 block text-sm">Descripción</label>
+            <label for="desc" class="mb-1 block text-sm">{{ 'common.description' | t }}</label>
             <textarea id="desc" rows="2" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.description"></textarea>
           </div>
-          <label class="flex items-center gap-2 text-sm sm:col-span-2"><input type="checkbox" [formField]="model.active" /> Activo (a la venta)</label>
+          <label class="flex items-center gap-2 text-sm sm:col-span-2"><input type="checkbox" [formField]="model.active" /> {{ 'micas.activeForSale' | t }}</label>
           @if (error()) { <p role="alert" class="text-sm text-destructive sm:col-span-2">{{ error() }}</p> }
           <div class="flex gap-2 sm:col-span-2">
-            <button type="submit" class="rounded-lg bg-primary px-3 py-2 text-primary-foreground disabled:opacity-50" [disabled]="busy()">Guardar</button>
-            <button type="button" class="rounded-lg border border-input px-3 py-2" (click)="editing.set(false)">Cancelar</button>
+            <button type="submit" class="rounded-full bg-primary px-3 py-2 text-primary-foreground disabled:opacity-50" [disabled]="busy()">{{ 'common.save' | t }}</button>
+            <button type="button" class="rounded-full border border-input px-3 py-2" (click)="editing.set(false)">{{ 'common.cancel' | t }}</button>
           </div>
         </form>
       </section>
@@ -77,23 +74,23 @@ const empty = (): PackageForm => ({
 
     @if (loadError()) { <p role="alert" class="mb-4 text-sm text-destructive">{{ loadError() }}</p> }
     <table class="w-full text-sm">
-      <thead><tr class="border-b text-left"><th class="py-2">Paquete</th><th>Tipo</th><th>Receta</th><th>Precio</th><th>Estado</th><th></th></tr></thead>
+      <thead><tr class="border-b text-left"><th class="py-2">{{ 'micas.package' | t }}</th><th>{{ 'common.type' | t }}</th><th>{{ 'micas.prescription' | t }}</th><th>{{ 'common.price' | t }}</th><th>{{ 'common.status' | t }}</th><th></th></tr></thead>
       <tbody>
         @for (p of packages(); track p.id; let i = $index) {
           <tr class="border-b">
             <td class="py-2">{{ p.name }}</td>
             <td>{{ visionLabel[p.vision_type] }}</td>
-            <td>{{ p.requires_prescription ? 'Requiere' : 'No' }}</td>
+            <td>{{ p.requires_prescription ? ('micas.requires' | t) : ('common.no' | t) }}</td>
             <td>{{ money(p.price_cents) }}</td>
-            <td>{{ p.active ? 'Activo' : 'Inactivo' }}</td>
+            <td>{{ p.active ? ('common.active' | t) : ('common.inactive' | t) }}</td>
             <td class="space-x-3 text-right">
-              <button type="button" class="underline disabled:opacity-40" [attr.aria-label]="'Subir ' + p.name" [disabled]="i === 0" (click)="shift(i, -1)">↑</button>
-              <button type="button" class="underline disabled:opacity-40" [attr.aria-label]="'Bajar ' + p.name" [disabled]="i === packages().length - 1" (click)="shift(i, 1)">↓</button>
-              <button type="button" class="underline" (click)="startEdit(p)">Editar</button>
+              <button type="button" class="underline disabled:opacity-40" [attr.aria-label]="'micas.moveUp' | t: { name: p.name }" [disabled]="i === 0" (click)="shift(i, -1)">↑</button>
+              <button type="button" class="underline disabled:opacity-40" [attr.aria-label]="'micas.moveDown' | t: { name: p.name }" [disabled]="i === packages().length - 1" (click)="shift(i, 1)">↓</button>
+              <button type="button" class="underline" (click)="startEdit(p)">{{ 'common.edit' | t }}</button>
             </td>
           </tr>
         } @empty {
-          <tr><td colspan="6" class="py-4 text-muted-foreground">Aún no hay paquetes de micas.</td></tr>
+          <tr><td colspan="6" class="py-4 text-muted-foreground">{{ 'micas.empty' | t }}</td></tr>
         }
       </tbody>
     </table>
@@ -124,7 +121,7 @@ export default class Micas implements OnInit {
     try {
       this.packages.set((await firstValueFrom(this.api.adminListLensPackages())).items);
     } catch (e) {
-      this.loadError.set(problemMessage(e, 'No se pudieron cargar los paquetes.'));
+      this.loadError.set(problemMessage(e, t('micas.loadFailed')));
     }
   }
 
@@ -153,7 +150,7 @@ export default class Micas implements OnInit {
 
   protected async save(event: Event) {
     event.preventDefault();
-    if (this.model().invalid()) return this.error.set('Revisa los campos obligatorios.');
+    if (this.model().invalid()) return this.error.set(t('common.checkRequired'));
     const s = this.state();
     const body: LensPackageInput = {
       name: s.name.trim(), slug: s.slug.trim(), description: s.description.trim() || null, vision_type: s.vision_type,
@@ -167,7 +164,7 @@ export default class Micas implements OnInit {
       this.packages.update((list) => (id ? list.map((p) => (p.id === id ? saved : p)) : [...list, saved]));
       this.editing.set(false);
     } catch (e) {
-      this.error.set(problemMessage(e, 'No se pudo guardar el paquete (¿slug repetido?).'));
+      this.error.set(problemMessage(e, t('micas.saveFailed')));
     } finally {
       this.busy.set(false);
     }
@@ -178,7 +175,7 @@ export default class Micas implements OnInit {
     try {
       this.packages.set((await firstValueFrom(this.api.adminReorderLensPackages({ package_ids: ids }))).items);
     } catch (e) {
-      this.loadError.set(problemMessage(e, 'No se pudo cambiar el orden.'));
+      this.loadError.set(problemMessage(e, t('common.reorderFailed')));
     }
   }
 }

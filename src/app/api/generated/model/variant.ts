@@ -17,6 +17,11 @@ export interface Variant {
   axis?: number | null;
   /** @nullable */
   addition?: string | null;
+  /**
+     * `D` o `N` en multifocales que lo requieren
+     * @nullable
+     */
+  dominance?: string | null;
   /** @nullable */
   base_curve?: number | null;
   /** @nullable */
@@ -27,7 +32,9 @@ export interface Variant {
   price_cents: number;
   /** @nullable */
   compare_at_cents?: number | null;
-  /** stock - reserved */
+  /** Se surte por pedido; no hay existencia física que mostrar */
+  on_demand: boolean;
+  /** stock - reserved; con `on_demand` es un tope técnico (9999), no una existencia */
   available: number;
   in_stock: boolean;
 }

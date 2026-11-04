@@ -1,15 +1,7 @@
 import type { OrderStatus } from '../api/generated/model';
+import { t } from './i18n';
 
-export const STATUS_LABEL: Record<OrderStatus, string> = {
-  pending_payment: 'Pago pendiente',
-  paid: 'Pagado',
-  preparing: 'Preparando',
-  shipped: 'Enviado',
-  delivered: 'Entregado',
-  cancelled: 'Cancelado',
-  refunded: 'Reembolsado',
-  expired: 'Expirado',
-};
+export const STATUS_LABEL: Record<OrderStatus, string> = t('labels.orderStatus', { returnObjects: true });
 
 /**
  * Transiciones que el panel ofrece. La API es la autoridad (responde 409 si no es válida).

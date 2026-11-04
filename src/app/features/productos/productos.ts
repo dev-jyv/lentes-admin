@@ -8,13 +8,10 @@ import type { AdminProduct, Brand, ProductInput } from '../../api/generated/mode
 import { CATEGORY_LABEL, GENDER_LABEL, MATERIAL_LABEL, RIM_LABEL, SHAPE_LABEL, toOptions } from '../../core/frame-labels';
 import { problemMessage } from '../../core/problem';
 import { slugify } from '../../core/slug';
+import { t, TPipe } from '../../core/i18n';
 
-const LENS_LABEL: Record<string, string> = {
-  spherical: 'Esférico', toric: 'Tórico', multifocal: 'Multifocal', cosmetic: 'Cosmético',
-};
-const REPL_LABEL: Record<string, string> = {
-  daily: 'Diario', biweekly: 'Quincenal', monthly: 'Mensual', quarterly: 'Trimestral', yearly: 'Anual',
-};
+const LENS_LABEL: Record<string, string> = t('labels.lensType', { returnObjects: true });
+const REPL_LABEL: Record<string, string> = t('labels.replacement', { returnObjects: true });
 
 interface ProductForm {
   category: ProductCategory;
@@ -49,114 +46,114 @@ const empty = (): ProductForm => ({
 
 @Component({
   selector: 'app-productos',
-  imports: [FormField, RouterLink],
+  imports: [FormField, RouterLink, TPipe],
   template: `
     <div class="mb-6 flex items-center justify-between">
-      <h1 class="text-2xl">Productos</h1>
-      <button type="button" class="rounded-lg bg-primary px-3 py-2 text-sm text-primary-foreground" (click)="startCreate()">Nuevo producto</button>
+      <h1 class="text-2xl">{{ 'nav.productos' | t }}</h1>
+      <button type="button" class="rounded-full bg-primary px-3 py-2 text-sm text-primary-foreground" (click)="startCreate()">{{ 'productos.new' | t }}</button>
     </div>
 
     @if (editing()) {
-      <section class="mb-8 max-w-3xl rounded-lg border border-border p-4" aria-labelledby="form-title">
-        <h2 id="form-title" class="mb-3 font-medium">{{ editingId() ? 'Editar producto' : 'Nuevo producto' }}</h2>
+      <section class="mb-8 max-w-3xl rounded-2xl border border-border bg-card p-4" aria-labelledby="form-title">
+        <h2 id="form-title" class="mb-3 font-medium">{{ editingId() ? ('productos.edit' | t) : ('productos.new' | t) }}</h2>
         <form class="grid gap-3 sm:grid-cols-2" (submit)="save($event)">
           <div class="sm:col-span-2">
-            <label for="category" class="mb-1 block text-sm">Categoría</label>
+            <label for="category" class="mb-1 block text-sm">{{ 'productos.category' | t }}</label>
             <select id="category" class="w-full rounded-lg border border-input px-3 py-2 disabled:opacity-60" [formField]="model.category">
               @for (o of categories; track o.value) { <option [value]="o.value">{{ o.label }}</option> }
             </select>
-            @if (editingId()) { <p class="mt-1 text-xs text-muted-foreground">La categoría no se puede cambiar después de crear el producto.</p> }
+            @if (editingId()) { <p class="mt-1 text-xs text-muted-foreground">{{ 'productos.categoryLocked' | t }}</p> }
           </div>
           <div>
-            <label for="brand" class="mb-1 block text-sm">Marca</label>
+            <label for="brand" class="mb-1 block text-sm">{{ 'productos.brand' | t }}</label>
             <select id="brand" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.brand_id">
-              <option value="">Elegir…</option>
+              <option value="">{{ 'common.choose' | t }}</option>
               @for (b of brands(); track b.id) { <option [value]="b.id">{{ b.name }}</option> }
             </select>
           </div>
           <div>
-            <label for="pname" class="mb-1 block text-sm">Nombre</label>
+            <label for="pname" class="mb-1 block text-sm">{{ 'common.name' | t }}</label>
             <input id="pname" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.name" (input)="autoSlug()" />
           </div>
           <div>
-            <label for="pslug" class="mb-1 block text-sm">Slug (URL)</label>
+            <label for="pslug" class="mb-1 block text-sm">{{ 'marcas.slugUrl' | t }}</label>
             <input id="pslug" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.slug" />
           </div>
           @if (isFrame()) {
             <div>
-              <label for="shape" class="mb-1 block text-sm">Forma</label>
+              <label for="shape" class="mb-1 block text-sm">{{ 'productos.shape' | t }}</label>
               <select id="shape" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.shape">
                 @for (o of shapes; track o.value) { <option [value]="o.value">{{ o.label }}</option> }
               </select>
             </div>
             <div>
-              <label for="fmaterial" class="mb-1 block text-sm">Material del armazón</label>
+              <label for="fmaterial" class="mb-1 block text-sm">{{ 'productos.frameMaterial' | t }}</label>
               <select id="fmaterial" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.frame_material">
                 @for (o of frameMaterials; track o.value) { <option [value]="o.value">{{ o.label }}</option> }
               </select>
             </div>
             <div>
-              <label for="rim" class="mb-1 block text-sm">Aro</label>
+              <label for="rim" class="mb-1 block text-sm">{{ 'productos.rim' | t }}</label>
               <select id="rim" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.rim">
                 @for (o of rims; track o.value) { <option [value]="o.value">{{ o.label }}</option> }
               </select>
             </div>
             <div>
-              <label for="gender" class="mb-1 block text-sm">Para quién</label>
+              <label for="gender" class="mb-1 block text-sm">{{ 'productos.gender' | t }}</label>
               <select id="gender" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.gender">
                 @for (o of genders; track o.value) { <option [value]="o.value">{{ o.label }}</option> }
               </select>
             </div>
             <div>
-              <label for="lwidth" class="mb-1 block text-sm">Ancho de lente (mm)</label>
+              <label for="lwidth" class="mb-1 block text-sm">{{ 'productos.lensWidth' | t }}</label>
               <input id="lwidth" type="number" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.lens_width_mm" />
             </div>
             <div>
-              <label for="bridge" class="mb-1 block text-sm">Puente (mm)</label>
+              <label for="bridge" class="mb-1 block text-sm">{{ 'productos.bridge' | t }}</label>
               <input id="bridge" type="number" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.bridge_mm" />
             </div>
             <div>
-              <label for="temple" class="mb-1 block text-sm">Varilla (mm)</label>
+              <label for="temple" class="mb-1 block text-sm">{{ 'productos.temple' | t }}</label>
               <input id="temple" type="number" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.temple_mm" />
             </div>
           } @else {
           <div>
-            <label for="lens" class="mb-1 block text-sm">Tipo de lente</label>
+            <label for="lens" class="mb-1 block text-sm">{{ 'productos.lensType' | t }}</label>
             <select id="lens" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.lens_type">
               @for (o of lensTypes; track o.value) { <option [value]="o.value">{{ o.label }}</option> }
             </select>
           </div>
           <div>
-            <label for="repl" class="mb-1 block text-sm">Reemplazo</label>
+            <label for="repl" class="mb-1 block text-sm">{{ 'productos.replacement' | t }}</label>
             <select id="repl" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.replacement">
               @for (o of replacements; track o.value) { <option [value]="o.value">{{ o.label }}</option> }
             </select>
           </div>
           <div>
-            <label for="pieces" class="mb-1 block text-sm">Piezas por caja</label>
+            <label for="pieces" class="mb-1 block text-sm">{{ 'productos.pieces' | t }}</label>
             <input id="pieces" type="number" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.pieces_per_box" />
           </div>
           <div>
-            <label for="material" class="mb-1 block text-sm">Material</label>
+            <label for="material" class="mb-1 block text-sm">{{ 'productos.material' | t }}</label>
             <input id="material" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.material" />
           </div>
           <div>
-            <label for="water" class="mb-1 block text-sm">Contenido de agua (%)</label>
+            <label for="water" class="mb-1 block text-sm">{{ 'productos.water' | t }}</label>
             <input id="water" type="number" step="0.1" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.water_content_pct" />
           </div>
           }
           <div class="sm:col-span-2">
-            <label for="desc" class="mb-1 block text-sm">Descripción</label>
+            <label for="desc" class="mb-1 block text-sm">{{ 'common.description' | t }}</label>
             <textarea id="desc" rows="3" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.description"></textarea>
           </div>
           @if (!isFrame()) {
-            <label class="flex items-center gap-2 text-sm"><input type="checkbox" [formField]="model.requires_prescription" /> Requiere receta</label>
+            <label class="flex items-center gap-2 text-sm"><input type="checkbox" [formField]="model.requires_prescription" /> {{ 'productos.requiresPrescription' | t }}</label>
           }
-          <label class="flex items-center gap-2 text-sm"><input type="checkbox" [formField]="model.active" /> Activo (visible en la tienda)</label>
+          <label class="flex items-center gap-2 text-sm"><input type="checkbox" [formField]="model.active" /> {{ 'productos.activeVisible' | t }}</label>
           @if (error()) { <p role="alert" class="text-sm text-destructive sm:col-span-2">{{ error() }}</p> }
           <div class="flex gap-2 sm:col-span-2">
-            <button type="submit" class="rounded-lg bg-primary px-3 py-2 text-primary-foreground disabled:opacity-50" [disabled]="busy()">Guardar</button>
-            <button type="button" class="rounded-lg border border-input px-3 py-2" (click)="editing.set(false)">Cancelar</button>
+            <button type="submit" class="rounded-full bg-primary px-3 py-2 text-primary-foreground disabled:opacity-50" [disabled]="busy()">{{ 'common.save' | t }}</button>
+            <button type="button" class="rounded-full border border-input px-3 py-2" (click)="editing.set(false)">{{ 'common.cancel' | t }}</button>
           </div>
         </form>
       </section>
@@ -164,14 +161,14 @@ const empty = (): ProductForm => ({
 
     @if (loadError()) { <p role="alert" class="mb-4 text-sm text-destructive">{{ loadError() }}</p> }
     <div class="mb-4 max-w-xs">
-      <label for="catfilter" class="mb-1 block text-sm">Filtrar por categoría</label>
+      <label for="catfilter" class="mb-1 block text-sm">{{ 'productos.filter' | t }}</label>
       <select id="catfilter" class="w-full rounded-lg border border-input px-3 py-2 text-sm" (change)="filterCategory($event)">
-        <option value="">Todas</option>
+        <option value="">{{ 'productos.allCategories' | t }}</option>
         @for (o of categories; track o.value) { <option [value]="o.value">{{ o.label }}</option> }
       </select>
     </div>
     <table class="w-full text-sm">
-      <thead><tr class="border-b text-left"><th class="py-2">Producto</th><th>Categoría</th><th>Tipo</th><th>Reemplazo</th><th>Estado</th><th></th></tr></thead>
+      <thead><tr class="border-b text-left"><th class="py-2">{{ 'common.product' | t }}</th><th>{{ 'productos.category' | t }}</th><th>{{ 'common.type' | t }}</th><th>{{ 'productos.replacement' | t }}</th><th>{{ 'common.status' | t }}</th><th></th></tr></thead>
       <tbody>
         @for (p of products(); track p.id) {
           <tr class="border-b">
@@ -179,20 +176,20 @@ const empty = (): ProductForm => ({
             <td>{{ categoryLabel[p.category] }}</td>
             <td>{{ p.frame ? shapeLabel[p.frame.shape] : lensLabel(p.lens_type) }}</td>
             <td>{{ replLabel(p.replacement) }}</td>
-            <td>{{ p.active ? 'Activo' : 'Inactivo' }}</td>
+            <td>{{ p.active ? ('common.active' | t) : ('common.inactive' | t) }}</td>
             <td class="space-x-3 text-right">
-              <a class="underline" [routerLink]="['/productos', p.id, 'variantes']" [queryParams]="{ categoria: p.category }">Variantes</a>
-              <a class="underline" [routerLink]="['/productos', p.id, 'imagenes']">Imágenes</a>
-              <button type="button" class="underline" (click)="startEdit(p)">Editar</button>
+              <a class="underline" [routerLink]="['/productos', p.id, 'variantes']" [queryParams]="{ categoria: p.category }">{{ 'inventario.variants' | t }}</a>
+              <a class="underline" [routerLink]="['/productos', p.id, 'imagenes']">{{ 'productos.images' | t }}</a>
+              <button type="button" class="underline" (click)="startEdit(p)">{{ 'common.edit' | t }}</button>
             </td>
           </tr>
         } @empty {
-          <tr><td colspan="6" class="py-4 text-muted-foreground">Aún no hay productos.</td></tr>
+          <tr><td colspan="6" class="py-4 text-muted-foreground">{{ 'productos.empty' | t }}</td></tr>
         }
       </tbody>
     </table>
     @if (nextCursor()) {
-      <button type="button" class="mt-4 rounded-lg border border-input px-3 py-2 text-sm" (click)="load(true)">Cargar más</button>
+      <button type="button" class="mt-4 rounded-full border border-input px-3 py-2 text-sm" (click)="load(true)">{{ 'common.loadMore' | t }}</button>
     }
   `,
 })
@@ -235,7 +232,7 @@ export default class Productos implements OnInit {
       const [brands] = await Promise.all([firstValueFrom(this.api.listBrands()), this.load(false)]);
       this.brands.set(brands.items);
     } catch (e) {
-      this.loadError.set(problemMessage(e, 'No se pudieron cargar los productos.'));
+      this.loadError.set(problemMessage(e, t('productos.loadFailed')));
     }
   }
 
@@ -247,7 +244,7 @@ export default class Productos implements OnInit {
         ...(more && this.nextCursor() ? { cursor: this.nextCursor()! } : {}),
       }),
     ).catch((e: unknown) => {
-      this.loadError.set(problemMessage(e, 'No se pudieron cargar los productos.'));
+      this.loadError.set(problemMessage(e, t('productos.loadFailed')));
       return null;
     });
     if (!res) return;
@@ -297,7 +294,7 @@ export default class Productos implements OnInit {
 
   protected async save(event: Event) {
     event.preventDefault();
-    if (this.model().invalid()) return this.error.set('Revisa los campos obligatorios.');
+    if (this.model().invalid()) return this.error.set(t('common.checkRequired'));
     const s = this.state();
     const common = {
       category: s.category, brand_id: s.brand_id, name: s.name.trim(), slug: s.slug.trim(),
@@ -306,7 +303,7 @@ export default class Productos implements OnInit {
     let body: ProductInput;
     if (s.category === ProductCategory.frame) {
       if (s.lens_width_mm == null || s.bridge_mm == null || s.temple_mm == null) {
-        return this.error.set('Captura las tres medidas del armazón.');
+        return this.error.set(t('productos.measuresRequired'));
       }
       body = {
         ...common, requires_prescription: false,
@@ -316,7 +313,7 @@ export default class Productos implements OnInit {
         },
       };
     } else {
-      if (s.pieces_per_box < 1) return this.error.set('Las piezas por caja deben ser al menos 1.');
+      if (s.pieces_per_box < 1) return this.error.set(t('productos.piecesMin'));
       body = {
         ...common,
         lens_type: s.lens_type as ProductInput['lens_type'],
@@ -336,7 +333,7 @@ export default class Productos implements OnInit {
       );
       this.editing.set(false);
     } catch (e) {
-      this.error.set(problemMessage(e, 'No se pudo guardar el producto (¿slug repetido?).'));
+      this.error.set(problemMessage(e, t('productos.saveFailed')));
     } finally {
       this.busy.set(false);
     }

@@ -5,16 +5,21 @@ import { firstValueFrom } from 'rxjs';
 import { DefaultService } from '../../api/generated/default/default.service';
 import { BannerPlacement, ProductCategory } from '../../api/generated/model';
 import type { AdminHomeBanner, AdminProduct, HomeBannerInput, Product } from '../../api/generated/model';
-import { bannerStatus, shownBannerIds } from '../../core/banner-status';
+import { bannerStatus, shownBannerIds, type BannerStatus } from '../../core/banner-status';
 import { cdmxInputToUtc, utcToCdmxInput } from '../../core/cdmx-time';
 import { CATEGORY_LABEL, toOptions } from '../../core/frame-labels';
 import { IMAGE_TYPES, ImageType, move, validateImage } from '../../core/images';
 import { problemMessage } from '../../core/problem';
+import { t, TPipe } from '../../core/i18n';
 
-const PLACEMENT_LABEL: Record<BannerPlacement, string> = {
-  promo_bar: 'Barra promocional',
-  hero: 'Banner principal',
-  secondary: 'Banners secundarios',
+const PLACEMENT_LABEL: Record<BannerPlacement, string> = t('labels.placement', { returnObjects: true });
+
+// El código del estado lo fija core/banner-status; aquí solo se traduce para mostrarlo.
+const STATUS_LABEL: Record<BannerStatus, string> = {
+  Vigente: t('labels.bannerStatus.current'),
+  Programado: t('labels.bannerStatus.scheduled'),
+  Vencido: t('labels.bannerStatus.expired'),
+  Inactivo: t('labels.bannerStatus.inactive'),
 };
 
 const MAX_FEATURED = 8;
@@ -39,66 +44,66 @@ type FeaturedItem = Pick<Product, 'id' | 'name' | 'brand'> & { active?: boolean;
 
 @Component({
   selector: 'app-home-content',
-  imports: [FormField],
+  imports: [FormField, TPipe],
   template: `
     <div class="mb-6 flex items-center justify-between">
-      <h1 class="text-2xl">Home</h1>
-      <button type="button" class="rounded-lg bg-primary px-3 py-2 text-sm text-primary-foreground" (click)="startCreate()">Nuevo banner</button>
+      <h1 class="text-2xl">{{ 'nav.home' | t }}</h1>
+      <button type="button" class="rounded-full bg-primary px-3 py-2 text-sm text-primary-foreground" (click)="startCreate()">{{ 'homeAdmin.newBanner' | t }}</button>
     </div>
 
     @if (editing()) {
-      <section class="mb-8 max-w-3xl rounded-lg border border-border p-4" aria-labelledby="btitle">
-        <h2 id="btitle" class="mb-1 font-medium">{{ editingId() ? 'Editar banner' : 'Nuevo banner' }}</h2>
-        <p class="mb-3 text-sm text-muted-foreground">Publica solo promociones que la tienda pueda cumplir: el sistema no las valida.</p>
+      <section class="mb-8 max-w-3xl rounded-2xl border border-border bg-card p-4" aria-labelledby="btitle">
+        <h2 id="btitle" class="mb-1 font-medium">{{ editingId() ? ('homeAdmin.editBanner' | t) : ('homeAdmin.newBanner' | t) }}</h2>
+        <p class="mb-3 text-sm text-muted-foreground">{{ 'homeAdmin.honesty' | t }}</p>
         <form class="grid gap-3 sm:grid-cols-2" (submit)="save($event)">
           <div>
-            <label for="placement" class="mb-1 block text-sm">Ubicación</label>
+            <label for="placement" class="mb-1 block text-sm">{{ 'homeAdmin.placement' | t }}</label>
             <select id="placement" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.placement">
               @for (o of placements; track o.value) { <option [value]="o.value">{{ o.label }}</option> }
             </select>
           </div>
           <div>
-            <label for="title" class="mb-1 block text-sm">Título {{ isPromo() ? '(máx. 90)' : '(máx. 120)' }}</label>
+            <label for="title" class="mb-1 block text-sm">{{ isPromo() ? ('homeAdmin.titlePromo' | t) : ('homeAdmin.titleDefault' | t) }}</label>
             <input id="title" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.title" />
           </div>
           @if (!isPromo()) {
             <div class="sm:col-span-2">
-              <label for="subtitle" class="mb-1 block text-sm">Subtítulo (opcional)</label>
+              <label for="subtitle" class="mb-1 block text-sm">{{ 'homeAdmin.subtitle' | t }}</label>
               <input id="subtitle" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.subtitle" />
             </div>
           }
           <div>
-            <label for="cta" class="mb-1 block text-sm">Texto del enlace{{ isPromo() ? ' (opcional)' : '' }}</label>
+            <label for="cta" class="mb-1 block text-sm">{{ isPromo() ? ('homeAdmin.ctaLabelOptional' | t) : ('homeAdmin.ctaLabel' | t) }}</label>
             <input id="cta" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.cta_label" />
           </div>
           <div>
-            <label for="href" class="mb-1 block text-sm">Ruta interna{{ isPromo() ? ' (opcional)' : '' }}</label>
+            <label for="href" class="mb-1 block text-sm">{{ isPromo() ? ('homeAdmin.hrefOptional' | t) : ('homeAdmin.href' | t) }}</label>
             <input id="href" class="w-full rounded-lg border border-input px-3 py-2" placeholder="/armazones" [formField]="model.cta_href" />
           </div>
           @if (!isPromo()) {
             <div>
-              <label for="img" class="mb-1 block text-sm">Imagen (JPG, PNG o WebP, máx. 5 MB)</label>
+              <label for="img" class="mb-1 block text-sm">{{ 'homeAdmin.image' | t }}</label>
               <input id="img" type="file" [accept]="accept" class="block text-sm" (change)="upload($event)" [disabled]="uploading()" />
-              @if (preview()) { <img [src]="preview()" alt="Vista previa del banner" class="mt-2 h-24 rounded-lg object-cover" /> }
+              @if (preview()) { <img [src]="preview()" [attr.alt]="'homeAdmin.previewAlt' | t" class="mt-2 h-24 rounded-lg object-cover" /> }
             </div>
             <div>
-              <label for="alt" class="mb-1 block text-sm">Descripción de la imagen</label>
+              <label for="alt" class="mb-1 block text-sm">{{ 'homeAdmin.imageAlt' | t }}</label>
               <input id="alt" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.image_alt" />
             </div>
           }
           <div>
-            <label for="starts" class="mb-1 block text-sm">Inicia (hora de la Ciudad de México)</label>
+            <label for="starts" class="mb-1 block text-sm">{{ 'homeAdmin.starts' | t }}</label>
             <input id="starts" type="datetime-local" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.starts_at" />
           </div>
           <div>
-            <label for="ends" class="mb-1 block text-sm">Termina (hora de la Ciudad de México)</label>
+            <label for="ends" class="mb-1 block text-sm">{{ 'homeAdmin.ends' | t }}</label>
             <input id="ends" type="datetime-local" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.ends_at" />
           </div>
-          <label class="flex items-center gap-2 text-sm sm:col-span-2"><input type="checkbox" [formField]="model.active" /> Activo</label>
+          <label class="flex items-center gap-2 text-sm sm:col-span-2"><input type="checkbox" [formField]="model.active" /> {{ 'common.active' | t }}</label>
           @if (error()) { <p role="alert" class="text-sm text-destructive sm:col-span-2">{{ error() }}</p> }
           <div class="flex gap-2 sm:col-span-2">
-            <button type="submit" class="rounded-lg bg-primary px-3 py-2 text-primary-foreground disabled:opacity-50" [disabled]="busy() || uploading()">Guardar</button>
-            <button type="button" class="rounded-lg border border-input px-3 py-2" (click)="editing.set(false)">Cancelar</button>
+            <button type="submit" class="rounded-full bg-primary px-3 py-2 text-primary-foreground disabled:opacity-50" [disabled]="busy() || uploading()">{{ 'common.save' | t }}</button>
+            <button type="button" class="rounded-full border border-input px-3 py-2" (click)="editing.set(false)">{{ 'common.cancel' | t }}</button>
           </div>
         </form>
       </section>
@@ -110,22 +115,22 @@ type FeaturedItem = Pick<Product, 'id' | 'name' | 'brand'> & { active?: boolean;
       <section class="mb-8" [attr.aria-labelledby]="'g-' + group.value">
         <h2 [id]="'g-' + group.value" class="mb-2 font-medium">{{ group.label }}</h2>
         <table class="w-full text-sm">
-          <thead><tr class="border-b text-left"><th class="py-2">Título</th><th>Estado</th><th>Vigencia (CDMX)</th><th></th></tr></thead>
+          <thead><tr class="border-b text-left"><th class="py-2">{{ 'homeAdmin.bannerTitle' | t }}</th><th>{{ 'common.status' | t }}</th><th>{{ 'homeAdmin.validity' | t }}</th><th></th></tr></thead>
           <tbody>
             @for (b of group.items; track b.id; let i = $index) {
               <tr class="border-b">
                 <td class="py-2">{{ b.title }}</td>
-                <td>{{ status(b) }} @if (shown().has(b.id)) { <span class="text-xs font-semibold text-primary">· se muestra</span> }</td>
+                <td>{{ status(b) }} @if (shown().has(b.id)) { <span class="text-xs font-semibold text-primary">· {{ 'homeAdmin.shown' | t }}</span> }</td>
                 <td>{{ range(b) }}</td>
                 <td class="space-x-3 text-right">
-                  <button type="button" class="underline disabled:opacity-40" [attr.aria-label]="'Subir ' + b.title" [disabled]="i === 0" (click)="shift(group.value, i, -1)">↑</button>
-                  <button type="button" class="underline disabled:opacity-40" [attr.aria-label]="'Bajar ' + b.title" [disabled]="i === group.items.length - 1" (click)="shift(group.value, i, 1)">↓</button>
-                  <button type="button" class="underline" (click)="startEdit(b)">Editar</button>
-                  <button type="button" class="underline" (click)="remove(b)">Borrar</button>
+                  <button type="button" class="underline disabled:opacity-40" [attr.aria-label]="'micas.moveUp' | t: { name: b.title }" [disabled]="i === 0" (click)="shift(group.value, i, -1)">↑</button>
+                  <button type="button" class="underline disabled:opacity-40" [attr.aria-label]="'micas.moveDown' | t: { name: b.title }" [disabled]="i === group.items.length - 1" (click)="shift(group.value, i, 1)">↓</button>
+                  <button type="button" class="underline" (click)="startEdit(b)">{{ 'common.edit' | t }}</button>
+                  <button type="button" class="underline" (click)="remove(b)">{{ 'homeAdmin.delete' | t }}</button>
                 </td>
               </tr>
             } @empty {
-              <tr><td colspan="4" class="py-4 text-muted-foreground">Sin banners.</td></tr>
+              <tr><td colspan="4" class="py-4 text-muted-foreground">{{ 'homeAdmin.noBanners' | t }}</td></tr>
             }
           </tbody>
         </table>
@@ -133,47 +138,47 @@ type FeaturedItem = Pick<Product, 'id' | 'name' | 'brand'> & { active?: boolean;
     }
 
     <section class="max-w-3xl" aria-labelledby="ftitle">
-      <h2 id="ftitle" class="mb-1 font-medium">Productos destacados</h2>
-      <p class="mb-3 text-sm text-muted-foreground">Hasta {{ maxFeatured }} por categoría. Los inactivos o agotados se conservan, pero la tienda no los muestra.</p>
+      <h2 id="ftitle" class="mb-1 font-medium">{{ 'homeAdmin.featured' | t }}</h2>
+      <p class="mb-3 text-sm text-muted-foreground">{{ 'homeAdmin.featuredHint' | t: { max: maxFeatured } }}</p>
       <div class="mb-3 max-w-xs">
-        <label for="fcat" class="mb-1 block text-sm">Categoría</label>
+        <label for="fcat" class="mb-1 block text-sm">{{ 'productos.category' | t }}</label>
         <select id="fcat" class="w-full rounded-lg border border-input px-3 py-2 text-sm" (change)="pickCategory($event)">
           @for (o of categories; track o.value) { <option [value]="o.value" [selected]="o.value === category()">{{ o.label }}</option> }
         </select>
       </div>
       <ol class="mb-4 space-y-1 text-sm">
         @for (p of featured(); track p.id; let i = $index) {
-          <li class="flex items-center justify-between rounded-lg border border-border px-3 py-2">
+          <li class="flex items-center justify-between rounded-2xl border border-border bg-card px-3 py-2">
             <span>{{ i + 1 }}. <span class="text-muted-foreground">{{ p.brand.name }}</span> {{ p.name }}
-              @if (hidden(p)) { <span class="text-xs text-destructive">· no se muestra</span> }
+              @if (hidden(p)) { <span class="text-xs text-destructive">· {{ 'homeAdmin.notShown' | t }}</span> }
             </span>
             <span class="space-x-3">
-              <button type="button" class="underline disabled:opacity-40" [attr.aria-label]="'Subir ' + p.name" [disabled]="i === 0" (click)="shiftFeatured(i, -1)">↑</button>
-              <button type="button" class="underline disabled:opacity-40" [attr.aria-label]="'Bajar ' + p.name" [disabled]="i === featured().length - 1" (click)="shiftFeatured(i, 1)">↓</button>
-              <button type="button" class="underline" (click)="removeFeatured(p.id)">Quitar</button>
+              <button type="button" class="underline disabled:opacity-40" [attr.aria-label]="'micas.moveUp' | t: { name: p.name }" [disabled]="i === 0" (click)="shiftFeatured(i, -1)">↑</button>
+              <button type="button" class="underline disabled:opacity-40" [attr.aria-label]="'micas.moveDown' | t: { name: p.name }" [disabled]="i === featured().length - 1" (click)="shiftFeatured(i, 1)">↓</button>
+              <button type="button" class="underline" (click)="removeFeatured(p.id)">{{ 'homeAdmin.removeFeatured' | t }}</button>
             </span>
           </li>
         } @empty {
-          <li class="text-muted-foreground">Sin destacados.</li>
+          <li class="text-muted-foreground">{{ 'homeAdmin.noFeatured' | t }}</li>
         }
       </ol>
       <form class="mb-2 flex items-end gap-2" (submit)="search($event)">
         <div class="grow">
-          <label for="fq" class="mb-1 block text-sm">Buscar producto</label>
+          <label for="fq" class="mb-1 block text-sm">{{ 'homeAdmin.searchProduct' | t }}</label>
           <input id="fq" class="w-full rounded-lg border border-input px-3 py-2 text-sm" [value]="query()" (input)="query.set($any($event.target).value)" />
         </div>
-        <button type="submit" class="rounded-lg border border-input px-3 py-2 text-sm">Buscar</button>
+        <button type="submit" class="rounded-full border border-input px-3 py-2 text-sm">{{ 'homeAdmin.search' | t }}</button>
       </form>
       @if (featuredError()) { <p role="alert" class="mb-2 text-sm text-destructive">{{ featuredError() }}</p> }
       <ul class="mb-4 space-y-1 text-sm">
         @for (p of results(); track p.id) {
           <li class="flex items-center justify-between border-b border-border py-1">
             <span><span class="text-muted-foreground">{{ p.brand.name }}</span> {{ p.name }}</span>
-            <button type="button" class="underline disabled:opacity-40" [disabled]="isFeatured(p.id) || featured().length >= maxFeatured" (click)="addFeatured(p)">Agregar</button>
+            <button type="button" class="underline disabled:opacity-40" [disabled]="isFeatured(p.id) || featured().length >= maxFeatured" (click)="addFeatured(p)">{{ 'homeAdmin.add' | t }}</button>
           </li>
         }
       </ul>
-      <button type="button" class="rounded-lg bg-primary px-3 py-2 text-sm text-primary-foreground disabled:opacity-50" [disabled]="busy()" (click)="saveFeatured()">Guardar destacados</button>
+      <button type="button" class="rounded-full bg-primary px-3 py-2 text-sm text-primary-foreground disabled:opacity-50" [disabled]="busy()" (click)="saveFeatured()">{{ 'homeAdmin.saveFeatured' | t }}</button>
       @if (featuredOk()) { <p role="status" class="mt-2 text-sm">{{ featuredOk() }}</p> }
     </section>
   `,
@@ -209,9 +214,9 @@ export default class HomeContent implements OnInit {
       items: this.banners().filter((b) => b.placement === p.value).sort((a, b) => a.position - b.position),
     })),
   );
-  protected status = (b: AdminHomeBanner) => bannerStatus(b);
+  protected status = (b: AdminHomeBanner) => STATUS_LABEL[bannerStatus(b)];
   protected range = (b: AdminHomeBanner) =>
-    `${utcToCdmxInput(b.starts_at).replace('T', ' ') || 'Sin inicio'} → ${utcToCdmxInput(b.ends_at).replace('T', ' ') || 'Sin fin'}`;
+    t('homeAdmin.range', { start: utcToCdmxInput(b.starts_at).replace('T', ' ') || t('homeAdmin.noStart'), end: utcToCdmxInput(b.ends_at).replace('T', ' ') || t('homeAdmin.noEnd') });
 
   protected readonly category = signal<ProductCategory>(ProductCategory.frame);
   protected readonly featured = signal<FeaturedItem[]>([]);
@@ -230,7 +235,7 @@ export default class HomeContent implements OnInit {
     try {
       this.banners.set((await firstValueFrom(this.api.adminListHomeBanners())).items);
     } catch (e) {
-      this.loadError.set(problemMessage(e, 'No se pudieron cargar los banners.'));
+      this.loadError.set(problemMessage(e, t('homeAdmin.loadFailed')));
     }
   }
 
@@ -273,7 +278,7 @@ export default class HomeContent implements OnInit {
       this.imageKey.set(r2_key);
       this.preview.set(URL.createObjectURL(file));
     } catch (e) {
-      this.error.set(problemMessage(e, 'No se pudo subir la imagen.'));
+      this.error.set(problemMessage(e, t('homeAdmin.uploadFailed')));
     } finally {
       this.uploading.set(false);
     }
@@ -281,7 +286,7 @@ export default class HomeContent implements OnInit {
 
   protected async save(event: Event) {
     event.preventDefault();
-    if (this.model().invalid()) return this.error.set('Revisa los campos obligatorios.');
+    if (this.model().invalid()) return this.error.set(t('common.checkRequired'));
     const s = this.state();
     const promo = this.isPromo();
     const body: HomeBannerInput = {
@@ -302,7 +307,7 @@ export default class HomeContent implements OnInit {
       await this.loadBanners();
       this.editing.set(false);
     } catch (e) {
-      this.error.set(problemMessage(e, 'No se pudo guardar el banner.'));
+      this.error.set(problemMessage(e, t('homeAdmin.saveFailed')));
     } finally {
       this.busy.set(false);
     }
@@ -315,17 +320,17 @@ export default class HomeContent implements OnInit {
       await firstValueFrom(this.api.adminReorderHomeBanners({ placement, banner_ids: ids }));
       await this.loadBanners();
     } catch (e) {
-      this.loadError.set(problemMessage(e, 'No se pudo cambiar el orden.'));
+      this.loadError.set(problemMessage(e, t('common.reorderFailed')));
     }
   }
 
   protected async remove(b: AdminHomeBanner) {
-    if (!confirm(`¿Borrar el banner "${b.title}"?`)) return;
+    if (!confirm(t('homeAdmin.confirmDelete', { title: b.title }))) return;
     try {
       await firstValueFrom(this.api.adminDeleteHomeBanner(b.id));
       await this.loadBanners();
     } catch (e) {
-      this.loadError.set(problemMessage(e, 'No se pudo borrar el banner.'));
+      this.loadError.set(problemMessage(e, t('homeAdmin.deleteFailed')));
     }
   }
 
@@ -334,7 +339,7 @@ export default class HomeContent implements OnInit {
       const res = await firstValueFrom(this.api.adminListHomeFeatured({ category: this.category() }));
       this.featured.set(res.items as AdminProduct[]);
     } catch (e) {
-      this.featuredError.set(problemMessage(e, 'No se pudieron cargar los destacados.'));
+      this.featuredError.set(problemMessage(e, t('homeAdmin.featuredLoadFailed')));
     }
   }
 
@@ -352,7 +357,7 @@ export default class HomeContent implements OnInit {
       const res = await firstValueFrom(this.api.listProducts({ category: this.category(), q: this.query().trim(), limit: 20 }));
       this.results.set(res.items);
     } catch (e) {
-      this.featuredError.set(problemMessage(e, 'No se pudo buscar. Escribe al menos 2 caracteres.'));
+      this.featuredError.set(problemMessage(e, t('homeAdmin.searchFailed')));
     }
   }
 
@@ -380,9 +385,9 @@ export default class HomeContent implements OnInit {
         this.api.adminSetHomeFeatured({ category: this.category(), product_ids: this.featured().map((p) => p.id) }),
       );
       this.featured.set(res.items as AdminProduct[]);
-      this.featuredOk.set('Destacados guardados. La tienda los muestra en menos de un minuto.');
+      this.featuredOk.set(t('homeAdmin.featuredSaved'));
     } catch (e) {
-      this.featuredError.set(problemMessage(e, 'No se pudieron guardar los destacados.'));
+      this.featuredError.set(problemMessage(e, t('homeAdmin.featuredSaveFailed')));
     } finally {
       this.busy.set(false);
     }

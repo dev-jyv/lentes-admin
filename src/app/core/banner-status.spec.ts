@@ -15,12 +15,16 @@ describe('banner-status', () => {
     expect(bannerStatus(banner('a', 'hero', 0, { ends_at: '2026-11-02T12:00:00Z' }), now)).toBe('Vencido');
   });
 
-  it('marca el primero vigente por ubicación y hasta 3 secundarios', () => {
+  it('marca hasta 5 banners principales vigentes y hasta 3 secundarios', () => {
     const shown = shownBannerIds(
       [
         banner('h2', 'hero', 1),
         banner('h1', 'hero', 0, { active: false }),
         banner('h3', 'hero', 2),
+        banner('h4', 'hero', 3),
+        banner('h5', 'hero', 4),
+        banner('h6', 'hero', 5),
+        banner('h7', 'hero', 6),
         banner('s1', 'secondary', 0),
         banner('s2', 'secondary', 1),
         banner('s3', 'secondary', 2),
@@ -28,6 +32,6 @@ describe('banner-status', () => {
       ],
       now,
     );
-    expect([...shown].sort()).toEqual(['h2', 's1', 's2', 's3']);
+    expect([...shown].sort()).toEqual(['h2', 'h3', 'h4', 'h5', 'h6', 's1', 's2', 's3']);
   });
 });

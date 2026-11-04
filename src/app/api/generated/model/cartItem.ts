@@ -18,8 +18,10 @@ export interface CartItem {
   quantity: number;
   unit_price_cents: number;
   line_total_cents: number;
-  /** stock - reserved ahora mismo */
+  /** stock - reserved ahora mismo; con `on_demand` es un tope técnico (9999) */
   available: number;
+  /** Se surte por pedido */
+  on_demand: boolean;
   /** false si la variante, el producto o el paquete de micas ya no están activos */
   purchasable: boolean;
   category: ProductCategory;
@@ -38,6 +40,8 @@ export interface CartItem {
   axis?: number | null;
   /** @nullable */
   addition?: string | null;
+  /** @nullable */
+  dominance?: string | null;
   /**
      * `null` en armazones
      * @nullable
