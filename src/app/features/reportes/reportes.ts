@@ -6,32 +6,34 @@ import { formatDate } from '../../core/format';
 import { formatMxn } from '../../core/money';
 import { problemMessage } from '../../core/problem';
 import { lastDays, pct } from '../../core/stats';
+import { t, TPipe } from '../../core/i18n';
 
 @Component({
   selector: 'app-reportes',
+  imports: [TPipe],
   template: `
-    <h1 class="mb-6 text-2xl">Reportes</h1>
+    <h1 class="mb-6 text-2xl">{{ 'nav.reportes' | t }}</h1>
     <form class="mb-6 flex flex-wrap items-end gap-3 text-sm" (submit)="apply($event)">
-      <div><label for="from" class="mb-1 block">Desde</label><input id="from" type="date" class="rounded-lg border border-input px-3 py-2" [value]="from()" (input)="from.set(val($event))" /></div>
-      <div><label for="to" class="mb-1 block">Hasta</label><input id="to" type="date" class="rounded-lg border border-input px-3 py-2" [value]="to()" (input)="to.set(val($event))" /></div>
-      <button type="submit" class="rounded-lg bg-primary px-3 py-2 text-primary-foreground">Consultar</button>
-      <button type="button" class="rounded-lg border border-input px-3 py-2" (click)="preset(7)">7 días</button>
-      <button type="button" class="rounded-lg border border-input px-3 py-2" (click)="preset(30)">30 días</button>
-      <button type="button" class="rounded-lg border border-input px-3 py-2" (click)="preset(90)">90 días</button>
+      <div><label for="from" class="mb-1 block">{{ 'reportes.from' | t }}</label><input id="from" type="date" class="rounded-lg border border-input px-3 py-2" [value]="from()" (input)="from.set(val($event))" /></div>
+      <div><label for="to" class="mb-1 block">{{ 'reportes.to' | t }}</label><input id="to" type="date" class="rounded-lg border border-input px-3 py-2" [value]="to()" (input)="to.set(val($event))" /></div>
+      <button type="submit" class="rounded-full bg-primary px-3 py-2 text-primary-foreground">{{ 'reportes.query' | t }}</button>
+      <button type="button" class="rounded-full border border-input px-3 py-2" (click)="preset(7)">{{ 'reportes.days' | t: { days: 7 } }}</button>
+      <button type="button" class="rounded-full border border-input px-3 py-2" (click)="preset(30)">{{ 'reportes.days' | t: { days: 30 } }}</button>
+      <button type="button" class="rounded-full border border-input px-3 py-2" (click)="preset(90)">{{ 'reportes.days' | t: { days: 90 } }}</button>
     </form>
     @if (error()) { <p role="alert" class="mb-4 text-sm text-destructive">{{ error() }}</p> }
 
     @if (sales(); as s) {
       <section aria-labelledby="ventas" class="mb-8">
-        <h2 id="ventas" class="mb-3 font-medium">Ventas</h2>
+        <h2 id="ventas" class="mb-3 font-medium">{{ 'reportes.sales' | t }}</h2>
         <dl class="mb-4 grid gap-3 sm:grid-cols-3">
-          <div class="rounded-lg border border-border p-4"><dt class="text-sm text-muted-foreground">Pedidos</dt><dd class="text-2xl">{{ s.orders }}</dd></div>
-          <div class="rounded-lg border border-border p-4"><dt class="text-sm text-muted-foreground">Ingresos</dt><dd class="text-2xl">{{ money(s.revenue_cents) }}</dd></div>
-          <div class="rounded-lg border border-border p-4"><dt class="text-sm text-muted-foreground">Cajas vendidas</dt><dd class="text-2xl">{{ s.units }}</dd></div>
+          <div class="rounded-2xl border border-border bg-card p-4"><dt class="text-sm text-muted-foreground">{{ 'nav.pedidos' | t }}</dt><dd class="text-2xl">{{ s.orders }}</dd></div>
+          <div class="rounded-2xl border border-border bg-card p-4"><dt class="text-sm text-muted-foreground">{{ 'reportes.revenue' | t }}</dt><dd class="text-2xl">{{ money(s.revenue_cents) }}</dd></div>
+          <div class="rounded-2xl border border-border bg-card p-4"><dt class="text-sm text-muted-foreground">{{ 'reportes.unitsSold' | t }}</dt><dd class="text-2xl">{{ s.units }}</dd></div>
         </dl>
         <table class="mb-6 w-full text-sm">
-          <caption class="mb-2 text-left font-medium">Por día</caption>
-          <thead><tr class="border-b text-left"><th class="py-1">Fecha</th><th>Pedidos</th><th>Ingresos</th><th class="w-1/2"><span class="sr-only">Gráfica</span></th></tr></thead>
+          <caption class="mb-2 text-left font-medium">{{ 'reportes.byDay' | t }}</caption>
+          <thead><tr class="border-b text-left"><th class="py-1">{{ 'common.date' | t }}</th><th>{{ 'nav.pedidos' | t }}</th><th>{{ 'reportes.revenue' | t }}</th><th class="w-1/2"><span class="sr-only">{{ 'reportes.chart' | t }}</span></th></tr></thead>
           <tbody>
             @for (d of s.daily; track d.date) {
               <tr class="border-b">
@@ -42,12 +44,12 @@ import { lastDays, pct } from '../../core/stats';
           </tbody>
         </table>
         <table class="w-full max-w-2xl text-sm">
-          <caption class="mb-2 text-left font-medium">Más vendidos</caption>
-          <thead><tr class="border-b text-left"><th class="py-1">Producto</th><th>Cajas</th><th class="text-right">Ingresos</th></tr></thead>
+          <caption class="mb-2 text-left font-medium">{{ 'reportes.topSold' | t }}</caption>
+          <thead><tr class="border-b text-left"><th class="py-1">{{ 'common.product' | t }}</th><th>{{ 'reportes.boxes' | t }}</th><th class="text-right">{{ 'reportes.revenue' | t }}</th></tr></thead>
           <tbody>
             @for (p of s.top_products; track p.product_name) {
               <tr class="border-b"><td class="py-1">{{ p.product_name }} <span class="text-muted-foreground">· {{ p.brand_name }}</span></td><td>{{ p.units }}</td><td class="text-right">{{ money(p.revenue_cents) }}</td></tr>
-            } @empty { <tr><td colspan="3" class="py-2 text-muted-foreground">Sin ventas en el rango.</td></tr> }
+            } @empty { <tr><td colspan="3" class="py-2 text-muted-foreground">{{ 'reportes.noSales' | t }}</td></tr> }
           </tbody>
         </table>
       </section>
@@ -55,21 +57,21 @@ import { lastDays, pct } from '../../core/stats';
 
     @if (repurchase(); as r) {
       <section aria-labelledby="recompra">
-        <h2 id="recompra" class="mb-3 font-medium">Recompra</h2>
+        <h2 id="recompra" class="mb-3 font-medium">{{ 'reportes.repurchase' | t }}</h2>
         <dl class="grid gap-3 sm:grid-cols-3">
-          <div class="rounded-lg border border-border p-4">
-            <dt class="text-sm text-muted-foreground">Clientes que repiten</dt>
+          <div class="rounded-2xl border border-border bg-card p-4">
+            <dt class="text-sm text-muted-foreground">{{ 'reportes.repeatCustomers' | t }}</dt>
             <dd class="text-2xl">{{ repeatRate() ?? '—' }}</dd>
-            <dd class="text-xs text-muted-foreground">{{ r.repeat_customers }} de {{ r.customers }} clientes</dd>
+            <dd class="text-xs text-muted-foreground">{{ 'reportes.repeatOf' | t: { repeat: r.repeat_customers, total: r.customers } }}</dd>
           </div>
-          <div class="rounded-lg border border-border p-4">
-            <dt class="text-sm text-muted-foreground">Recordatorios enviados</dt>
+          <div class="rounded-2xl border border-border bg-card p-4">
+            <dt class="text-sm text-muted-foreground">{{ 'reportes.remindersSent' | t }}</dt>
             <dd class="text-2xl">{{ r.reminders_sent }}</dd>
           </div>
-          <div class="rounded-lg border border-border p-4">
-            <dt class="text-sm text-muted-foreground">Conversión del recordatorio</dt>
+          <div class="rounded-2xl border border-border bg-card p-4">
+            <dt class="text-sm text-muted-foreground">{{ 'reportes.reminderConversion' | t }}</dt>
             <dd class="text-2xl">{{ reminderRate() ?? '—' }}</dd>
-            <dd class="text-xs text-muted-foreground">{{ r.reorders_from_reminder }} pedidos</dd>
+            <dd class="text-xs text-muted-foreground">{{ 'reportes.reorders' | t: { count: r.reorders_from_reminder } }}</dd>
           </div>
         </dl>
       </section>
@@ -117,7 +119,7 @@ export default class Reportes implements OnInit {
 
   private async load() {
     if (!this.from() || !this.to() || this.from() > this.to()) {
-      return this.error.set('Revisa el rango de fechas: "Desde" debe ser anterior o igual a "Hasta".');
+      return this.error.set(t('reportes.badRange'));
     }
     this.error.set(null);
     const range = { from: this.from(), to: this.to() };
@@ -129,7 +131,7 @@ export default class Reportes implements OnInit {
       this.sales.set(sales);
       this.repurchase.set(repurchase);
     } catch (e) {
-      this.error.set(problemMessage(e, 'No se pudieron cargar los reportes.'));
+      this.error.set(problemMessage(e, t('reportes.loadFailed')));
     }
   }
 }

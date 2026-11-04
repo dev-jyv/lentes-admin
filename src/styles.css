@@ -21,6 +21,7 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-band: var(--band);
   --color-amber: var(--amber);
   --color-amber-soft: var(--amber-soft);
   --color-good: var(--good);
@@ -52,6 +53,8 @@
   --amber-soft: #f7e8cf;
   --good: #1f8a5b;
   --warn: #b7791f;
+  /* Franja oscura superior; es oscura en ambos temas, igual que en lentes-web. */
+  --band: #0e2230;
 
   --background: var(--bg);
   --foreground: var(--ink);
@@ -83,6 +86,7 @@
   --amber-soft: #3a2c15;
   --good: #4cc38a;
   --warn: #e8b04b;
+  --band: #06121a;
 
   --primary-foreground: #0a151b;
   --muted: #162a33;
@@ -95,6 +99,17 @@
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
   letter-spacing: 0;
+}
+
+/* Contenedor del panel: máximo 1280 px, igual que container-page en lentes-web. */
+@utility container-page {
+  width: 100%;
+  max-width: 1280px;
+  margin-inline: auto;
+  padding-inline: 1rem;
+  @variant md {
+    padding-inline: 1.5rem;
+  }
 }
 
 @layer base {

@@ -7,22 +7,23 @@ import { formatDateTime } from '../../core/format';
 import { formatMxn } from '../../core/money';
 import { orderFolio, STATUS_LABEL } from '../../core/order-flow';
 import { problemMessage } from '../../core/problem';
+import { t, TPipe } from '../../core/i18n';
 
 @Component({
   selector: 'app-pedidos',
-  imports: [RouterLink],
+  imports: [RouterLink, TPipe],
   template: `
-    <h1 class="mb-6 text-2xl">Pedidos</h1>
+    <h1 class="mb-6 text-2xl">{{ 'nav.pedidos' | t }}</h1>
     <div class="mb-4 flex items-center gap-2 text-sm">
-      <label for="status">Estado</label>
+      <label for="status">{{ 'common.status' | t }}</label>
       <select id="status" class="rounded-lg border border-input px-3 py-2" (change)="filter($event)">
-        <option value="">Todos</option>
+        <option value="">{{ 'common.all' | t }}</option>
         @for (s of statuses; track s.value) { <option [value]="s.value">{{ s.label }}</option> }
       </select>
     </div>
     @if (error()) { <p role="alert" class="mb-4 text-sm text-destructive">{{ error() }}</p> }
     <table class="w-full text-sm">
-      <thead><tr class="border-b text-left"><th class="py-2">Folio</th><th>Cliente</th><th>Estado</th><th>Total</th><th>Creado</th><th></th></tr></thead>
+      <thead><tr class="border-b text-left"><th class="py-2">{{ 'pedidos.folio' | t }}</th><th>{{ 'pedidos.customer' | t }}</th><th>{{ 'common.status' | t }}</th><th>{{ 'common.total' | t }}</th><th>{{ 'pedidos.created' | t }}</th><th></th></tr></thead>
       <tbody>
         @for (o of orders(); track o.id) {
           <tr class="border-b">
@@ -31,15 +32,15 @@ import { problemMessage } from '../../core/problem';
             <td>{{ label(o.status) }}</td>
             <td>{{ money(o.total_cents) }}</td>
             <td>{{ date(o.created_at) }}</td>
-            <td class="text-right"><a class="underline" [routerLink]="['/pedidos', o.id]">Ver</a></td>
+            <td class="text-right"><a class="underline" [routerLink]="['/pedidos', o.id]">{{ 'common.view' | t }}</a></td>
           </tr>
         } @empty {
-          <tr><td colspan="6" class="py-4 text-muted-foreground">No hay pedidos con ese filtro.</td></tr>
+          <tr><td colspan="6" class="py-4 text-muted-foreground">{{ 'pedidos.empty' | t }}</td></tr>
         }
       </tbody>
     </table>
     @if (nextCursor()) {
-      <button type="button" class="mt-4 rounded-lg border border-input px-3 py-2 text-sm" (click)="load(true)">Cargar más</button>
+      <button type="button" class="mt-4 rounded-full border border-input px-3 py-2 text-sm" (click)="load(true)">{{ 'common.loadMore' | t }}</button>
     }
   `,
 })
@@ -78,7 +79,7 @@ export default class Pedidos implements OnInit {
       this.nextCursor.set(res.next_cursor ?? null);
       this.error.set(null);
     } catch (e) {
-      this.error.set(problemMessage(e, 'No se pudieron cargar los pedidos.'));
+      this.error.set(problemMessage(e, t('pedidos.loadFailed')));
     }
   }
 }

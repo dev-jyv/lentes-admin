@@ -5,35 +5,36 @@ import { DefaultService } from '../../api/generated/default/default.service';
 import type { Brand } from '../../api/generated/model';
 import { problemMessage } from '../../core/problem';
 import { slugify } from '../../core/slug';
+import { t, TPipe } from '../../core/i18n';
 
 @Component({
   selector: 'app-marcas',
-  imports: [FormField],
+  imports: [FormField, TPipe],
   template: `
-    <h1 class="mb-6 text-2xl">Marcas</h1>
-    <section class="mb-8 max-w-md space-y-3 rounded-lg border border-border p-4">
-      <h2 class="font-medium">Nueva marca</h2>
+    <h1 class="mb-6 text-2xl">{{ 'nav.marcas' | t }}</h1>
+    <section class="mb-8 max-w-md space-y-3 rounded-2xl border border-border bg-card p-4">
+      <h2 class="font-medium">{{ 'marcas.new' | t }}</h2>
       <form class="space-y-3" (submit)="create($event)">
         <div>
-          <label for="name" class="mb-1 block text-sm">Nombre</label>
+          <label for="name" class="mb-1 block text-sm">{{ 'common.name' | t }}</label>
           <input id="name" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.name" (input)="autoSlug()" />
         </div>
         <div>
-          <label for="slug" class="mb-1 block text-sm">Slug (URL)</label>
+          <label for="slug" class="mb-1 block text-sm">{{ 'marcas.slugUrl' | t }}</label>
           <input id="slug" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.slug" />
         </div>
         @if (error()) { <p role="alert" class="text-sm text-destructive">{{ error() }}</p> }
-        <button type="submit" class="rounded-lg bg-primary px-3 py-2 text-primary-foreground disabled:opacity-50" [disabled]="busy()">Crear marca</button>
+        <button type="submit" class="rounded-full bg-primary px-3 py-2 text-primary-foreground disabled:opacity-50" [disabled]="busy()">{{ 'marcas.create' | t }}</button>
       </form>
     </section>
     @if (loadError()) { <p role="alert" class="mb-4 text-sm text-destructive">{{ loadError() }}</p> }
     <table class="w-full max-w-2xl text-sm">
-      <thead><tr class="border-b text-left"><th class="py-2">Nombre</th><th>Slug</th></tr></thead>
+      <thead><tr class="border-b text-left"><th class="py-2">{{ 'common.name' | t }}</th><th>{{ 'common.slug' | t }}</th></tr></thead>
       <tbody>
         @for (b of brands(); track b.id) {
           <tr class="border-b"><td class="py-2">{{ b.name }}</td><td class="text-muted-foreground">{{ b.slug }}</td></tr>
         } @empty {
-          <tr><td colspan="2" class="py-4 text-muted-foreground">Aún no hay marcas.</td></tr>
+          <tr><td colspan="2" class="py-4 text-muted-foreground">{{ 'marcas.empty' | t }}</td></tr>
         }
       </tbody>
     </table>
@@ -58,7 +59,7 @@ export default class Marcas implements OnInit {
       const res = await firstValueFrom(this.api.listBrands());
       this.brands.set(res.items);
     } catch (e) {
-      this.loadError.set(problemMessage(e, 'No se pudieron cargar las marcas.'));
+      this.loadError.set(problemMessage(e, t('marcas.loadFailed')));
     }
   }
 
@@ -76,7 +77,7 @@ export default class Marcas implements OnInit {
       this.brands.update((list) => [...list, brand].sort((a, b) => a.name.localeCompare(b.name)));
       this.state.set({ name: '', slug: '' });
     } catch (e) {
-      this.error.set(problemMessage(e, 'No se pudo crear la marca (¿nombre o slug repetido?).'));
+      this.error.set(problemMessage(e, t('marcas.createFailed')));
     } finally {
       this.busy.set(false);
     }

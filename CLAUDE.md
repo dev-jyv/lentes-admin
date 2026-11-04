@@ -19,6 +19,7 @@ Admin panel (internal SPA, no SSR) for a contact-lens store. Angular 22, zoneles
 - **`core/api.interceptor.ts`**: generated URLs are relative (`/v1/...`). Interceptor prefixes `environment.apiUrl` and adds the Supabase Bearer.
 - **Auth** (`core/auth.service.ts`, `core/guards.ts`): Supabase session in signals; admin only if `app_metadata.role === 'admin'` (never `user_metadata`). Guard is UX only; API enforces 403. Empty `supabaseUrl` makes app open at `/login` instead of crashing. Supabase URL/key are blank in `environment*.ts`; fill locally, no secrets in repo.
 - **Routing**: all feature routes lazy-load default-exported components under `features/<area>/`, nested in `layout/shell` behind `adminGuard` (`app.routes.ts`).
+- **Texts (`core/i18n.ts`, `src/i18n/es-MX.json`)**: all static UI text lives in the JSON and is read through i18next, the same library as `lentes-web`. In templates use the pipe `{{ 'key' | t: { value } }}` (import `TPipe`); in TypeScript use `t('key')`.
 - **`core/`** holds pure helpers with specs: `money.ts` (money is integer cents; UI captures pesos, convert here, never floats), `problem.ts` (RFC 9457 `problem+json` errors to messages), `order-flow.ts` (allowed order status transitions), `stock.ts`, `slug.ts`, etc.
 
 ## Code Style and Angular Rules

@@ -5,20 +5,21 @@ import { DefaultService } from '../../api/generated/default/default.service';
 import type { LowStockItem } from '../../api/generated/model';
 import { problemMessage } from '../../core/problem';
 import { StockAdjust } from './stock-adjust';
+import { t, TPipe } from '../../core/i18n';
 
 @Component({
   selector: 'app-inventario',
-  imports: [RouterLink, StockAdjust],
+  imports: [RouterLink, StockAdjust, TPipe],
   template: `
-    <h1 class="mb-2 text-2xl">Inventario</h1>
-    <p class="mb-6 text-sm text-muted-foreground">Variantes activas con existencia disponible (stock − apartado) igual o menor al umbral.</p>
+    <h1 class="mb-2 text-2xl">{{ 'nav.inventario' | t }}</h1>
+    <p class="mb-6 text-sm text-muted-foreground">{{ 'inventario.description' | t }}</p>
     <div class="mb-4 flex items-center gap-2 text-sm">
-      <label for="thr">Umbral</label>
+      <label for="thr">{{ 'inventario.threshold' | t }}</label>
       <input id="thr" type="number" min="0" class="w-24 rounded-lg border border-input px-3 py-2" [value]="threshold()" (change)="setThreshold($event)" />
     </div>
     @if (error()) { <p role="alert" class="mb-4 text-sm text-destructive">{{ error() }}</p> }
     <table class="w-full text-sm">
-      <thead><tr class="border-b text-left"><th class="py-2">SKU</th><th>Producto</th><th>Existencia</th><th>Apartado</th><th>Disponible</th><th></th></tr></thead>
+      <thead><tr class="border-b text-left"><th class="py-2">{{ 'common.sku' | t }}</th><th>{{ 'common.product' | t }}</th><th>{{ 'inventario.stock' | t }}</th><th>{{ 'inventario.reserved' | t }}</th><th>{{ 'inventario.available' | t }}</th><th></th></tr></thead>
       <tbody>
         @for (v of items(); track v.variant_id) {
           <tr class="border-b">
@@ -27,11 +28,11 @@ import { StockAdjust } from './stock-adjust';
             <td>{{ v.stock }}</td><td>{{ v.reserved }}</td>
             <td [class.text-destructive]="v.available <= 0" [class.font-medium]="v.available <= 0">{{ v.available }}</td>
             <td class="space-x-3 text-right">
-              <button type="button" class="underline" (click)="selected.set(v)">Ajustar</button>
-              <a class="underline" [routerLink]="['/productos', v.product_id, 'variantes']">Variantes</a>
+              <button type="button" class="underline" (click)="selected.set(v)">{{ 'inventario.adjust' | t }}</button>
+              <a class="underline" [routerLink]="['/productos', v.product_id, 'variantes']">{{ 'inventario.variants' | t }}</a>
             </td>
           </tr>
-        } @empty { <tr><td colspan="6" class="py-4 text-muted-foreground">Nada por reponer con ese umbral.</td></tr> }
+        } @empty { <tr><td colspan="6" class="py-4 text-muted-foreground">{{ 'inventario.empty' | t }}</td></tr> }
       </tbody>
     </table>
     @if (selected(); as v) {
@@ -69,7 +70,7 @@ export default class Inventario implements OnInit {
       this.items.set((await firstValueFrom(this.api.adminListLowStock({ threshold: this.threshold() }))).items);
       this.error.set(null);
     } catch (e) {
-      this.error.set(problemMessage(e, 'No se pudo cargar el inventario.'));
+      this.error.set(problemMessage(e, t('inventario.loadFailed')));
     }
   }
 }

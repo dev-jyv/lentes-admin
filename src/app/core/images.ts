@@ -1,10 +1,12 @@
+import { t } from './i18n';
+
 export const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'] as const;
 export type ImageType = (typeof IMAGE_TYPES)[number];
 export const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 
 export function validateImage(file: { type: string; size: number; name: string }): string | null {
-  if (!(IMAGE_TYPES as readonly string[]).includes(file.type)) return `${file.name}: usa JPG, PNG o WebP.`;
-  if (file.size > MAX_IMAGE_BYTES) return `${file.name}: pesa más de 5 MB.`;
+  if (!(IMAGE_TYPES as readonly string[]).includes(file.type)) return t('images.badType', { name: file.name });
+  if (file.size > MAX_IMAGE_BYTES) return t('images.tooLarge', { name: file.name });
   return null;
 }
 

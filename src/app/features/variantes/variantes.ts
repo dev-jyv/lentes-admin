@@ -8,6 +8,7 @@ import { COLOR_LABEL, toOptions } from '../../core/frame-labels';
 import { centsToPesos, formatMxn, pesosToCents } from '../../core/money';
 import { importErrors, problemMessage } from '../../core/problem';
 import { StockAdjust } from '../inventario/stock-adjust';
+import { t, TPipe } from '../../core/i18n';
 
 interface VariantForm {
   sku: string;
@@ -33,77 +34,77 @@ const fmt = (n: number | null | undefined) => (n == null ? '—' : String(n));
 
 @Component({
   selector: 'app-variantes',
-  imports: [FormField, RouterLink, StockAdjust],
+  imports: [FormField, RouterLink, StockAdjust, TPipe],
   template: `
-    <a routerLink="/productos" class="text-sm underline">← Productos</a>
+    <a routerLink="/productos" class="text-sm underline">{{ 'imagenes.back' | t }}</a>
     <div class="my-4 flex items-center justify-between">
-      <h1 class="text-2xl">Variantes</h1>
-      <button type="button" class="rounded-lg bg-primary px-3 py-2 text-sm text-primary-foreground" (click)="startCreate()">Nueva variante</button>
+      <h1 class="text-2xl">{{ 'inventario.variants' | t }}</h1>
+      <button type="button" class="rounded-full bg-primary px-3 py-2 text-sm text-primary-foreground" (click)="startCreate()">{{ 'variantes.new' | t }}</button>
     </div>
 
     @if (editing()) {
-      <section class="mb-8 max-w-3xl rounded-lg border border-border p-4" aria-labelledby="vtitle">
-        <h2 id="vtitle" class="mb-3 font-medium">{{ editingId() ? 'Editar variante' : 'Nueva variante' }}</h2>
+      <section class="mb-8 max-w-3xl rounded-2xl border border-border bg-card p-4" aria-labelledby="vtitle">
+        <h2 id="vtitle" class="mb-3 font-medium">{{ editingId() ? ('variantes.edit' | t) : ('variantes.new' | t) }}</h2>
         <form class="grid gap-3 sm:grid-cols-3" (submit)="save($event)">
           <div class="sm:col-span-3">
-            <label for="sku" class="mb-1 block text-sm">SKU</label>
+            <label for="sku" class="mb-1 block text-sm">{{ 'common.sku' | t }}</label>
             <input id="sku" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.sku" />
           </div>
           @if (isFrame()) {
             <div>
-              <label for="fcolor" class="mb-1 block text-sm">Color</label>
+              <label for="fcolor" class="mb-1 block text-sm">{{ 'variantes.color' | t }}</label>
               <select id="fcolor" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.color">
-                <option value="">Elegir…</option>
+                <option value="">{{ 'common.choose' | t }}</option>
                 @for (o of frameColors; track o.value) { <option [value]="o.value">{{ o.label }}</option> }
               </select>
             </div>
           } @else {
           <div>
-            <label for="sphere" class="mb-1 block text-sm">Esfera</label>
+            <label for="sphere" class="mb-1 block text-sm">{{ 'variantes.sphere' | t }}</label>
             <input id="sphere" type="number" step="0.25" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.sphere" />
           </div>
           <div>
-            <label for="cyl" class="mb-1 block text-sm">Cilindro</label>
+            <label for="cyl" class="mb-1 block text-sm">{{ 'variantes.cylinder' | t }}</label>
             <input id="cyl" type="number" step="0.25" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.cylinder" />
           </div>
           <div>
-            <label for="axis" class="mb-1 block text-sm">Eje</label>
+            <label for="axis" class="mb-1 block text-sm">{{ 'variantes.axis' | t }}</label>
             <input id="axis" type="number" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.axis" />
           </div>
           <div>
-            <label for="add" class="mb-1 block text-sm">Adición</label>
+            <label for="add" class="mb-1 block text-sm">{{ 'variantes.addition' | t }}</label>
             <input id="add" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.addition" />
           </div>
           <div>
-            <label for="bc" class="mb-1 block text-sm">Curva base</label>
+            <label for="bc" class="mb-1 block text-sm">{{ 'variantes.baseCurve' | t }}</label>
             <input id="bc" type="number" step="0.1" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.base_curve" />
           </div>
           <div>
-            <label for="dia" class="mb-1 block text-sm">Diámetro</label>
+            <label for="dia" class="mb-1 block text-sm">{{ 'variantes.diameter' | t }}</label>
             <input id="dia" type="number" step="0.1" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.diameter" />
           </div>
           <div>
-            <label for="color" class="mb-1 block text-sm">Color (cosméticos)</label>
+            <label for="color" class="mb-1 block text-sm">{{ 'variantes.cosmeticColor' | t }}</label>
             <input id="color" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.color" />
           </div>
           }
           <div>
-            <label for="price" class="mb-1 block text-sm">Precio (MXN)</label>
+            <label for="price" class="mb-1 block text-sm">{{ 'micas.pricePesos' | t }}</label>
             <input id="price" type="number" step="0.01" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.price_pesos" />
           </div>
           <div>
-            <label for="cmp" class="mb-1 block text-sm">Precio de lista (MXN)</label>
+            <label for="cmp" class="mb-1 block text-sm">{{ 'variantes.listPrice' | t }}</label>
             <input id="cmp" type="number" step="0.01" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.compare_at_pesos" />
           </div>
           <div>
-            <label for="stock" class="mb-1 block text-sm">Existencia @if (editingId()) { <span class="text-xs text-muted-foreground">(usa “Ajustar”)</span> }</label>
+            <label for="stock" class="mb-1 block text-sm">{{ 'inventario.stock' | t }} @if (editingId()) { <span class="text-xs text-muted-foreground">{{ 'variantes.useAdjust' | t }}</span> }</label>
             <input id="stock" type="number" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.stock" />
           </div>
-          <label class="flex items-center gap-2 text-sm sm:col-span-3"><input type="checkbox" [formField]="model.active" /> Activa (a la venta)</label>
+          <label class="flex items-center gap-2 text-sm sm:col-span-3"><input type="checkbox" [formField]="model.active" /> {{ 'variantes.activeForSale' | t }}</label>
           @if (error()) { <p role="alert" class="text-sm text-destructive sm:col-span-3">{{ error() }}</p> }
           <div class="flex gap-2 sm:col-span-3">
-            <button type="submit" class="rounded-lg bg-primary px-3 py-2 text-primary-foreground disabled:opacity-50" [disabled]="busy()">Guardar</button>
-            <button type="button" class="rounded-lg border border-input px-3 py-2" (click)="editing.set(false)">Cancelar</button>
+            <button type="submit" class="rounded-full bg-primary px-3 py-2 text-primary-foreground disabled:opacity-50" [disabled]="busy()">{{ 'common.save' | t }}</button>
+            <button type="button" class="rounded-full border border-input px-3 py-2" (click)="editing.set(false)">{{ 'common.cancel' | t }}</button>
           </div>
         </form>
       </section>
@@ -116,22 +117,21 @@ const fmt = (n: number | null | undefined) => (n == null ? '—' : String(n));
     }
 
     @if (!isFrame()) {
-    <section class="mb-8 max-w-3xl rounded-lg border border-border p-4" aria-labelledby="imp">
-      <h2 id="imp" class="mb-1 font-medium">Carga masiva por CSV</h2>
+    <section class="mb-8 max-w-3xl rounded-2xl border border-border bg-card p-4" aria-labelledby="imp">
+      <h2 id="imp" class="mb-1 font-medium">{{ 'variantes.csvTitle' | t }}</h2>
       <p class="mb-3 text-sm text-muted-foreground">
-        Se actualiza por SKU. Todo o nada: si una fila falla, no se aplica nada. Máx. 5 MB y 5,000 filas.
-        Columnas: product_slug, sku, sphere, cylinder, axis, addition, base_curve, diameter, color, price_cents, compare_at_cents, stock, active.
+        {{ 'variantes.csvHelp' | t }}
       </p>
-      <label for="csv" class="mb-1 block text-sm">Archivo CSV</label>
+      <label for="csv" class="mb-1 block text-sm">{{ 'variantes.csvFile' | t }}</label>
       <input id="csv" type="file" accept=".csv,text/csv" class="mb-3 block text-sm" (change)="pickFile($event)" />
-      <button type="button" class="rounded-lg bg-primary px-3 py-2 text-sm text-primary-foreground disabled:opacity-50" [disabled]="!file() || importing()" (click)="runImport()">
-        {{ importing() ? 'Importando…' : 'Importar' }}
+      <button type="button" class="rounded-full bg-primary px-3 py-2 text-sm text-primary-foreground disabled:opacity-50" [disabled]="!file() || importing()" (click)="runImport()">
+        {{ importing() ? ('variantes.importing' | t) : ('variantes.import' | t) }}
       </button>
       @if (importOk()) { <p role="status" class="mt-3 text-sm">{{ importOk() }}</p> }
       @if (importError()) { <p role="alert" class="mt-3 text-sm text-destructive">{{ importError() }}</p> }
       @if (rowErrors().length) {
         <ul class="mt-2 max-h-48 overflow-auto text-sm text-destructive">
-          @for (e of rowErrors(); track e.row) { <li>Fila {{ e.row }}: {{ e.message }}</li> }
+          @for (e of rowErrors(); track e.row) { <li>{{ 'variantes.rowError' | t: { row: e.row, message: e.message } }}</li> }
         </ul>
       }
     </section>
@@ -140,9 +140,9 @@ const fmt = (n: number | null | undefined) => (n == null ? '—' : String(n));
     @if (loadError()) { <p role="alert" class="mb-4 text-sm text-destructive">{{ loadError() }}</p> }
     <table class="w-full text-sm">
       <thead><tr class="border-b text-left">
-        <th class="py-2">SKU</th>
-        @if (isFrame()) { <th>Color</th> } @else { <th>Esf</th><th>Cil</th><th>Eje</th><th>Add</th><th>CB</th><th>Diám</th> }
-        <th>Precio</th><th>Existencia</th><th>Apartado</th><th>Estado</th><th></th>
+        <th class="py-2">{{ 'common.sku' | t }}</th>
+        @if (isFrame()) { <th>{{ 'variantes.color' | t }}</th> } @else { <th>{{ 'variantes.abbr.sphere' | t }}</th><th>{{ 'variantes.abbr.cylinder' | t }}</th><th>{{ 'variantes.axis' | t }}</th><th>{{ 'variantes.abbr.addition' | t }}</th><th>{{ 'variantes.abbr.baseCurve' | t }}</th><th>{{ 'variantes.abbr.diameter' | t }}</th> }
+        <th>{{ 'common.price' | t }}</th><th>{{ 'inventario.stock' | t }}</th><th>{{ 'inventario.reserved' | t }}</th><th>{{ 'common.status' | t }}</th><th></th>
       </tr></thead>
       <tbody>
         @for (v of variants(); track v.id) {
@@ -155,14 +155,14 @@ const fmt = (n: number | null | undefined) => (n == null ? '—' : String(n));
               <td>{{ v.addition ?? '—' }}</td><td>{{ f(v.base_curve) }}</td><td>{{ f(v.diameter) }}</td>
             }
             <td>{{ money(v.price_cents) }}</td><td>{{ v.stock }}</td><td>{{ v.reserved }}</td>
-            <td>{{ v.active ? 'Activa' : 'Inactiva' }}</td>
+            <td>{{ v.active ? ('variantes.active' | t) : ('variantes.inactive' | t) }}</td>
             <td class="space-x-3 text-right">
-              <button type="button" class="underline" (click)="startEdit(v)">Editar</button>
-              <button type="button" class="underline" (click)="adjusting.set(v)">Ajustar existencia</button>
+              <button type="button" class="underline" (click)="startEdit(v)">{{ 'common.edit' | t }}</button>
+              <button type="button" class="underline" (click)="adjusting.set(v)">{{ 'variantes.adjustStock' | t }}</button>
             </td>
           </tr>
         } @empty {
-          <tr><td colspan="12" class="py-4 text-muted-foreground">Este producto aún no tiene variantes.</td></tr>
+          <tr><td colspan="12" class="py-4 text-muted-foreground">{{ 'variantes.empty' | t }}</td></tr>
         }
       </tbody>
     </table>
@@ -217,7 +217,7 @@ export default class Variantes implements OnInit {
       this.variants.set(res.items);
       this.loadError.set(null);
     } catch (e) {
-      this.loadError.set(problemMessage(e, 'No se pudieron cargar las variantes.'));
+      this.loadError.set(problemMessage(e, t('variantes.loadFailed')));
     }
   }
 
@@ -243,7 +243,7 @@ export default class Variantes implements OnInit {
 
   protected async save(event: Event) {
     event.preventDefault();
-    if (this.model().invalid()) return this.error.set('Revisa los campos obligatorios.');
+    if (this.model().invalid()) return this.error.set(t('common.checkRequired'));
     const s = this.state();
     const body: VariantInput = {
       product_id: this.productId(), sku: s.sku.trim(),
@@ -266,7 +266,7 @@ export default class Variantes implements OnInit {
       await this.load();
       this.editing.set(false);
     } catch (e) {
-      this.error.set(problemMessage(e, 'No se pudo guardar (¿SKU o combinación repetida?).'));
+      this.error.set(problemMessage(e, t('variantes.saveFailed')));
     } finally {
       this.busy.set(false);
     }
@@ -286,7 +286,7 @@ export default class Variantes implements OnInit {
     this.rowErrors.set([]);
     if (f && f.size > 5 * 1024 * 1024) {
       this.file.set(null);
-      return this.importError.set('El archivo pesa más de 5 MB.');
+      return this.importError.set(t('variantes.fileTooLarge'));
     }
     this.file.set(f);
   }
@@ -300,10 +300,10 @@ export default class Variantes implements OnInit {
     this.rowErrors.set([]);
     try {
       const res = await firstValueFrom(this.api.adminImportVariants(f, { headers: { 'Content-Type': 'text/csv' } }));
-      this.importOk.set(`Listo: ${res.created} creadas, ${res.updated} actualizadas.`);
+      this.importOk.set(t('variantes.importDone', { created: res.created, updated: res.updated }));
       await this.load();
     } catch (e) {
-      this.importError.set(problemMessage(e, 'El archivo no es válido. No se aplicó ningún cambio.'));
+      this.importError.set(problemMessage(e, t('variantes.importFailed')));
       this.rowErrors.set(importErrors(e));
     } finally {
       this.importing.set(false);
