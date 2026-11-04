@@ -5,38 +5,40 @@ import type { ManualStockReason, StockAdjustment, StockReason } from '../../api/
 import { formatDateTime } from '../../core/format';
 import { problemMessage } from '../../core/problem';
 import { MANUAL_REASONS, REASON_LABEL, validateAdjustment } from '../../core/stock';
+import { t, TPipe } from '../../core/i18n';
 
 @Component({
   selector: 'app-stock-adjust',
+  imports: [TPipe],
   template: `
-    <section class="space-y-3 rounded-lg border border-border p-4" [attr.aria-label]="'Ajustar existencia de ' + sku()">
-      <h3 class="font-medium">Ajustar existencia · {{ sku() }} <span class="font-normal text-muted-foreground">(hay {{ stock() }})</span></h3>
+    <section class="space-y-3 rounded-2xl border border-border bg-card p-4" [attr.aria-label]="'stock.adjustLabel' | t: { sku: sku() }">
+      <h3 class="font-medium">{{ 'stock.adjustTitle' | t: { sku: sku() } }} <span class="font-normal text-muted-foreground">{{ 'stock.current' | t: { stock: stock() } }}</span></h3>
       <form class="grid gap-3 sm:grid-cols-3" (submit)="save($event)">
         <div>
-          <label [attr.for]="'delta-' + variantId()" class="mb-1 block text-sm">Cantidad (+ suma, − resta)</label>
+          <label [attr.for]="'delta-' + variantId()" class="mb-1 block text-sm">{{ 'stock.quantity' | t }}</label>
           <input [id]="'delta-' + variantId()" type="number" step="1" class="w-full rounded-lg border border-input px-3 py-2" [value]="delta() ?? ''" (input)="setDelta($event)" />
         </div>
         <div>
-          <label [attr.for]="'reason-' + variantId()" class="mb-1 block text-sm">Motivo</label>
+          <label [attr.for]="'reason-' + variantId()" class="mb-1 block text-sm">{{ 'stock.reason' | t }}</label>
           <select [id]="'reason-' + variantId()" class="w-full rounded-lg border border-input px-3 py-2" (change)="reason.set(asReason($event))">
             @for (r of reasons; track r.value) { <option [value]="r.value" [selected]="r.value === reason()">{{ r.label }}</option> }
           </select>
         </div>
         <div>
-          <label [attr.for]="'note-' + variantId()" class="mb-1 block text-sm">Nota @if (reason() === 'other') { (obligatoria) }</label>
+          <label [attr.for]="'note-' + variantId()" class="mb-1 block text-sm">{{ 'stock.note' | t }} @if (reason() === 'other') { {{ 'stock.required' | t }} }</label>
           <input [id]="'note-' + variantId()" class="w-full rounded-lg border border-input px-3 py-2" [value]="note()" (input)="note.set(val($event))" />
         </div>
         @if (error()) { <p role="alert" class="text-sm text-destructive sm:col-span-3">{{ error() }}</p> }
         @if (ok()) { <p role="status" class="text-sm sm:col-span-3">{{ ok() }}</p> }
         <div class="flex gap-2 sm:col-span-3">
-          <button type="submit" class="rounded-lg bg-primary px-3 py-2 text-sm text-primary-foreground disabled:opacity-50" [disabled]="busy()">Registrar ajuste</button>
-          <button type="button" class="rounded-lg border border-input px-3 py-2 text-sm" (click)="toggleHistory()">{{ showHistory() ? 'Ocultar historial' : 'Ver historial' }}</button>
-          <button type="button" class="rounded-lg border border-input px-3 py-2 text-sm" (click)="closed.emit()">Cerrar</button>
+          <button type="submit" class="rounded-full bg-primary px-3 py-2 text-sm text-primary-foreground disabled:opacity-50" [disabled]="busy()">{{ 'stock.register' | t }}</button>
+          <button type="button" class="rounded-full border border-input px-3 py-2 text-sm" (click)="toggleHistory()">{{ showHistory() ? ('stock.hideHistory' | t) : ('stock.showHistory' | t) }}</button>
+          <button type="button" class="rounded-full border border-input px-3 py-2 text-sm" (click)="closed.emit()">{{ 'common.close' | t }}</button>
         </div>
       </form>
       @if (showHistory()) {
         <table class="w-full text-sm">
-          <thead><tr class="border-b text-left"><th class="py-1">Fecha</th><th>Cambio</th><th>Quedó</th><th>Motivo</th><th>Quién</th></tr></thead>
+          <thead><tr class="border-b text-left"><th class="py-1">{{ 'common.date' | t }}</th><th>{{ 'stock.change' | t }}</th><th>{{ 'stock.after' | t }}</th><th>{{ 'stock.reason' | t }}</th><th>{{ 'stock.who' | t }}</th></tr></thead>
           <tbody>
             @for (a of history(); track a.id) {
               <tr class="border-b">
@@ -46,7 +48,7 @@ import { MANUAL_REASONS, REASON_LABEL, validateAdjustment } from '../../core/sto
                 <td>{{ label(a.reason) }}@if (a.note) { <span class="text-muted-foreground"> · {{ a.note }}</span> }</td>
                 <td>{{ a.actor_email }}</td>
               </tr>
-            } @empty { <tr><td colspan="5" class="py-2 text-muted-foreground">Sin ajustes registrados.</td></tr> }
+            } @empty { <tr><td colspan="5" class="py-2 text-muted-foreground">{{ 'stock.noHistory' | t }}</td></tr> }
           </tbody>
         </table>
       }
@@ -91,7 +93,7 @@ export class StockAdjust {
     try {
       this.history.set((await firstValueFrom(this.api.adminListStockAdjustments(this.variantId()))).items);
     } catch (e) {
-      this.error.set(problemMessage(e, 'No se pudo cargar el historial.'));
+      this.error.set(problemMessage(e, t('stock.historyFailed')));
     }
   }
 
@@ -109,12 +111,12 @@ export class StockAdjust {
         }),
       );
       this.adjusted.emit(adj.stock_after);
-      this.ok.set(`Listo. Existencia: ${adj.stock_after}.`);
+      this.ok.set(t('stock.done', { stock: adj.stock_after }));
       this.delta.set(null);
       this.note.set('');
       if (this.showHistory()) await this.loadHistory();
     } catch (e) {
-      this.error.set(problemMessage(e, 'No se pudo registrar el ajuste.'));
+      this.error.set(problemMessage(e, t('stock.saveFailed')));
     } finally {
       this.busy.set(false);
     }

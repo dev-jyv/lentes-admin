@@ -1,15 +1,7 @@
 import type { ManualStockReason, StockReason } from '../api/generated/model';
+import { t } from './i18n';
 
-export const REASON_LABEL: Record<StockReason, string> = {
-  receipt: 'Recepción de mercancía',
-  count_correction: 'Corrección por conteo',
-  damage: 'Merma o daño',
-  return: 'Devolución',
-  other: 'Otro (explicar en la nota)',
-  initial: 'Alta de la variante',
-  edit: 'Edición de la variante',
-  import: 'Carga masiva (CSV)',
-};
+export const REASON_LABEL: Record<StockReason, string> = t('labels.stockReason', { returnObjects: true });
 
 /** Motivos que el admin puede elegir en un ajuste; el resto los registra el sistema. */
 export const MANUAL_REASONS: ManualStockReason[] = ['receipt', 'count_correction', 'damage', 'return', 'other'];
@@ -21,9 +13,9 @@ export function validateAdjustment(
   note: string,
   currentStock: number,
 ): string | null {
-  if (delta === null || !Number.isInteger(delta)) return 'Captura una cantidad entera.';
-  if (delta === 0) return 'El ajuste no puede ser 0.';
-  if (currentStock + delta < 0) return `La existencia no puede quedar negativa (hay ${currentStock}).`;
-  if (reason === 'other' && !note.trim()) return 'Explica el motivo en la nota.';
+  if (delta === null || !Number.isInteger(delta)) return t('stock.integerRequired');
+  if (delta === 0) return t('stock.zero');
+  if (currentStock + delta < 0) return t('stock.negative', { stock: currentStock });
+  if (reason === 'other' && !note.trim()) return t('stock.noteRequired');
   return null;
 }

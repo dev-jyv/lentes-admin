@@ -2,41 +2,47 @@ import { Component, inject, input, signal } from '@angular/core';
 import { form, FormField, required, email } from '@angular/forms/signals';
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/auth.service';
+import { TPipe } from '../../core/i18n';
 
 @Component({
   selector: 'app-login',
-  imports: [FormField],
+  imports: [FormField, TPipe],
   template: `
-    <main class="mx-auto mt-24 w-full max-w-sm p-4">
-      <div class="mb-6 flex items-center gap-2">
-        <svg viewBox="0 0 32 32" aria-hidden="true" class="size-7" fill="none">
-          <circle cx="16" cy="16" r="14.2" stroke="var(--teal)" stroke-width="1.6" />
-          <circle cx="16" cy="16" r="8.4" fill="var(--amber-soft)" stroke="var(--amber)" stroke-width="1.6" />
-          <circle cx="16" cy="16" r="3.6" fill="var(--ink)" />
-          <circle cx="14.4" cy="14.4" r="1.1" fill="#fff" opacity="0.9" />
-        </svg>
-        <span class="font-display text-xl font-extrabold tracking-tight">pupila</span>
-      </div>
-      <h1 class="mb-6 text-2xl">Admin · Iniciar sesión</h1>
-      @if (error() === 'forbidden') {
-        <p role="alert" class="mb-4 text-sm text-destructive">Esta cuenta no tiene permisos de administrador.</p>
-      }
-      <form class="space-y-4" (submit)="submit($event)">
-        <div>
-          <label for="email" class="mb-1 block text-sm">Correo</label>
-          <input id="email" type="email" autocomplete="email" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.email" />
+    <div class="bg-band text-white">
+      <p class="container-page flex min-h-10 items-center justify-center py-1 text-sm font-medium">{{ 'shell.band' | t }}</p>
+    </div>
+    <main class="mx-auto mt-16 w-full max-w-sm px-4 pb-8">
+      <div class="rounded-2xl border border-border bg-card p-6">
+        <div class="mb-6 flex items-center gap-2">
+          <svg viewBox="0 0 32 32" aria-hidden="true" class="size-7" fill="none">
+            <circle cx="16" cy="16" r="14.2" stroke="var(--teal)" stroke-width="1.6" />
+            <circle cx="16" cy="16" r="8.4" fill="var(--amber-soft)" stroke="var(--amber)" stroke-width="1.6" />
+            <circle cx="16" cy="16" r="3.6" fill="var(--ink)" />
+            <circle cx="14.4" cy="14.4" r="1.1" fill="#fff" opacity="0.9" />
+          </svg>
+          <span class="font-display text-xl font-extrabold tracking-tight">{{ 'brand.wordmark' | t }}</span>
         </div>
-        <div>
-          <label for="password" class="mb-1 block text-sm">Contraseña</label>
-          <input id="password" type="password" autocomplete="current-password" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.password" />
-        </div>
-        @if (failed()) {
-          <p role="alert" class="text-sm text-destructive">Correo o contraseña incorrectos.</p>
+        <h1 class="mb-6 text-2xl">{{ 'login.title' | t }}</h1>
+        @if (error() === 'forbidden') {
+          <p role="alert" class="mb-4 text-sm text-destructive">{{ 'login.forbidden' | t }}</p>
         }
-        <button type="submit" class="w-full rounded-lg bg-primary px-3 py-2 text-primary-foreground disabled:opacity-50" [disabled]="busy()">
-          Entrar
-        </button>
-      </form>
+        <form class="space-y-4" (submit)="submit($event)">
+          <div>
+            <label for="email" class="mb-1 block text-sm">{{ 'login.email' | t }}</label>
+            <input id="email" type="email" autocomplete="email" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.email" />
+          </div>
+          <div>
+            <label for="password" class="mb-1 block text-sm">{{ 'login.password' | t }}</label>
+            <input id="password" type="password" autocomplete="current-password" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.password" />
+          </div>
+          @if (failed()) {
+            <p role="alert" class="text-sm text-destructive">{{ 'login.failed' | t }}</p>
+          }
+          <button type="submit" class="w-full rounded-full bg-primary px-3 py-2 text-primary-foreground disabled:opacity-50" [disabled]="busy()">
+            {{ 'login.submit' | t }}
+          </button>
+        </form>
+      </div>
     </main>
   `,
 })
