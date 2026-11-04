@@ -10,7 +10,13 @@ import type { HomeContentFeatured } from './homeContentFeatured';
 
 export interface HomeContent {
   promo_bar: HomeBanner | null;
+  /** Primer banner de `heroes`; se conserva para clientes que aún no usan el carrusel. */
   hero: HomeBanner | null;
+  /**
+     * Banners principales vigentes, en orden, para el carrusel del home.
+     * @maxItems 5
+     */
+  heroes: HomeBanner[];
   /** @maxItems 3 */
   secondary: HomeBanner[];
   featured: HomeContentFeatured;

@@ -1579,10 +1579,18 @@ components:
         ends_at: { type: string, format: date-time, nullable: true }
     HomeContent:
       type: object
-      required: [promo_bar, hero, secondary, featured]
+      required: [promo_bar, hero, heroes, secondary, featured]
       properties:
         promo_bar: { allOf: [{ $ref: "#/components/schemas/HomeBanner" }], nullable: true }
-        hero: { allOf: [{ $ref: "#/components/schemas/HomeBanner" }], nullable: true }
+        hero:
+          allOf: [{ $ref: "#/components/schemas/HomeBanner" }]
+          nullable: true
+          description: Primer banner de `heroes`; se conserva para clientes que aún no usan el carrusel.
+        heroes:
+          type: array
+          maxItems: 5
+          description: Banners principales vigentes, en orden, para el carrusel del home.
+          items: { $ref: "#/components/schemas/HomeBanner" }
         secondary:
           type: array
           maxItems: 3

@@ -10,7 +10,7 @@ export function bannerStatus(b: Pick<AdminHomeBanner, 'active' | 'starts_at' | '
 }
 
 /** Cuántos banners vigentes muestra la tienda por ubicación. */
-const SHOWN: Record<AdminHomeBanner['placement'], number> = { promo_bar: 1, hero: 1, secondary: 3 };
+const SHOWN: Record<AdminHomeBanner['placement'], number> = { promo_bar: 1, hero: 5, secondary: 3 };
 
 /** Ids de los banners que la tienda muestra ahora, según vigencia y posición. */
 export function shownBannerIds(banners: readonly AdminHomeBanner[], now: Date = new Date()): Set<string> {
