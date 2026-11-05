@@ -11,46 +11,48 @@ import { t, TPipe } from '../../core/i18n';
   selector: 'app-stock-adjust',
   imports: [TPipe],
   template: `
-    <section class="space-y-3 rounded-2xl border border-border bg-card p-4" [attr.aria-label]="'stock.adjustLabel' | t: { sku: sku() }">
-      <h3 class="font-medium">{{ 'stock.adjustTitle' | t: { sku: sku() } }} <span class="font-normal text-muted-foreground">{{ 'stock.current' | t: { stock: stock() } }}</span></h3>
+    <section class="panel space-y-4 p-5 shadow-[0_4px_16px_rgb(14_34_48/0.08)]" [attr.aria-label]="'stock.adjustLabel' | t: { sku: sku() }">
+      <h3 class="text-lg">{{ 'stock.adjustTitle' | t: { sku: sku() } }} <span class="font-normal text-muted-foreground">{{ 'stock.current' | t: { stock: stock() } }}</span></h3>
       <form class="grid gap-3 sm:grid-cols-3" (submit)="save($event)">
         <div>
-          <label [attr.for]="'delta-' + variantId()" class="mb-1 block text-sm">{{ 'stock.quantity' | t }}</label>
-          <input [id]="'delta-' + variantId()" type="number" step="1" class="w-full rounded-lg border border-input px-3 py-2" [value]="delta() ?? ''" (input)="setDelta($event)" />
+          <label [attr.for]="'delta-' + variantId()" class="field-label">{{ 'stock.quantity' | t }}</label>
+          <input [id]="'delta-' + variantId()" type="number" step="1" class="field w-full" [value]="delta() ?? ''" (input)="setDelta($event)" />
         </div>
         <div>
-          <label [attr.for]="'reason-' + variantId()" class="mb-1 block text-sm">{{ 'stock.reason' | t }}</label>
-          <select [id]="'reason-' + variantId()" class="w-full rounded-lg border border-input px-3 py-2" (change)="reason.set(asReason($event))">
+          <label [attr.for]="'reason-' + variantId()" class="field-label">{{ 'stock.reason' | t }}</label>
+          <select [id]="'reason-' + variantId()" class="field w-full" (change)="reason.set(asReason($event))">
             @for (r of reasons; track r.value) { <option [value]="r.value" [selected]="r.value === reason()">{{ r.label }}</option> }
           </select>
         </div>
         <div>
-          <label [attr.for]="'note-' + variantId()" class="mb-1 block text-sm">{{ 'stock.note' | t }} @if (reason() === 'other') { {{ 'stock.required' | t }} }</label>
-          <input [id]="'note-' + variantId()" class="w-full rounded-lg border border-input px-3 py-2" [value]="note()" (input)="note.set(val($event))" />
+          <label [attr.for]="'note-' + variantId()" class="field-label">{{ 'stock.note' | t }} @if (reason() === 'other') { {{ 'stock.required' | t }} }</label>
+          <input [id]="'note-' + variantId()" class="field w-full" [value]="note()" (input)="note.set(val($event))" />
         </div>
-        @if (error()) { <p role="alert" class="text-sm text-destructive sm:col-span-3">{{ error() }}</p> }
-        @if (ok()) { <p role="status" class="text-sm sm:col-span-3">{{ ok() }}</p> }
-        <div class="flex gap-2 sm:col-span-3">
-          <button type="submit" class="rounded-full bg-primary px-3 py-2 text-sm text-primary-foreground disabled:opacity-50" [disabled]="busy()">{{ 'stock.register' | t }}</button>
-          <button type="button" class="rounded-full border border-input px-3 py-2 text-sm" (click)="toggleHistory()">{{ showHistory() ? ('stock.hideHistory' | t) : ('stock.showHistory' | t) }}</button>
-          <button type="button" class="rounded-full border border-input px-3 py-2 text-sm" (click)="closed.emit()">{{ 'common.close' | t }}</button>
+        @if (error()) { <p role="alert" class="alert-error sm:col-span-3">{{ error() }}</p> }
+        @if (ok()) { <p role="status" class="alert-ok sm:col-span-3">{{ ok() }}</p> }
+        <div class="flex flex-wrap gap-2 sm:col-span-3">
+          <button type="submit" class="btn btn-primary" [disabled]="busy()">{{ 'stock.register' | t }}</button>
+          <button type="button" class="btn btn-secondary" (click)="toggleHistory()">{{ showHistory() ? ('stock.hideHistory' | t) : ('stock.showHistory' | t) }}</button>
+          <button type="button" class="btn btn-secondary" (click)="closed.emit()">{{ 'common.close' | t }}</button>
         </div>
       </form>
       @if (showHistory()) {
-        <table class="w-full text-sm">
-          <thead><tr class="border-b text-left"><th class="py-1">{{ 'common.date' | t }}</th><th>{{ 'stock.change' | t }}</th><th>{{ 'stock.after' | t }}</th><th>{{ 'stock.reason' | t }}</th><th>{{ 'stock.who' | t }}</th></tr></thead>
+        <div class="-mx-5 overflow-x-auto border-t border-border">
+        <table class="data-table">
+          <thead><tr><th>{{ 'common.date' | t }}</th><th>{{ 'stock.change' | t }}</th><th>{{ 'stock.after' | t }}</th><th>{{ 'stock.reason' | t }}</th><th>{{ 'stock.who' | t }}</th></tr></thead>
           <tbody>
             @for (a of history(); track a.id) {
-              <tr class="border-b">
-                <td class="py-1">{{ dt(a.created_at) }}</td>
-                <td [class.text-destructive]="a.delta < 0">{{ a.delta > 0 ? '+' : '' }}{{ a.delta }}</td>
+              <tr>
+                <td>{{ dt(a.created_at) }}</td>
+                <td class="tabular-nums" [class.text-destructive]="a.delta < 0">{{ a.delta > 0 ? '+' : '' }}{{ a.delta }}</td>
                 <td>{{ a.stock_after }}</td>
                 <td>{{ label(a.reason) }}@if (a.note) { <span class="text-muted-foreground"> · {{ a.note }}</span> }</td>
                 <td>{{ a.actor_email }}</td>
               </tr>
-            } @empty { <tr><td colspan="5" class="py-2 text-muted-foreground">{{ 'stock.noHistory' | t }}</td></tr> }
+            } @empty { <tr><td colspan="5" class="empty">{{ 'stock.noHistory' | t }}</td></tr> }
           </tbody>
         </table>
+        </div>
       }
     </section>
   `,

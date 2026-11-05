@@ -41,86 +41,86 @@ const fmt = (n: number | null | undefined) => (n == null ? '—' : String(n));
   selector: 'app-variantes',
   imports: [FormField, RouterLink, StockAdjust, TPipe],
   template: `
-    <a routerLink="/productos" class="text-sm underline">{{ 'imagenes.back' | t }}</a>
-    <div class="my-4 flex items-center justify-between">
-      <h1 class="text-2xl">{{ 'inventario.variants' | t }}</h1>
-      <button type="button" class="rounded-full bg-primary px-3 py-2 text-sm text-primary-foreground" (click)="startCreate()">{{ 'variantes.new' | t }}</button>
+    <a routerLink="/productos" class="back-link">{{ 'imagenes.back' | t }}</a>
+    <div class="my-4 flex flex-wrap items-center justify-between gap-3">
+      <h1 class="page-title">{{ 'inventario.variants' | t }}</h1>
+      <button type="button" class="btn btn-primary" (click)="startCreate()">{{ 'variantes.new' | t }}</button>
     </div>
 
     @if (editing()) {
-      <section class="mb-8 max-w-3xl rounded-2xl border border-border bg-card p-4" aria-labelledby="vtitle">
-        <h2 id="vtitle" class="mb-3 font-medium">{{ editingId() ? ('variantes.edit' | t) : ('variantes.new' | t) }}</h2>
-        <form class="grid gap-3 sm:grid-cols-3" (submit)="save($event)">
+      <section class="panel mb-8 max-w-3xl p-5 shadow-[0_4px_16px_rgb(14_34_48/0.08)]" aria-labelledby="vtitle">
+        <h2 id="vtitle" class="mb-3 text-lg">{{ editingId() ? ('variantes.edit' | t) : ('variantes.new' | t) }}</h2>
+        <form class="grid gap-4 sm:grid-cols-3" (submit)="save($event)">
           <div class="sm:col-span-3">
-            <label for="sku" class="mb-1 block text-sm">{{ 'common.sku' | t }}</label>
-            <input id="sku" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.sku" />
+            <label for="sku" class="field-label">{{ 'common.sku' | t }}</label>
+            <input id="sku" class="field w-full" [formField]="model.sku" />
           </div>
           @if (isFrame()) {
             <div>
-              <label for="fcolor" class="mb-1 block text-sm">{{ 'variantes.color' | t }}</label>
-              <select id="fcolor" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.color">
+              <label for="fcolor" class="field-label">{{ 'variantes.color' | t }}</label>
+              <select id="fcolor" class="field w-full" [formField]="model.color">
                 <option value="">{{ 'common.choose' | t }}</option>
                 @for (o of frameColors; track o.value) { <option [value]="o.value">{{ o.label }}</option> }
               </select>
             </div>
           } @else {
           <div>
-            <label for="sphere" class="mb-1 block text-sm">{{ 'variantes.sphere' | t }}</label>
-            <input id="sphere" type="number" step="0.25" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.sphere" />
+            <label for="sphere" class="field-label">{{ 'variantes.sphere' | t }}</label>
+            <input id="sphere" type="number" step="0.25" class="field w-full" [formField]="model.sphere" />
           </div>
           <div>
-            <label for="cyl" class="mb-1 block text-sm">{{ 'variantes.cylinder' | t }}</label>
-            <input id="cyl" type="number" step="0.25" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.cylinder" />
+            <label for="cyl" class="field-label">{{ 'variantes.cylinder' | t }}</label>
+            <input id="cyl" type="number" step="0.25" class="field w-full" [formField]="model.cylinder" />
           </div>
           <div>
-            <label for="axis" class="mb-1 block text-sm">{{ 'variantes.axis' | t }}</label>
-            <input id="axis" type="number" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.axis" />
+            <label for="axis" class="field-label">{{ 'variantes.axis' | t }}</label>
+            <input id="axis" type="number" class="field w-full" [formField]="model.axis" />
           </div>
           <div>
-            <label for="add" class="mb-1 block text-sm">{{ 'variantes.addition' | t }}</label>
-            <input id="add" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.addition" />
+            <label for="add" class="field-label">{{ 'variantes.addition' | t }}</label>
+            <input id="add" class="field w-full" [formField]="model.addition" />
           </div>
           <div>
-            <label for="dom" class="mb-1 block text-sm">{{ 'variantes.dominance' | t }}</label>
-            <select id="dom" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.dominance">
+            <label for="dom" class="field-label">{{ 'variantes.dominance' | t }}</label>
+            <select id="dom" class="field w-full" [formField]="model.dominance">
               <option value="">{{ 'variantes.noDominance' | t }}</option>
               <option value="D">D</option>
               <option value="N">N</option>
             </select>
           </div>
           <div>
-            <label for="bc" class="mb-1 block text-sm">{{ 'variantes.baseCurve' | t }}</label>
-            <input id="bc" type="number" step="0.1" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.base_curve" />
+            <label for="bc" class="field-label">{{ 'variantes.baseCurve' | t }}</label>
+            <input id="bc" type="number" step="0.1" class="field w-full" [formField]="model.base_curve" />
           </div>
           <div>
-            <label for="dia" class="mb-1 block text-sm">{{ 'variantes.diameter' | t }}</label>
-            <input id="dia" type="number" step="0.1" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.diameter" />
+            <label for="dia" class="field-label">{{ 'variantes.diameter' | t }}</label>
+            <input id="dia" type="number" step="0.1" class="field w-full" [formField]="model.diameter" />
           </div>
           <div>
-            <label for="color" class="mb-1 block text-sm">{{ 'variantes.cosmeticColor' | t }}</label>
-            <input id="color" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.color" />
+            <label for="color" class="field-label">{{ 'variantes.cosmeticColor' | t }}</label>
+            <input id="color" class="field w-full" [formField]="model.color" />
           </div>
           }
           <div>
-            <label for="price" class="mb-1 block text-sm">{{ 'micas.pricePesos' | t }}</label>
-            <input id="price" type="number" step="0.01" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.price_pesos" />
+            <label for="price" class="field-label">{{ 'micas.pricePesos' | t }}</label>
+            <input id="price" type="number" step="0.01" class="field w-full" [formField]="model.price_pesos" />
           </div>
           <div>
-            <label for="cmp" class="mb-1 block text-sm">{{ 'variantes.listPrice' | t }}</label>
-            <input id="cmp" type="number" step="0.01" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.compare_at_pesos" />
+            <label for="cmp" class="field-label">{{ 'variantes.listPrice' | t }}</label>
+            <input id="cmp" type="number" step="0.01" class="field w-full" [formField]="model.compare_at_pesos" />
           </div>
           <div>
-            <label for="stock" class="mb-1 block text-sm">{{ 'inventario.stock' | t }} @if (editingId()) { <span class="text-xs text-muted-foreground">{{ 'variantes.useAdjust' | t }}</span> }</label>
-            <input id="stock" type="number" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.stock" />
+            <label for="stock" class="field-label">{{ 'inventario.stock' | t }} @if (editingId()) { <span class="text-xs text-muted-foreground">{{ 'variantes.useAdjust' | t }}</span> }</label>
+            <input id="stock" type="number" class="field w-full" [formField]="model.stock" />
           </div>
           @if (!isFrame()) {
             <label class="flex items-center gap-2 text-sm sm:col-span-3"><input type="checkbox" [formField]="model.on_demand" /> {{ 'variantes.onDemandHelp' | t }}</label>
           }
           <label class="flex items-center gap-2 text-sm sm:col-span-3"><input type="checkbox" [formField]="model.active" /> {{ 'variantes.activeForSale' | t }}</label>
-          @if (error()) { <p role="alert" class="text-sm text-destructive sm:col-span-3">{{ error() }}</p> }
-          <div class="flex gap-2 sm:col-span-3">
-            <button type="submit" class="rounded-full bg-primary px-3 py-2 text-primary-foreground disabled:opacity-50" [disabled]="busy()">{{ 'common.save' | t }}</button>
-            <button type="button" class="rounded-full border border-input px-3 py-2" (click)="editing.set(false)">{{ 'common.cancel' | t }}</button>
+          @if (error()) { <p role="alert" class="alert-error sm:col-span-3">{{ error() }}</p> }
+          <div class="flex flex-wrap gap-2 border-t border-border pt-4 sm:col-span-3">
+            <button type="submit" class="btn btn-primary" [disabled]="busy()">{{ 'common.save' | t }}</button>
+            <button type="button" class="btn btn-secondary" (click)="editing.set(false)">{{ 'common.cancel' | t }}</button>
           </div>
         </form>
       </section>
@@ -133,64 +133,71 @@ const fmt = (n: number | null | undefined) => (n == null ? '—' : String(n));
     }
 
     @if (!isFrame()) {
-    <section class="mb-8 max-w-3xl rounded-2xl border border-border bg-card p-4" aria-labelledby="imp">
-      <h2 id="imp" class="mb-1 font-medium">{{ 'variantes.csvTitle' | t }}</h2>
+    <section class="panel mb-8 max-w-3xl p-5" aria-labelledby="imp">
+      <h2 id="imp" class="mb-1 text-lg">{{ 'variantes.csvTitle' | t }}</h2>
       <p class="mb-3 text-sm text-muted-foreground">
         {{ 'variantes.csvHelp' | t }}
       </p>
-      <label for="csv" class="mb-1 block text-sm">{{ 'variantes.csvFile' | t }}</label>
-      <input id="csv" type="file" accept=".csv,text/csv" class="mb-3 block text-sm" (change)="pickFile($event)" />
-      <button type="button" class="rounded-full bg-primary px-3 py-2 text-sm text-primary-foreground disabled:opacity-50" [disabled]="!file() || importing()" (click)="runImport()">
+      <label for="csv" class="field-label">{{ 'variantes.csvFile' | t }}</label>
+      <input id="csv" type="file" accept=".csv,text/csv" class="mb-4 block" (change)="pickFile($event)" />
+      <button type="button" class="btn btn-primary" [disabled]="!file() || importing()" (click)="runImport()">
         {{ importing() ? ('variantes.importing' | t) : ('variantes.import' | t) }}
       </button>
-      @if (importOk()) { <p role="status" class="mt-3 text-sm">{{ importOk() }}</p> }
-      @if (importError()) { <p role="alert" class="mt-3 text-sm text-destructive">{{ importError() }}</p> }
+      @if (importOk()) { <p role="status" class="alert-ok mt-3">{{ importOk() }}</p> }
+      @if (importError()) { <p role="alert" class="alert-error mt-3">{{ importError() }}</p> }
       @if (rowErrors().length) {
-        <ul class="mt-2 max-h-48 overflow-auto text-sm text-destructive">
+        <ul class="mt-2 max-h-48 list-disc overflow-auto rounded-lg bg-destructive/10 py-2 pr-4 pl-8 text-sm text-destructive">
           @for (e of rowErrors(); track e.row) { <li>{{ 'variantes.rowError' | t: { row: e.row, message: e.message } }}</li> }
         </ul>
       }
     </section>
     }
 
-    @if (loadError()) { <p role="alert" class="mb-4 text-sm text-destructive">{{ loadError() }}</p> }
+    @if (loadError()) { <p role="alert" class="alert-error mb-4">{{ loadError() }}</p> }
     @if (variants().length > maxRows) {
       <div class="mb-3 flex flex-wrap items-center gap-3">
-        <label for="vfilter" class="text-sm">{{ 'variantes.filterSku' | t }}</label>
-        <input id="vfilter" class="rounded-lg border border-input px-3 py-2 text-sm" [value]="filter()" (input)="filter.set($any($event.target).value)" />
+        <label for="vfilter" class="text-sm font-medium">{{ 'variantes.filterSku' | t }}</label>
+        <input id="vfilter" class="field optic" [value]="filter()" (input)="filter.set($any($event.target).value)" />
         <p role="status" class="text-sm text-muted-foreground">{{ 'variantes.showing' | t: { shown: visible().length, total: filtered().length } }}</p>
       </div>
     }
-    <table class="w-full text-sm">
-      <thead><tr class="border-b text-left">
-        <th class="py-2">{{ 'common.sku' | t }}</th>
-        @if (isFrame()) { <th>{{ 'variantes.color' | t }}</th> } @else { <th>{{ 'variantes.abbr.sphere' | t }}</th><th>{{ 'variantes.abbr.cylinder' | t }}</th><th>{{ 'variantes.axis' | t }}</th><th>{{ 'variantes.abbr.addition' | t }}</th><th>{{ 'variantes.abbr.dominance' | t }}</th><th>{{ 'variantes.abbr.baseCurve' | t }}</th><th>{{ 'variantes.abbr.diameter' | t }}</th> }
-        <th>{{ 'common.price' | t }}</th><th>{{ 'inventario.stock' | t }}</th><th>{{ 'inventario.reserved' | t }}</th><th>{{ 'common.status' | t }}</th><th></th>
-      </tr></thead>
-      <tbody>
-        @for (v of visible(); track v.id) {
-          <tr class="border-b">
-            <td class="py-2">{{ v.sku }}</td>
-            @if (isFrame()) {
-              <td>{{ colorLabel(v.color) }}</td>
-            } @else {
-              <td>{{ f(v.sphere) }}</td><td>{{ f(v.cylinder) }}</td><td>{{ f(v.axis) }}</td>
-              <td>{{ v.addition ?? '—' }}</td><td>{{ v.dominance ?? '—' }}</td><td>{{ f(v.base_curve) }}</td><td>{{ f(v.diameter) }}</td>
-            }
-            <td>{{ money(v.price_cents) }}</td><td>{{ v.on_demand ? ('variantes.onDemand' | t) : v.stock }}</td><td>{{ v.reserved }}</td>
-            <td>{{ v.active ? ('variantes.active' | t) : ('variantes.inactive' | t) }}</td>
-            <td class="space-x-3 text-right">
-              <button type="button" class="underline" (click)="startEdit(v)">{{ 'common.edit' | t }}</button>
-              @if (!v.on_demand) {
-                <button type="button" class="underline" (click)="adjusting.set(v)">{{ 'variantes.adjustStock' | t }}</button>
+    <div class="panel overflow-x-auto">
+      <table class="data-table">
+        <thead><tr>
+          <th>{{ 'common.sku' | t }}</th>
+          @if (isFrame()) { <th>{{ 'variantes.color' | t }}</th> } @else {
+            <th class="text-right">{{ 'variantes.abbr.sphere' | t }}</th><th class="text-right">{{ 'variantes.abbr.cylinder' | t }}</th><th class="text-right">{{ 'variantes.axis' | t }}</th>
+            <th class="text-right">{{ 'variantes.abbr.addition' | t }}</th><th class="text-center">{{ 'variantes.abbr.dominance' | t }}</th><th class="text-right">{{ 'variantes.abbr.baseCurve' | t }}</th><th class="text-right">{{ 'variantes.abbr.diameter' | t }}</th>
+          }
+          <th class="text-right">{{ 'common.price' | t }}</th><th class="text-right">{{ 'inventario.stock' | t }}</th><th class="text-right">{{ 'inventario.reserved' | t }}</th><th>{{ 'common.status' | t }}</th><th><span class="sr-only">{{ 'common.edit' | t }}</span></th>
+        </tr></thead>
+        <tbody>
+          @for (v of visible(); track v.id) {
+            <tr>
+              <td class="optic font-medium">{{ v.sku }}</td>
+              @if (isFrame()) {
+                <td>{{ colorLabel(v.color) }}</td>
+              } @else {
+                <td class="optic text-right">{{ f(v.sphere) }}</td><td class="optic text-right">{{ f(v.cylinder) }}</td><td class="optic text-right">{{ f(v.axis) }}</td>
+                <td class="optic text-right">{{ v.addition ?? '—' }}</td><td class="optic text-center">{{ v.dominance ?? '—' }}</td><td class="optic text-right">{{ f(v.base_curve) }}</td><td class="optic text-right">{{ f(v.diameter) }}</td>
               }
-            </td>
-          </tr>
-        } @empty {
-          <tr><td colspan="13" class="py-4 text-muted-foreground">{{ 'variantes.empty' | t }}</td></tr>
-        }
-      </tbody>
-    </table>
+              <td class="text-right font-semibold tabular-nums">{{ money(v.price_cents) }}</td>
+              <td class="text-right tabular-nums">@if (v.on_demand) { <span class="pill">{{ 'variantes.onDemand' | t }}</span> } @else { {{ v.stock }} }</td>
+              <td class="text-right tabular-nums">{{ v.reserved }}</td>
+              <td><span class="pill"><span class="size-1.5 rounded-full" [class]="v.active ? 'bg-good' : 'bg-muted-foreground'" aria-hidden="true"></span>{{ v.active ? ('variantes.active' | t) : ('variantes.inactive' | t) }}</span></td>
+              <td class="actions">
+                <button type="button" class="link" (click)="startEdit(v)">{{ 'common.edit' | t }}</button>
+                @if (!v.on_demand) {
+                  <button type="button" class="link" (click)="adjusting.set(v)">{{ 'variantes.adjustStock' | t }}</button>
+                }
+              </td>
+            </tr>
+          } @empty {
+            <tr><td colspan="13" class="empty">{{ 'variantes.empty' | t }}</td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
   `,
 })
 export default class Variantes implements OnInit {

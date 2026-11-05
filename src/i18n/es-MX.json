@@ -151,7 +151,12 @@
     "navLabel": "Principal",
     "mobileNavLabel": "Principal, móvil",
     "lightMode": "Activar modo claro",
-    "darkMode": "Activar modo oscuro"
+    "darkMode": "Activar modo oscuro",
+    "tabsLabel": "Accesos rápidos",
+    "moreLabel": "Más secciones",
+    "badgeToShip": "{{count}} por preparar",
+    "badgeRx": "{{count}} en revisión",
+    "badgeLow": "{{count}} con stock bajo"
   },
   "common": {
     "signOut": "Cerrar sesión",
@@ -184,6 +189,7 @@
     "choose": "Elegir…"
   },
   "nav": {
+    "resumen": "Resumen",
     "pedidos": "Pedidos",
     "recetas": "Recetas",
     "productos": "Productos",
@@ -191,7 +197,14 @@
     "reportes": "Reportes",
     "marcas": "Marcas",
     "micas": "Micas",
-    "home": "Home"
+    "home": "Home",
+    "more": "Más"
+  },
+  "navGroups": {
+    "sales": "Ventas",
+    "catalog": "Catálogo",
+    "store": "Tienda",
+    "insights": "Análisis"
   },
   "login": {
     "title": "Admin · Iniciar sesión",
@@ -214,7 +227,36 @@
     "customer": "Cliente",
     "created": "Creado",
     "empty": "No hay pedidos con ese filtro.",
-    "loadFailed": "No se pudieron cargar los pedidos."
+    "loadFailed": "No se pudieron cargar los pedidos.",
+    "filterLabel": "Filtrar por estado"
+  },
+  "resumen": {
+    "title": "Resumen",
+    "todo": "Por atender",
+    "toShip": "Pedidos por preparar",
+    "toShipHint": "Pagados; falta prepararlos y capturar la guía.",
+    "rxPending": "Recetas en revisión",
+    "rxHint": "Apruébalas o recházalas para liberar sus pedidos.",
+    "lowStock": "Variantes con stock bajo",
+    "lowHint": "Por debajo del umbral de inventario.",
+    "allClear": "Al día",
+    "open": "Abrir",
+    "sales7": "Ventas de los últimos 7 días",
+    "revenue": "Ingresos",
+    "orders": "Pedidos",
+    "units": "Cajas",
+    "chartLabel": "Ingresos por día",
+    "recent": "Pedidos recientes",
+    "seeAll": "Ver todos",
+    "noOrders": "Todavía no hay pedidos.",
+    "lowTitle": "Stock bajo",
+    "available": "{{count}} disp.",
+    "noLow": "Ninguna variante está bajo el umbral.",
+    "seeReports": "Ver reportes",
+    "seeInventory": "Ver inventario",
+    "loadFailed": "No se pudo cargar parte del resumen.",
+    "ordersCount_one": "{{count}} pedido",
+    "ordersCount_other": "{{count}} pedidos"
   },
   "pedido": {
     "back": "← Pedidos",
@@ -267,8 +309,6 @@
     "issued": "emitida {{date}}",
     "validUntil": "vigente hasta {{date}}",
     "uploaded": "Subida {{date}}",
-    "rightEye": "OD: esf {{sphere}} cil {{cylinder}} eje {{axis}} add {{addition}}",
-    "leftEye": "OI: esf {{sphere}} cil {{cylinder}} eje {{axis}} add {{addition}}",
     "pdLabel": "Distancia pupilar (mm)",
     "pdRequired": "Obligatoria para mandar a laboratorio.",
     "reason": "Motivo: {{reason}}",
@@ -284,6 +324,13 @@
       "pending": "Pendientes",
       "approved": "Aprobadas",
       "rejected": "Rechazadas"
+    },
+    "grid": {
+      "eye": "Ojo",
+      "od": "OD",
+      "os": "OI",
+      "axis": "Eje",
+      "caption": "Graduación"
     }
   },
   "inventario": {

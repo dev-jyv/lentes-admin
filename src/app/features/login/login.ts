@@ -11,8 +11,8 @@ import { TPipe } from '../../core/i18n';
     <div class="bg-band text-white">
       <p class="container-page flex min-h-10 items-center justify-center py-1 text-sm font-medium">{{ 'shell.band' | t }}</p>
     </div>
-    <main class="mx-auto mt-16 w-full max-w-sm px-4 pb-8">
-      <div class="rounded-2xl border border-border bg-card p-6">
+    <main class="mx-auto flex min-h-[calc(100dvh-2.5rem)] w-full max-w-sm flex-col justify-center px-4 py-10">
+      <div class="panel p-6 shadow-[0_8px_32px_rgb(14_34_48/0.08)] sm:p-8">
         <div class="mb-6 flex items-center gap-2">
           <svg viewBox="0 0 32 32" aria-hidden="true" class="size-7" fill="none">
             <circle cx="16" cy="16" r="14.2" stroke="var(--teal)" stroke-width="1.6" />
@@ -24,21 +24,21 @@ import { TPipe } from '../../core/i18n';
         </div>
         <h1 class="mb-6 text-2xl">{{ 'login.title' | t }}</h1>
         @if (error() === 'forbidden') {
-          <p role="alert" class="mb-4 text-sm text-destructive">{{ 'login.forbidden' | t }}</p>
+          <p role="alert" class="alert-error mb-4">{{ 'login.forbidden' | t }}</p>
         }
         <form class="space-y-4" (submit)="submit($event)">
           <div>
-            <label for="email" class="mb-1 block text-sm">{{ 'login.email' | t }}</label>
-            <input id="email" type="email" autocomplete="email" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.email" />
+            <label for="email" class="field-label">{{ 'login.email' | t }}</label>
+            <input id="email" type="email" autocomplete="email" class="field w-full" [formField]="model.email" />
           </div>
           <div>
-            <label for="password" class="mb-1 block text-sm">{{ 'login.password' | t }}</label>
-            <input id="password" type="password" autocomplete="current-password" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.password" />
+            <label for="password" class="field-label">{{ 'login.password' | t }}</label>
+            <input id="password" type="password" autocomplete="current-password" class="field w-full" [formField]="model.password" />
           </div>
           @if (failed()) {
-            <p role="alert" class="text-sm text-destructive">{{ 'login.failed' | t }}</p>
+            <p role="alert" class="alert-error">{{ 'login.failed' | t }}</p>
           }
-          <button type="submit" class="w-full rounded-full bg-primary px-3 py-2 text-primary-foreground disabled:opacity-50" [disabled]="busy()">
+          <button type="submit" class="btn btn-primary w-full" [disabled]="busy()">
             {{ 'login.submit' | t }}
           </button>
         </form>

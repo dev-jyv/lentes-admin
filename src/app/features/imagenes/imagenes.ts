@@ -12,39 +12,39 @@ import { t, TPipe } from '../../core/i18n';
   selector: 'app-imagenes',
   imports: [RouterLink, TPipe],
   template: `
-    <a routerLink="/productos" class="text-sm underline">{{ 'imagenes.back' | t }}</a>
-    <h1 class="my-4 text-2xl">{{ 'imagenes.title' | t }}</h1>
-    <p class="mb-4 text-sm text-muted-foreground">{{ 'imagenes.hint' | t }}</p>
+    <a routerLink="/productos" class="back-link">{{ 'imagenes.back' | t }}</a>
+    <h1 class="page-title my-4">{{ 'imagenes.title' | t }}</h1>
+    <p class="mb-6 text-sm text-muted-foreground">{{ 'imagenes.hint' | t }}</p>
 
-    <div class="mb-6 max-w-md">
-      <label for="files" class="mb-1 block text-sm">{{ 'imagenes.add' | t }}</label>
-      <input id="files" type="file" multiple [accept]="accept" class="block text-sm" (change)="upload($event)" [disabled]="busy()" />
-      @if (busy()) { <p role="status" class="mt-2 text-sm">{{ 'imagenes.uploading' | t }}</p> }
+    <div class="panel mb-6 max-w-xl border-dashed p-5">
+      <label for="files" class="field-label">{{ 'imagenes.add' | t }}</label>
+      <input id="files" type="file" multiple [accept]="accept" class="block" (change)="upload($event)" [disabled]="busy()" />
+      @if (busy()) { <p role="status" class="mt-3 flex items-center gap-2 text-sm text-muted-foreground"><span class="size-3 animate-pulse rounded-full bg-primary" aria-hidden="true"></span>{{ 'imagenes.uploading' | t }}</p> }
     </div>
-    @if (loadError()) { <p role="alert" class="mb-4 text-sm text-destructive">{{ loadError() }}</p> }
+    @if (loadError()) { <p role="alert" class="alert-error mb-4">{{ loadError() }}</p> }
     @if (errors().length) {
-      <ul role="alert" class="mb-4 text-sm text-destructive">@for (e of errors(); track $index) { <li>{{ e }}</li> }</ul>
+      <ul role="alert" class="alert-error mb-4 list-disc pl-8">@for (e of errors(); track $index) { <li>{{ e }}</li> }</ul>
     }
 
-    <ul class="grid grid-cols-2 gap-4 sm:grid-cols-4">
+    <ul class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
       @for (img of images(); track img.id; let i = $index; let first = $first; let last = $last) {
-        <li class="space-y-2 rounded-2xl border border-border bg-card p-2">
+        <li class="panel space-y-3 p-2 pb-3">
           <img [src]="img.url" [alt]="'imagenes.alt' | t: { position: i + 1 }" class="aspect-square w-full rounded-lg bg-muted object-contain" />
-          <p class="text-xs text-muted-foreground">@if (first) { <strong>{{ 'imagenes.main' | t }}</strong> } @else { {{ 'imagenes.position' | t: { position: i + 1 } }} }</p>
+          <p class="px-1 text-xs text-muted-foreground">@if (first) { <span class="pill bg-secondary font-semibold text-foreground">{{ 'imagenes.main' | t }}</span> } @else { {{ 'imagenes.position' | t: { position: i + 1 } }} }</p>
           @if (confirming() === img.id) {
-            <div class="flex gap-1">
-              <button type="button" class="rounded-full bg-destructive px-2 py-1 text-xs text-destructive-foreground disabled:opacity-50" [disabled]="busy()" (click)="remove(img)">{{ 'imagenes.confirmDelete' | t }}</button>
-              <button type="button" class="rounded-full border border-input px-2 py-1 text-xs" (click)="confirming.set(null)">{{ 'common.no' | t }}</button>
+            <div class="flex flex-wrap gap-1.5 px-1">
+              <button type="button" class="btn btn-danger btn-sm" [disabled]="busy()" (click)="remove(img)">{{ 'imagenes.confirmDelete' | t }}</button>
+              <button type="button" class="btn btn-secondary btn-sm" (click)="confirming.set(null)">{{ 'common.no' | t }}</button>
             </div>
           } @else {
-            <div class="flex flex-wrap gap-1">
-              <button type="button" class="rounded-full border border-input px-2 py-1 text-xs disabled:opacity-40" [disabled]="first || busy()" [attr.aria-label]="'imagenes.moveBefore' | t: { position: i + 1 }" (click)="shift(i, -1)">←</button>
-              <button type="button" class="rounded-full border border-input px-2 py-1 text-xs disabled:opacity-40" [disabled]="last || busy()" [attr.aria-label]="'imagenes.moveAfter' | t: { position: i + 1 }" (click)="shift(i, 1)">→</button>
-              <button type="button" class="rounded-full border border-input px-2 py-1 text-xs" (click)="confirming.set(img.id)">{{ 'common.delete' | t }}</button>
+            <div class="flex flex-wrap gap-1.5 px-1">
+              <button type="button" class="btn btn-secondary btn-icon" [disabled]="first || busy()" [attr.aria-label]="'imagenes.moveBefore' | t: { position: i + 1 }" (click)="shift(i, -1)"><svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6" /></svg></button>
+              <button type="button" class="btn btn-secondary btn-icon" [disabled]="last || busy()" [attr.aria-label]="'imagenes.moveAfter' | t: { position: i + 1 }" (click)="shift(i, 1)"><svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg></button>
+              <button type="button" class="btn btn-secondary btn-sm" (click)="confirming.set(img.id)">{{ 'common.delete' | t }}</button>
             </div>
           }
         </li>
-      } @empty { <li class="text-sm text-muted-foreground">{{ 'imagenes.empty' | t }}</li> }
+      } @empty { <li class="col-span-full rounded-2xl border border-dashed border-border px-5 py-10 text-center text-sm text-muted-foreground">{{ 'imagenes.empty' | t }}</li> }
     </ul>
   `,
 })

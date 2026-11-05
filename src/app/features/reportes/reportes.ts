@@ -12,66 +12,80 @@ import { t, TPipe } from '../../core/i18n';
   selector: 'app-reportes',
   imports: [TPipe],
   template: `
-    <h1 class="mb-6 text-2xl">{{ 'nav.reportes' | t }}</h1>
-    <form class="mb-6 flex flex-wrap items-end gap-3 text-sm" (submit)="apply($event)">
-      <div><label for="from" class="mb-1 block">{{ 'reportes.from' | t }}</label><input id="from" type="date" class="rounded-lg border border-input px-3 py-2" [value]="from()" (input)="from.set(val($event))" /></div>
-      <div><label for="to" class="mb-1 block">{{ 'reportes.to' | t }}</label><input id="to" type="date" class="rounded-lg border border-input px-3 py-2" [value]="to()" (input)="to.set(val($event))" /></div>
-      <button type="submit" class="rounded-full bg-primary px-3 py-2 text-primary-foreground">{{ 'reportes.query' | t }}</button>
-      <button type="button" class="rounded-full border border-input px-3 py-2" (click)="preset(7)">{{ 'reportes.days' | t: { days: 7 } }}</button>
-      <button type="button" class="rounded-full border border-input px-3 py-2" (click)="preset(30)">{{ 'reportes.days' | t: { days: 30 } }}</button>
-      <button type="button" class="rounded-full border border-input px-3 py-2" (click)="preset(90)">{{ 'reportes.days' | t: { days: 90 } }}</button>
+    <h1 class="page-title mb-6">{{ 'nav.reportes' | t }}</h1>
+    <form class="panel mb-6 flex flex-wrap items-end gap-3 p-4" (submit)="apply($event)">
+      <div><label for="from" class="field-label">{{ 'reportes.from' | t }}</label><input id="from" type="date" class="field" [value]="from()" (input)="from.set(val($event))" /></div>
+      <div><label for="to" class="field-label">{{ 'reportes.to' | t }}</label><input id="to" type="date" class="field" [value]="to()" (input)="to.set(val($event))" /></div>
+      <button type="submit" class="btn btn-primary">{{ 'reportes.query' | t }}</button>
+      <div class="flex flex-wrap gap-2 sm:ml-auto">
+        @for (d of presets; track d) {
+          <button type="button" class="chip" [attr.aria-pressed]="days() === d" (click)="preset(d)">{{ 'reportes.days' | t: { days: d } }}</button>
+        }
+      </div>
     </form>
-    @if (error()) { <p role="alert" class="mb-4 text-sm text-destructive">{{ error() }}</p> }
+    @if (error()) { <p role="alert" class="alert-error mb-4">{{ error() }}</p> }
 
     @if (sales(); as s) {
-      <section aria-labelledby="ventas" class="mb-8">
-        <h2 id="ventas" class="mb-3 font-medium">{{ 'reportes.sales' | t }}</h2>
-        <dl class="mb-4 grid gap-3 sm:grid-cols-3">
-          <div class="rounded-2xl border border-border bg-card p-4"><dt class="text-sm text-muted-foreground">{{ 'nav.pedidos' | t }}</dt><dd class="text-2xl">{{ s.orders }}</dd></div>
-          <div class="rounded-2xl border border-border bg-card p-4"><dt class="text-sm text-muted-foreground">{{ 'reportes.revenue' | t }}</dt><dd class="text-2xl">{{ money(s.revenue_cents) }}</dd></div>
-          <div class="rounded-2xl border border-border bg-card p-4"><dt class="text-sm text-muted-foreground">{{ 'reportes.unitsSold' | t }}</dt><dd class="text-2xl">{{ s.units }}</dd></div>
+      <section aria-labelledby="ventas" class="mb-10">
+        <h2 id="ventas" class="mb-3 text-lg">{{ 'reportes.sales' | t }}</h2>
+        <dl class="panel mb-6 grid grid-cols-3 divide-x divide-border">
+          <div class="p-4 sm:p-5"><dt class="text-xs font-medium text-muted-foreground sm:text-sm">{{ 'reportes.revenue' | t }}</dt><dd class="mt-1 text-xl font-semibold tracking-tight tabular-nums sm:text-3xl">{{ money(s.revenue_cents) }}</dd></div>
+          <div class="p-4 sm:p-5"><dt class="text-xs font-medium text-muted-foreground sm:text-sm">{{ 'nav.pedidos' | t }}</dt><dd class="mt-1 text-xl font-semibold tabular-nums sm:text-3xl">{{ s.orders }}</dd></div>
+          <div class="p-4 sm:p-5"><dt class="text-xs font-medium text-muted-foreground sm:text-sm">{{ 'reportes.unitsSold' | t }}</dt><dd class="mt-1 text-xl font-semibold tabular-nums sm:text-3xl">{{ s.units }}</dd></div>
         </dl>
-        <table class="mb-6 w-full text-sm">
-          <caption class="mb-2 text-left font-medium">{{ 'reportes.byDay' | t }}</caption>
-          <thead><tr class="border-b text-left"><th class="py-1">{{ 'common.date' | t }}</th><th>{{ 'nav.pedidos' | t }}</th><th>{{ 'reportes.revenue' | t }}</th><th class="w-1/2"><span class="sr-only">{{ 'reportes.chart' | t }}</span></th></tr></thead>
-          <tbody>
-            @for (d of s.daily; track d.date) {
-              <tr class="border-b">
-                <td class="py-1">{{ date(d.date) }}</td><td>{{ d.orders }}</td><td>{{ money(d.revenue_cents) }}</td>
-                <td><div class="h-3 rounded-lg bg-primary" [style.width.%]="barWidth(d.revenue_cents)" aria-hidden="true"></div></td>
-              </tr>
-            }
-          </tbody>
-        </table>
-        <table class="w-full max-w-2xl text-sm">
-          <caption class="mb-2 text-left font-medium">{{ 'reportes.topSold' | t }}</caption>
-          <thead><tr class="border-b text-left"><th class="py-1">{{ 'common.product' | t }}</th><th>{{ 'reportes.boxes' | t }}</th><th class="text-right">{{ 'reportes.revenue' | t }}</th></tr></thead>
-          <tbody>
-            @for (p of s.top_products; track p.product_name) {
-              <tr class="border-b"><td class="py-1">{{ p.product_name }} <span class="text-muted-foreground">· {{ p.brand_name }}</span></td><td>{{ p.units }}</td><td class="text-right">{{ money(p.revenue_cents) }}</td></tr>
-            } @empty { <tr><td colspan="3" class="py-2 text-muted-foreground">{{ 'reportes.noSales' | t }}</td></tr> }
-          </tbody>
-        </table>
+        <div class="grid items-start gap-6 xl:grid-cols-2">
+          <div class="panel overflow-x-auto">
+            <table class="data-table">
+              <caption>{{ 'reportes.byDay' | t }}</caption>
+              <thead><tr><th scope="col">{{ 'common.date' | t }}</th><th scope="col" class="text-right">{{ 'nav.pedidos' | t }}</th><th scope="col" class="text-right">{{ 'reportes.revenue' | t }}</th><th scope="col" class="w-2/5"><span class="sr-only">{{ 'reportes.chart' | t }}</span></th></tr></thead>
+              <tbody>
+                @for (d of s.daily; track d.date) {
+                  <tr>
+                    <td class="whitespace-nowrap">{{ date(d.date) }}</td>
+                    <td class="text-right tabular-nums">{{ d.orders }}</td>
+                    <td class="text-right font-semibold whitespace-nowrap tabular-nums">{{ money(d.revenue_cents) }}</td>
+                    <td><div class="h-3 min-w-0.5 rounded-r-[4px] bg-primary" [style.width.%]="barWidth(d.revenue_cents)" aria-hidden="true"></div></td>
+                  </tr>
+                } @empty { <tr><td colspan="4" class="empty">{{ 'reportes.noSales' | t }}</td></tr> }
+              </tbody>
+            </table>
+          </div>
+          <div class="panel overflow-x-auto">
+            <table class="data-table">
+              <caption>{{ 'reportes.topSold' | t }}</caption>
+              <thead><tr><th scope="col">{{ 'common.product' | t }}</th><th scope="col" class="text-right">{{ 'reportes.boxes' | t }}</th><th scope="col" class="text-right">{{ 'reportes.revenue' | t }}</th></tr></thead>
+              <tbody>
+                @for (p of s.top_products; track p.product_name) {
+                  <tr>
+                    <td><span class="font-medium">{{ p.product_name }}</span><span class="ml-1 text-muted-foreground">· {{ p.brand_name }}</span></td>
+                    <td class="text-right tabular-nums">{{ p.units }}</td>
+                    <td class="text-right font-semibold whitespace-nowrap tabular-nums">{{ money(p.revenue_cents) }}</td>
+                  </tr>
+                } @empty { <tr><td colspan="3" class="empty">{{ 'reportes.noSales' | t }}</td></tr> }
+              </tbody>
+            </table>
+          </div>
+        </div>
       </section>
     }
 
     @if (repurchase(); as r) {
       <section aria-labelledby="recompra">
-        <h2 id="recompra" class="mb-3 font-medium">{{ 'reportes.repurchase' | t }}</h2>
-        <dl class="grid gap-3 sm:grid-cols-3">
-          <div class="rounded-2xl border border-border bg-card p-4">
-            <dt class="text-sm text-muted-foreground">{{ 'reportes.repeatCustomers' | t }}</dt>
-            <dd class="text-2xl">{{ repeatRate() ?? '—' }}</dd>
-            <dd class="text-xs text-muted-foreground">{{ 'reportes.repeatOf' | t: { repeat: r.repeat_customers, total: r.customers } }}</dd>
+        <h2 id="recompra" class="mb-3 text-lg">{{ 'reportes.repurchase' | t }}</h2>
+        <dl class="panel grid divide-border sm:grid-cols-3 sm:divide-x max-sm:divide-y">
+          <div class="p-5">
+            <dt class="text-sm font-medium text-muted-foreground">{{ 'reportes.repeatCustomers' | t }}</dt>
+            <dd class="mt-1 text-3xl font-semibold tabular-nums">{{ repeatRate() ?? '—' }}</dd>
+            <dd class="mt-1 text-xs text-muted-foreground">{{ 'reportes.repeatOf' | t: { repeat: r.repeat_customers, total: r.customers } }}</dd>
           </div>
-          <div class="rounded-2xl border border-border bg-card p-4">
-            <dt class="text-sm text-muted-foreground">{{ 'reportes.remindersSent' | t }}</dt>
-            <dd class="text-2xl">{{ r.reminders_sent }}</dd>
+          <div class="p-5">
+            <dt class="text-sm font-medium text-muted-foreground">{{ 'reportes.remindersSent' | t }}</dt>
+            <dd class="mt-1 text-3xl font-semibold tabular-nums">{{ r.reminders_sent }}</dd>
           </div>
-          <div class="rounded-2xl border border-border bg-card p-4">
-            <dt class="text-sm text-muted-foreground">{{ 'reportes.reminderConversion' | t }}</dt>
-            <dd class="text-2xl">{{ reminderRate() ?? '—' }}</dd>
-            <dd class="text-xs text-muted-foreground">{{ 'reportes.reorders' | t: { count: r.reorders_from_reminder } }}</dd>
+          <div class="p-5">
+            <dt class="text-sm font-medium text-muted-foreground">{{ 'reportes.reminderConversion' | t }}</dt>
+            <dd class="mt-1 text-3xl font-semibold tabular-nums">{{ reminderRate() ?? '—' }}</dd>
+            <dd class="mt-1 text-xs text-muted-foreground">{{ 'reportes.reorders' | t: { count: r.reorders_from_reminder } }}</dd>
           </div>
         </dl>
       </section>
@@ -85,6 +99,9 @@ export default class Reportes implements OnInit {
   protected readonly sales = signal<SalesReport | null>(null);
   protected readonly repurchase = signal<RepurchaseReport | null>(null);
   protected readonly error = signal<string | null>(null);
+  protected readonly presets = [7, 30, 90];
+  /** Atajo activo; null cuando el rango se escribió a mano. */
+  protected readonly days = signal<number | null>(30);
 
   private readonly maxRevenue = computed(() => Math.max(0, ...(this.sales()?.daily.map((d) => d.revenue_cents) ?? [])));
   protected readonly repeatRate = computed(() => {
@@ -107,11 +124,13 @@ export default class Reportes implements OnInit {
 
   protected apply(event: Event) {
     event.preventDefault();
+    this.days.set(null);
     return this.load();
   }
 
   protected preset(days: number) {
     const r = lastDays(days);
+    this.days.set(days);
     this.from.set(r.from);
     this.to.set(r.to);
     return this.load();
