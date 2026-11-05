@@ -48,148 +48,161 @@ const empty = (): ProductForm => ({
   selector: 'app-productos',
   imports: [FormField, RouterLink, TPipe],
   template: `
-    <div class="mb-6 flex items-center justify-between">
-      <h1 class="text-2xl">{{ 'nav.productos' | t }}</h1>
-      <button type="button" class="rounded-full bg-primary px-3 py-2 text-sm text-primary-foreground" (click)="startCreate()">{{ 'productos.new' | t }}</button>
+    <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+      <h1 class="page-title">{{ 'nav.productos' | t }}</h1>
+      <button type="button" class="btn btn-primary" (click)="startCreate()">{{ 'productos.new' | t }}</button>
     </div>
 
     @if (editing()) {
-      <section class="mb-8 max-w-3xl rounded-2xl border border-border bg-card p-4" aria-labelledby="form-title">
-        <h2 id="form-title" class="mb-3 font-medium">{{ editingId() ? ('productos.edit' | t) : ('productos.new' | t) }}</h2>
-        <form class="grid gap-3 sm:grid-cols-2" (submit)="save($event)">
+      <section class="panel mb-8 max-w-3xl p-5 shadow-[0_4px_16px_rgb(14_34_48/0.08)]" aria-labelledby="form-title">
+        <h2 id="form-title" class="mb-3 text-lg">{{ editingId() ? ('productos.edit' | t) : ('productos.new' | t) }}</h2>
+        <form class="grid gap-4 sm:grid-cols-2" (submit)="save($event)">
           <div class="sm:col-span-2">
-            <label for="category" class="mb-1 block text-sm">{{ 'productos.category' | t }}</label>
-            <select id="category" class="w-full rounded-lg border border-input px-3 py-2 disabled:opacity-60" [formField]="model.category">
+            <label for="category" class="field-label">{{ 'productos.category' | t }}</label>
+            <select id="category" class="field w-full" [formField]="model.category">
               @for (o of categories; track o.value) { <option [value]="o.value">{{ o.label }}</option> }
             </select>
             @if (editingId()) { <p class="mt-1 text-xs text-muted-foreground">{{ 'productos.categoryLocked' | t }}</p> }
           </div>
           <div>
-            <label for="brand" class="mb-1 block text-sm">{{ 'productos.brand' | t }}</label>
-            <select id="brand" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.brand_id">
+            <label for="brand" class="field-label">{{ 'productos.brand' | t }}</label>
+            <select id="brand" class="field w-full" [formField]="model.brand_id">
               <option value="">{{ 'common.choose' | t }}</option>
               @for (b of brands(); track b.id) { <option [value]="b.id">{{ b.name }}</option> }
             </select>
           </div>
           <div>
-            <label for="pname" class="mb-1 block text-sm">{{ 'common.name' | t }}</label>
-            <input id="pname" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.name" (input)="autoSlug()" />
+            <label for="pname" class="field-label">{{ 'common.name' | t }}</label>
+            <input id="pname" class="field w-full" [formField]="model.name" (input)="autoSlug()" />
           </div>
           <div>
-            <label for="pslug" class="mb-1 block text-sm">{{ 'marcas.slugUrl' | t }}</label>
-            <input id="pslug" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.slug" />
+            <label for="pslug" class="field-label">{{ 'marcas.slugUrl' | t }}</label>
+            <input id="pslug" class="field w-full" [formField]="model.slug" />
           </div>
           @if (isFrame()) {
             <div>
-              <label for="shape" class="mb-1 block text-sm">{{ 'productos.shape' | t }}</label>
-              <select id="shape" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.shape">
+              <label for="shape" class="field-label">{{ 'productos.shape' | t }}</label>
+              <select id="shape" class="field w-full" [formField]="model.shape">
                 @for (o of shapes; track o.value) { <option [value]="o.value">{{ o.label }}</option> }
               </select>
             </div>
             <div>
-              <label for="fmaterial" class="mb-1 block text-sm">{{ 'productos.frameMaterial' | t }}</label>
-              <select id="fmaterial" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.frame_material">
+              <label for="fmaterial" class="field-label">{{ 'productos.frameMaterial' | t }}</label>
+              <select id="fmaterial" class="field w-full" [formField]="model.frame_material">
                 @for (o of frameMaterials; track o.value) { <option [value]="o.value">{{ o.label }}</option> }
               </select>
             </div>
             <div>
-              <label for="rim" class="mb-1 block text-sm">{{ 'productos.rim' | t }}</label>
-              <select id="rim" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.rim">
+              <label for="rim" class="field-label">{{ 'productos.rim' | t }}</label>
+              <select id="rim" class="field w-full" [formField]="model.rim">
                 @for (o of rims; track o.value) { <option [value]="o.value">{{ o.label }}</option> }
               </select>
             </div>
             <div>
-              <label for="gender" class="mb-1 block text-sm">{{ 'productos.gender' | t }}</label>
-              <select id="gender" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.gender">
+              <label for="gender" class="field-label">{{ 'productos.gender' | t }}</label>
+              <select id="gender" class="field w-full" [formField]="model.gender">
                 @for (o of genders; track o.value) { <option [value]="o.value">{{ o.label }}</option> }
               </select>
             </div>
             <div>
-              <label for="lwidth" class="mb-1 block text-sm">{{ 'productos.lensWidth' | t }}</label>
-              <input id="lwidth" type="number" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.lens_width_mm" />
+              <label for="lwidth" class="field-label">{{ 'productos.lensWidth' | t }}</label>
+              <input id="lwidth" type="number" class="field w-full" [formField]="model.lens_width_mm" />
             </div>
             <div>
-              <label for="bridge" class="mb-1 block text-sm">{{ 'productos.bridge' | t }}</label>
-              <input id="bridge" type="number" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.bridge_mm" />
+              <label for="bridge" class="field-label">{{ 'productos.bridge' | t }}</label>
+              <input id="bridge" type="number" class="field w-full" [formField]="model.bridge_mm" />
             </div>
             <div>
-              <label for="temple" class="mb-1 block text-sm">{{ 'productos.temple' | t }}</label>
-              <input id="temple" type="number" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.temple_mm" />
+              <label for="temple" class="field-label">{{ 'productos.temple' | t }}</label>
+              <input id="temple" type="number" class="field w-full" [formField]="model.temple_mm" />
             </div>
           } @else {
           <div>
-            <label for="lens" class="mb-1 block text-sm">{{ 'productos.lensType' | t }}</label>
-            <select id="lens" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.lens_type">
+            <label for="lens" class="field-label">{{ 'productos.lensType' | t }}</label>
+            <select id="lens" class="field w-full" [formField]="model.lens_type">
               @for (o of lensTypes; track o.value) { <option [value]="o.value">{{ o.label }}</option> }
             </select>
           </div>
           <div>
-            <label for="repl" class="mb-1 block text-sm">{{ 'productos.replacement' | t }}</label>
-            <select id="repl" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.replacement">
+            <label for="repl" class="field-label">{{ 'productos.replacement' | t }}</label>
+            <select id="repl" class="field w-full" [formField]="model.replacement">
               @for (o of replacements; track o.value) { <option [value]="o.value">{{ o.label }}</option> }
             </select>
           </div>
           <div>
-            <label for="pieces" class="mb-1 block text-sm">{{ 'productos.pieces' | t }}</label>
-            <input id="pieces" type="number" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.pieces_per_box" />
+            <label for="pieces" class="field-label">{{ 'productos.pieces' | t }}</label>
+            <input id="pieces" type="number" class="field w-full" [formField]="model.pieces_per_box" />
           </div>
           <div>
-            <label for="material" class="mb-1 block text-sm">{{ 'productos.material' | t }}</label>
-            <input id="material" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.material" />
+            <label for="material" class="field-label">{{ 'productos.material' | t }}</label>
+            <input id="material" class="field w-full" [formField]="model.material" />
           </div>
           <div>
-            <label for="water" class="mb-1 block text-sm">{{ 'productos.water' | t }}</label>
-            <input id="water" type="number" step="0.1" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.water_content_pct" />
+            <label for="water" class="field-label">{{ 'productos.water' | t }}</label>
+            <input id="water" type="number" step="0.1" class="field w-full" [formField]="model.water_content_pct" />
           </div>
           }
           <div class="sm:col-span-2">
-            <label for="desc" class="mb-1 block text-sm">{{ 'common.description' | t }}</label>
-            <textarea id="desc" rows="3" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.description"></textarea>
+            <label for="desc" class="field-label">{{ 'common.description' | t }}</label>
+            <textarea id="desc" rows="3" class="field w-full" [formField]="model.description"></textarea>
           </div>
           @if (!isFrame()) {
             <label class="flex items-center gap-2 text-sm"><input type="checkbox" [formField]="model.requires_prescription" /> {{ 'productos.requiresPrescription' | t }}</label>
           }
           <label class="flex items-center gap-2 text-sm"><input type="checkbox" [formField]="model.active" /> {{ 'productos.activeVisible' | t }}</label>
-          @if (error()) { <p role="alert" class="text-sm text-destructive sm:col-span-2">{{ error() }}</p> }
-          <div class="flex gap-2 sm:col-span-2">
-            <button type="submit" class="rounded-full bg-primary px-3 py-2 text-primary-foreground disabled:opacity-50" [disabled]="busy()">{{ 'common.save' | t }}</button>
-            <button type="button" class="rounded-full border border-input px-3 py-2" (click)="editing.set(false)">{{ 'common.cancel' | t }}</button>
+          @if (error()) { <p role="alert" class="alert-error sm:col-span-2">{{ error() }}</p> }
+          <div class="flex flex-wrap gap-2 border-t border-border pt-4 sm:col-span-2">
+            <button type="submit" class="btn btn-primary" [disabled]="busy()">{{ 'common.save' | t }}</button>
+            <button type="button" class="btn btn-secondary" (click)="editing.set(false)">{{ 'common.cancel' | t }}</button>
           </div>
         </form>
       </section>
     }
 
-    @if (loadError()) { <p role="alert" class="mb-4 text-sm text-destructive">{{ loadError() }}</p> }
-    <div class="mb-4 max-w-xs">
-      <label for="catfilter" class="mb-1 block text-sm">{{ 'productos.filter' | t }}</label>
-      <select id="catfilter" class="w-full rounded-lg border border-input px-3 py-2 text-sm" (change)="filterCategory($event)">
+    @if (loadError()) { <p role="alert" class="alert-error mb-4">{{ loadError() }}</p> }
+    <div class="mb-4 flex items-center gap-3">
+      <label for="catfilter" class="text-sm font-medium">{{ 'productos.filter' | t }}</label>
+      <select id="catfilter" class="field" (change)="filterCategory($event)">
         <option value="">{{ 'productos.allCategories' | t }}</option>
         @for (o of categories; track o.value) { <option [value]="o.value">{{ o.label }}</option> }
       </select>
     </div>
-    <table class="w-full text-sm">
-      <thead><tr class="border-b text-left"><th class="py-2">{{ 'common.product' | t }}</th><th>{{ 'productos.category' | t }}</th><th>{{ 'common.type' | t }}</th><th>{{ 'productos.replacement' | t }}</th><th>{{ 'common.status' | t }}</th><th></th></tr></thead>
-      <tbody>
-        @for (p of products(); track p.id) {
-          <tr class="border-b">
-            <td class="py-2"><span class="text-muted-foreground">{{ p.brand.name }}</span> {{ p.name }}</td>
-            <td>{{ categoryLabel[p.category] }}</td>
-            <td>{{ p.frame ? shapeLabel[p.frame.shape] : lensLabel(p.lens_type) }}</td>
-            <td>{{ replLabel(p.replacement) }}</td>
-            <td>{{ p.active ? ('common.active' | t) : ('common.inactive' | t) }}</td>
-            <td class="space-x-3 text-right">
-              <a class="underline" [routerLink]="['/productos', p.id, 'variantes']" [queryParams]="{ categoria: p.category }">{{ 'inventario.variants' | t }}</a>
-              <a class="underline" [routerLink]="['/productos', p.id, 'imagenes']">{{ 'productos.images' | t }}</a>
-              <button type="button" class="underline" (click)="startEdit(p)">{{ 'common.edit' | t }}</button>
-            </td>
+    <div class="panel overflow-x-auto">
+      <table class="data-table stack">
+        <thead>
+          <tr>
+            <th scope="col">{{ 'common.product' | t }}</th>
+            <th scope="col">{{ 'productos.category' | t }}</th>
+            <th scope="col">{{ 'common.type' | t }}</th>
+            <th scope="col">{{ 'productos.replacement' | t }}</th>
+            <th scope="col">{{ 'common.status' | t }}</th>
+            <th scope="col"><span class="sr-only">{{ 'common.edit' | t }}</span></th>
           </tr>
-        } @empty {
-          <tr><td colspan="6" class="py-4 text-muted-foreground">{{ 'productos.empty' | t }}</td></tr>
-        }
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          @for (p of products(); track p.id) {
+            <tr>
+              <td>{{ p.name }} <span class="font-normal text-muted-foreground">· {{ p.brand.name }}</span></td>
+              <td [attr.data-label]="'productos.category' | t">{{ categoryLabel[p.category] }}</td>
+              <td [attr.data-label]="'common.type' | t">{{ p.frame ? shapeLabel[p.frame.shape] : lensLabel(p.lens_type) }}</td>
+              <td [attr.data-label]="'productos.replacement' | t">{{ replLabel(p.replacement) }}</td>
+              <td [attr.data-label]="'common.status' | t">
+                <span class="pill"><span class="size-1.5 rounded-full" [class]="p.active ? 'bg-good' : 'bg-muted-foreground'" aria-hidden="true"></span>{{ p.active ? ('common.active' | t) : ('common.inactive' | t) }}</span>
+              </td>
+              <td class="actions">
+                <a class="link" [routerLink]="['/productos', p.id, 'variantes']" [queryParams]="{ categoria: p.category }">{{ 'inventario.variants' | t }}</a>
+                <a class="link" [routerLink]="['/productos', p.id, 'imagenes']">{{ 'productos.images' | t }}</a>
+                <button type="button" class="link" (click)="startEdit(p)">{{ 'common.edit' | t }}</button>
+              </td>
+            </tr>
+          } @empty {
+            <tr><td colspan="6" class="empty">{{ 'productos.empty' | t }}</td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
     @if (nextCursor()) {
-      <button type="button" class="mt-4 rounded-full border border-input px-3 py-2 text-sm" (click)="load(true)">{{ 'common.loadMore' | t }}</button>
+      <div class="mt-4 flex justify-center"><button type="button" class="btn btn-secondary" (click)="load(true)">{{ 'common.loadMore' | t }}</button></div>
     }
   `,
 })

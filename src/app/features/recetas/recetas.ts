@@ -18,59 +18,79 @@ const fmt = (n: number | null | undefined) => (n == null ? '—' : n > 0 ? `+${n
   selector: 'app-recetas',
   imports: [TPipe],
   template: `
-    <h1 class="mb-6 text-2xl">{{ 'nav.recetas' | t }}</h1>
-    <div role="tablist" [attr.aria-label]="'common.status' | t" class="mb-4 flex gap-2">
+    <h1 class="page-title mb-6">{{ 'nav.recetas' | t }}</h1>
+    <div role="tablist" [attr.aria-label]="'common.status' | t" class="mb-4 flex gap-2 overflow-x-auto">
       @for (t of tabs; track t.value) {
-        <button type="button" role="tab" [attr.aria-selected]="tab() === t.value" class="rounded-full border px-3 py-2 text-sm" [class.bg-primary]="tab() === t.value" [class.text-primary-foreground]="tab() === t.value" [class.border-input]="tab() !== t.value" (click)="select(t.value)">{{ t.label }}</button>
+        <button type="button" role="tab" [attr.aria-selected]="tab() === t.value" class="chip" (click)="select(t.value)">{{ t.label }}</button>
       }
     </div>
-    @if (error()) { <p role="alert" class="mb-4 text-sm text-destructive">{{ error() }}</p> }
-    <ul class="divide-y rounded-2xl border border-border bg-card">
+    @if (error()) { <p role="alert" class="alert-error mb-4">{{ error() }}</p> }
+    <ul class="panel divide-y divide-border">
       @for (r of items(); track r.id) {
-        <li class="space-y-2 p-4 text-sm">
-          <div class="flex flex-wrap justify-between gap-2">
-            <div>
-              <p class="font-medium">{{ r.customer_email }} <span class="font-normal text-muted-foreground">· {{ r.kind === 'glasses' ? ('common.frames' | t) : ('common.contactLenses' | t) }}</span></p>
+        <li class="space-y-4 p-4 text-sm sm:p-5">
+          <div class="flex flex-wrap items-start justify-between gap-3">
+            <div class="min-w-0 space-y-1">
+              <p class="flex flex-wrap items-center gap-2 font-semibold">{{ r.customer_email }} <span class="pill font-medium">{{ r.kind === 'glasses' ? ('common.frames' | t) : ('common.contactLenses' | t) }}</span></p>
               <p class="text-muted-foreground">{{ 'recetas.doctor' | t: { name: r.doctor_name } }}@if (r.doctor_license) { · {{ 'recetas.license' | t: { license: r.doctor_license } }} } · {{ 'recetas.issued' | t: { date: d(r.issued_at) } }} · {{ 'recetas.validUntil' | t: { date: d(r.expires_at) } }}</p>
               <p class="text-xs text-muted-foreground">{{ 'recetas.uploaded' | t: { date: dt(r.created_at) } }}</p>
             </div>
-            @if (r.file_url) { <a [href]="r.file_url" target="_blank" rel="noopener noreferrer" class="underline">{{ 'pedido.viewFile' | t }}</a> }
+            @if (r.file_url) { <a [href]="r.file_url" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">{{ 'pedido.viewFile' | t }}</a> }
           </div>
-          <p>
-            {{ 'recetas.rightEye' | t: { sphere: f(r.od_sphere), cylinder: f(r.od_cylinder), axis: r.od_axis ?? '—', addition: r.od_addition ?? '—' } }}<br />
-            {{ 'recetas.leftEye' | t: { sphere: f(r.os_sphere), cylinder: f(r.os_cylinder), axis: r.os_axis ?? '—', addition: r.os_addition ?? '—' } }}
-          </p>
+          <table class="w-full max-w-md overflow-hidden rounded-lg bg-muted/60 text-sm">
+            <caption class="sr-only">{{ 'recetas.grid.caption' | t }}</caption>
+            <thead class="text-xs text-muted-foreground">
+              <tr>
+                <th scope="col" class="px-3 py-2 text-left font-semibold">{{ 'recetas.grid.eye' | t }}</th>
+                <th scope="col" class="px-3 py-2 text-right font-semibold">{{ 'variantes.abbr.sphere' | t }}</th>
+                <th scope="col" class="px-3 py-2 text-right font-semibold">{{ 'variantes.abbr.cylinder' | t }}</th>
+                <th scope="col" class="px-3 py-2 text-right font-semibold">{{ 'recetas.grid.axis' | t }}</th>
+                <th scope="col" class="px-3 py-2 text-right font-semibold">{{ 'variantes.abbr.addition' | t }}</th>
+              </tr>
+            </thead>
+            <tbody class="optic">
+              <tr class="border-t border-border">
+                <th scope="row" class="px-3 py-2 text-left font-sans font-semibold">{{ 'recetas.grid.od' | t }}</th>
+                <td class="px-3 py-2 text-right">{{ f(r.od_sphere) }}</td><td class="px-3 py-2 text-right">{{ f(r.od_cylinder) }}</td>
+                <td class="px-3 py-2 text-right">{{ r.od_axis ?? '—' }}</td><td class="px-3 py-2 text-right">{{ r.od_addition ?? '—' }}</td>
+              </tr>
+              <tr class="border-t border-border">
+                <th scope="row" class="px-3 py-2 text-left font-sans font-semibold">{{ 'recetas.grid.os' | t }}</th>
+                <td class="px-3 py-2 text-right">{{ f(r.os_sphere) }}</td><td class="px-3 py-2 text-right">{{ f(r.os_cylinder) }}</td>
+                <td class="px-3 py-2 text-right">{{ r.os_axis ?? '—' }}</td><td class="px-3 py-2 text-right">{{ r.os_addition ?? '—' }}</td>
+              </tr>
+            </tbody>
+          </table>
           @if (r.kind === 'glasses') {
             <form class="flex flex-wrap items-end gap-2" (submit)="savePd($event, r)">
               <div>
-                <label [attr.for]="'pd-' + r.id" class="mb-1 block">{{ 'recetas.pdLabel' | t }}</label>
-                <input [id]="'pd-' + r.id" type="number" step="0.1" min="40" max="80" class="w-28 rounded-lg border border-input px-3 py-2" [value]="r.pd_mm ?? ''" (input)="pd.set(val($event))" />
+                <label [attr.for]="'pd-' + r.id" class="field-label">{{ 'recetas.pdLabel' | t }}</label>
+                <input [id]="'pd-' + r.id" type="number" step="0.1" min="40" max="80" class="field w-28" [value]="r.pd_mm ?? ''" (input)="pd.set(val($event))" />
               </div>
-              <button type="submit" class="rounded-full border border-input px-3 py-2 disabled:opacity-50" [disabled]="busy()">{{ 'common.save' | t }}</button>
-              @if (!r.pd_mm) { <span class="text-xs text-muted-foreground">{{ 'recetas.pdRequired' | t }}</span> }
+              <button type="submit" class="btn btn-secondary" [disabled]="busy()">{{ 'common.save' | t }}</button>
+              @if (!r.pd_mm) { <span class="w-full text-xs text-muted-foreground">{{ 'recetas.pdRequired' | t }}</span> }
             </form>
           }
-          @if (r.status === 'rejected' && r.reject_reason) { <p class="text-destructive">{{ 'recetas.reason' | t: { reason: r.reject_reason } }}</p> }
+          @if (r.status === 'rejected' && r.reject_reason) { <p class="alert-error">{{ 'recetas.reason' | t: { reason: r.reject_reason } }}</p> }
           @if (r.status === 'pending') {
             @if (rejecting() === r.id) {
               <div class="space-y-2">
-                <label [attr.for]="'reason-' + r.id" class="block">{{ 'recetas.rejectLabel' | t }}</label>
-                <textarea [id]="'reason-' + r.id" rows="2" class="w-full rounded-lg border border-input px-3 py-2" [value]="reason()" (input)="reason.set(val($event))"></textarea>
+                <label [attr.for]="'reason-' + r.id" class="field-label">{{ 'recetas.rejectLabel' | t }}</label>
+                <textarea [id]="'reason-' + r.id" rows="2" class="field w-full" [value]="reason()" (input)="reason.set(val($event))"></textarea>
                 <div class="flex gap-2">
-                  <button type="button" class="rounded-full bg-destructive px-3 py-2 text-destructive-foreground disabled:opacity-50" [disabled]="busy() || !reason().trim()" (click)="review(r, 'rejected')">{{ 'recetas.reject' | t }}</button>
-                  <button type="button" class="rounded-full border border-input px-3 py-2" (click)="rejecting.set(null)">{{ 'common.cancel' | t }}</button>
+                  <button type="button" class="btn btn-danger" [disabled]="busy() || !reason().trim()" (click)="review(r, 'rejected')">{{ 'recetas.reject' | t }}</button>
+                  <button type="button" class="btn btn-secondary" (click)="rejecting.set(null)">{{ 'common.cancel' | t }}</button>
                 </div>
               </div>
             } @else {
               <div class="flex gap-2">
-                <button type="button" class="rounded-full bg-primary px-3 py-2 text-primary-foreground disabled:opacity-50" [disabled]="busy()" (click)="review(r, 'approved')">{{ 'recetas.approve' | t }}</button>
-                <button type="button" class="rounded-full border border-input px-3 py-2" (click)="startReject(r.id)">{{ 'recetas.reject' | t }}</button>
+                <button type="button" class="btn btn-primary" [disabled]="busy()" (click)="review(r, 'approved')">{{ 'recetas.approve' | t }}</button>
+                <button type="button" class="btn btn-secondary" (click)="startReject(r.id)">{{ 'recetas.reject' | t }}</button>
               </div>
             }
           }
         </li>
       } @empty {
-        <li class="p-4 text-muted-foreground">{{ 'recetas.empty' | t }}</li>
+        <li class="px-5 py-10 text-center text-muted-foreground">{{ 'recetas.empty' | t }}</li>
       }
     </ul>
   `,

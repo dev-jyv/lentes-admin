@@ -30,70 +30,74 @@ const empty = (): PackageForm => ({
   selector: 'app-micas',
   imports: [FormField, TPipe],
   template: `
-    <div class="mb-6 flex items-center justify-between">
-      <h1 class="text-2xl">{{ 'nav.micas' | t }}</h1>
-      <button type="button" class="rounded-full bg-primary px-3 py-2 text-sm text-primary-foreground" (click)="startCreate()">{{ 'micas.new' | t }}</button>
+    <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+      <h1 class="page-title">{{ 'nav.micas' | t }}</h1>
+      <button type="button" class="btn btn-primary" (click)="startCreate()">{{ 'micas.new' | t }}</button>
     </div>
 
     @if (editing()) {
-      <section class="mb-8 max-w-3xl rounded-2xl border border-border bg-card p-4" aria-labelledby="ptitle">
-        <h2 id="ptitle" class="mb-3 font-medium">{{ editingId() ? ('micas.edit' | t) : ('micas.new' | t) }}</h2>
-        <form class="grid gap-3 sm:grid-cols-2" (submit)="save($event)">
+      <section class="panel mb-8 max-w-3xl p-5 shadow-[0_4px_16px_rgb(14_34_48/0.08)]" aria-labelledby="ptitle">
+        <h2 id="ptitle" class="mb-3 text-lg">{{ editingId() ? ('micas.edit' | t) : ('micas.new' | t) }}</h2>
+        <form class="grid gap-4 sm:grid-cols-2" (submit)="save($event)">
           <div>
-            <label for="pname" class="mb-1 block text-sm">{{ 'common.name' | t }}</label>
-            <input id="pname" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.name" (input)="autoSlug()" />
+            <label for="pname" class="field-label">{{ 'common.name' | t }}</label>
+            <input id="pname" class="field w-full" [formField]="model.name" (input)="autoSlug()" />
           </div>
           <div>
-            <label for="pslug" class="mb-1 block text-sm">{{ 'common.slug' | t }}</label>
-            <input id="pslug" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.slug" />
+            <label for="pslug" class="field-label">{{ 'common.slug' | t }}</label>
+            <input id="pslug" class="field w-full" [formField]="model.slug" />
           </div>
           <div>
-            <label for="vision" class="mb-1 block text-sm">{{ 'micas.visionType' | t }}</label>
-            <select id="vision" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.vision_type">
+            <label for="vision" class="field-label">{{ 'micas.visionType' | t }}</label>
+            <select id="vision" class="field w-full" [formField]="model.vision_type">
               @for (o of visions; track o.value) { <option [value]="o.value">{{ o.label }}</option> }
             </select>
             <p class="mt-1 text-xs text-muted-foreground">{{ 'micas.visionHint' | t }}</p>
           </div>
           <div>
-            <label for="price" class="mb-1 block text-sm">{{ 'micas.pricePesos' | t }}</label>
-            <input id="price" type="number" step="0.01" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.price_pesos" />
+            <label for="price" class="field-label">{{ 'micas.pricePesos' | t }}</label>
+            <input id="price" type="number" step="0.01" class="field w-full" [formField]="model.price_pesos" />
           </div>
           <div class="sm:col-span-2">
-            <label for="desc" class="mb-1 block text-sm">{{ 'common.description' | t }}</label>
-            <textarea id="desc" rows="2" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.description"></textarea>
+            <label for="desc" class="field-label">{{ 'common.description' | t }}</label>
+            <textarea id="desc" rows="2" class="field w-full" [formField]="model.description"></textarea>
           </div>
           <label class="flex items-center gap-2 text-sm sm:col-span-2"><input type="checkbox" [formField]="model.active" /> {{ 'micas.activeForSale' | t }}</label>
-          @if (error()) { <p role="alert" class="text-sm text-destructive sm:col-span-2">{{ error() }}</p> }
-          <div class="flex gap-2 sm:col-span-2">
-            <button type="submit" class="rounded-full bg-primary px-3 py-2 text-primary-foreground disabled:opacity-50" [disabled]="busy()">{{ 'common.save' | t }}</button>
-            <button type="button" class="rounded-full border border-input px-3 py-2" (click)="editing.set(false)">{{ 'common.cancel' | t }}</button>
+          @if (error()) { <p role="alert" class="alert-error sm:col-span-2">{{ error() }}</p> }
+          <div class="flex flex-wrap gap-2 border-t border-border pt-4 sm:col-span-2">
+            <button type="submit" class="btn btn-primary" [disabled]="busy()">{{ 'common.save' | t }}</button>
+            <button type="button" class="btn btn-secondary" (click)="editing.set(false)">{{ 'common.cancel' | t }}</button>
           </div>
         </form>
       </section>
     }
 
-    @if (loadError()) { <p role="alert" class="mb-4 text-sm text-destructive">{{ loadError() }}</p> }
-    <table class="w-full text-sm">
-      <thead><tr class="border-b text-left"><th class="py-2">{{ 'micas.package' | t }}</th><th>{{ 'common.type' | t }}</th><th>{{ 'micas.prescription' | t }}</th><th>{{ 'common.price' | t }}</th><th>{{ 'common.status' | t }}</th><th></th></tr></thead>
-      <tbody>
-        @for (p of packages(); track p.id; let i = $index) {
-          <tr class="border-b">
-            <td class="py-2">{{ p.name }}</td>
-            <td>{{ visionLabel[p.vision_type] }}</td>
-            <td>{{ p.requires_prescription ? ('micas.requires' | t) : ('common.no' | t) }}</td>
-            <td>{{ money(p.price_cents) }}</td>
-            <td>{{ p.active ? ('common.active' | t) : ('common.inactive' | t) }}</td>
-            <td class="space-x-3 text-right">
-              <button type="button" class="underline disabled:opacity-40" [attr.aria-label]="'micas.moveUp' | t: { name: p.name }" [disabled]="i === 0" (click)="shift(i, -1)">↑</button>
-              <button type="button" class="underline disabled:opacity-40" [attr.aria-label]="'micas.moveDown' | t: { name: p.name }" [disabled]="i === packages().length - 1" (click)="shift(i, 1)">↓</button>
-              <button type="button" class="underline" (click)="startEdit(p)">{{ 'common.edit' | t }}</button>
-            </td>
-          </tr>
-        } @empty {
-          <tr><td colspan="6" class="py-4 text-muted-foreground">{{ 'micas.empty' | t }}</td></tr>
-        }
-      </tbody>
-    </table>
+    @if (loadError()) { <p role="alert" class="alert-error mb-4">{{ loadError() }}</p> }
+    <div class="panel overflow-x-auto">
+      <table class="data-table stack">
+        <thead><tr><th scope="col">{{ 'micas.package' | t }}</th><th scope="col">{{ 'common.type' | t }}</th><th scope="col">{{ 'micas.prescription' | t }}</th><th scope="col" class="text-right">{{ 'common.price' | t }}</th><th scope="col">{{ 'common.status' | t }}</th><th scope="col"><span class="sr-only">{{ 'common.edit' | t }}</span></th></tr></thead>
+        <tbody>
+          @for (p of packages(); track p.id; let i = $index) {
+            <tr>
+              <td>{{ p.name }}</td>
+              <td [attr.data-label]="'common.type' | t">{{ visionLabel[p.vision_type] }}</td>
+              <td [attr.data-label]="'micas.prescription' | t">{{ p.requires_prescription ? ('micas.requires' | t) : ('common.no' | t) }}</td>
+              <td class="text-right font-semibold tabular-nums" [attr.data-label]="'common.price' | t">{{ money(p.price_cents) }}</td>
+              <td [attr.data-label]="'common.status' | t">
+                <span class="pill"><span class="size-1.5 rounded-full" [class]="p.active ? 'bg-good' : 'bg-muted-foreground'" aria-hidden="true"></span>{{ p.active ? ('common.active' | t) : ('common.inactive' | t) }}</span>
+              </td>
+              <td class="actions">
+                <button type="button" class="btn btn-secondary btn-icon" [attr.aria-label]="'micas.moveUp' | t: { name: p.name }" [disabled]="i === 0" (click)="shift(i, -1)"><svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 15l6-6 6 6" /></svg></button>
+                <button type="button" class="btn btn-secondary btn-icon" [attr.aria-label]="'micas.moveDown' | t: { name: p.name }" [disabled]="i === packages().length - 1" (click)="shift(i, 1)"><svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg></button>
+                <button type="button" class="link" (click)="startEdit(p)">{{ 'common.edit' | t }}</button>
+              </td>
+            </tr>
+          } @empty {
+            <tr><td colspan="6" class="empty">{{ 'micas.empty' | t }}</td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
   `,
 })
 export default class Micas implements OnInit {

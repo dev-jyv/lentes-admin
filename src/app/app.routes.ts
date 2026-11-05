@@ -8,7 +8,7 @@ export const routes: Routes = [
     canActivate: [adminGuard],
     loadComponent: () => import('./layout/shell'),
     children: [
-      { path: '', pathMatch: 'full', redirectTo: 'pedidos' },
+      { path: '', pathMatch: 'full', loadComponent: () => import('./features/resumen/resumen') },
       { path: 'pedidos', loadComponent: () => import('./features/pedidos/pedidos') },
       { path: 'pedidos/:id', loadComponent: () => import('./features/pedidos/pedido') },
       { path: 'recetas', loadComponent: () => import('./features/recetas/recetas') },

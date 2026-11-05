@@ -11,33 +11,39 @@ import { t, TPipe } from '../../core/i18n';
   selector: 'app-marcas',
   imports: [FormField, TPipe],
   template: `
-    <h1 class="mb-6 text-2xl">{{ 'nav.marcas' | t }}</h1>
-    <section class="mb-8 max-w-md space-y-3 rounded-2xl border border-border bg-card p-4">
-      <h2 class="font-medium">{{ 'marcas.new' | t }}</h2>
-      <form class="space-y-3" (submit)="create($event)">
-        <div>
-          <label for="name" class="mb-1 block text-sm">{{ 'common.name' | t }}</label>
-          <input id="name" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.name" (input)="autoSlug()" />
+    <h1 class="page-title mb-6">{{ 'nav.marcas' | t }}</h1>
+    <div class="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
+      <div class="min-w-0">
+        @if (loadError()) { <p role="alert" class="alert-error mb-4">{{ loadError() }}</p> }
+        <div class="panel overflow-x-auto">
+          <table class="data-table">
+            <thead><tr><th scope="col">{{ 'common.name' | t }}</th><th scope="col">{{ 'common.slug' | t }}</th></tr></thead>
+            <tbody>
+              @for (b of brands(); track b.id) {
+                <tr><td class="font-medium">{{ b.name }}</td><td class="optic text-muted-foreground">{{ b.slug }}</td></tr>
+              } @empty {
+                <tr><td colspan="2" class="empty">{{ 'marcas.empty' | t }}</td></tr>
+              }
+            </tbody>
+          </table>
         </div>
-        <div>
-          <label for="slug" class="mb-1 block text-sm">{{ 'marcas.slugUrl' | t }}</label>
-          <input id="slug" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.slug" />
-        </div>
-        @if (error()) { <p role="alert" class="text-sm text-destructive">{{ error() }}</p> }
-        <button type="submit" class="rounded-full bg-primary px-3 py-2 text-primary-foreground disabled:opacity-50" [disabled]="busy()">{{ 'marcas.create' | t }}</button>
-      </form>
-    </section>
-    @if (loadError()) { <p role="alert" class="mb-4 text-sm text-destructive">{{ loadError() }}</p> }
-    <table class="w-full max-w-2xl text-sm">
-      <thead><tr class="border-b text-left"><th class="py-2">{{ 'common.name' | t }}</th><th>{{ 'common.slug' | t }}</th></tr></thead>
-      <tbody>
-        @for (b of brands(); track b.id) {
-          <tr class="border-b"><td class="py-2">{{ b.name }}</td><td class="text-muted-foreground">{{ b.slug }}</td></tr>
-        } @empty {
-          <tr><td colspan="2" class="py-4 text-muted-foreground">{{ 'marcas.empty' | t }}</td></tr>
-        }
-      </tbody>
-    </table>
+      </div>
+      <section class="panel space-y-4 p-5 lg:sticky lg:top-8 max-lg:order-first" aria-labelledby="new-brand">
+        <h2 id="new-brand" class="text-lg">{{ 'marcas.new' | t }}</h2>
+        <form class="space-y-4" (submit)="create($event)">
+          <div>
+            <label for="name" class="field-label">{{ 'common.name' | t }}</label>
+            <input id="name" class="field w-full" [formField]="model.name" (input)="autoSlug()" />
+          </div>
+          <div>
+            <label for="slug" class="field-label">{{ 'marcas.slugUrl' | t }}</label>
+            <input id="slug" class="field w-full" [formField]="model.slug" />
+          </div>
+          @if (error()) { <p role="alert" class="alert-error">{{ error() }}</p> }
+          <button type="submit" class="btn btn-primary" [disabled]="busy()">{{ 'marcas.create' | t }}</button>
+        </form>
+      </section>
+    </div>
   `,
 })
 export default class Marcas implements OnInit {

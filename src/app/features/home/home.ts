@@ -22,6 +22,13 @@ const STATUS_LABEL: Record<BannerStatus, string> = {
   Inactivo: t('labels.bannerStatus.inactive'),
 };
 
+const STATUS_DOT: Record<BannerStatus, string> = {
+  Vigente: 'bg-good',
+  Programado: 'bg-primary',
+  Vencido: 'bg-muted-foreground',
+  Inactivo: 'bg-muted-foreground',
+};
+
 const MAX_FEATURED = 8;
 
 interface BannerForm {
@@ -46,140 +53,147 @@ type FeaturedItem = Pick<Product, 'id' | 'name' | 'brand'> & { active?: boolean;
   selector: 'app-home-content',
   imports: [FormField, TPipe],
   template: `
-    <div class="mb-6 flex items-center justify-between">
-      <h1 class="text-2xl">{{ 'nav.home' | t }}</h1>
-      <button type="button" class="rounded-full bg-primary px-3 py-2 text-sm text-primary-foreground" (click)="startCreate()">{{ 'homeAdmin.newBanner' | t }}</button>
+    <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+      <h1 class="page-title">{{ 'nav.home' | t }}</h1>
+      <button type="button" class="btn btn-primary" (click)="startCreate()">{{ 'homeAdmin.newBanner' | t }}</button>
     </div>
 
     @if (editing()) {
-      <section class="mb-8 max-w-3xl rounded-2xl border border-border bg-card p-4" aria-labelledby="btitle">
-        <h2 id="btitle" class="mb-1 font-medium">{{ editingId() ? ('homeAdmin.editBanner' | t) : ('homeAdmin.newBanner' | t) }}</h2>
+      <section class="panel mb-8 max-w-3xl p-5 shadow-[0_4px_16px_rgb(14_34_48/0.08)]" aria-labelledby="btitle">
+        <h2 id="btitle" class="mb-1 text-lg">{{ editingId() ? ('homeAdmin.editBanner' | t) : ('homeAdmin.newBanner' | t) }}</h2>
         <p class="mb-3 text-sm text-muted-foreground">{{ 'homeAdmin.honesty' | t }}</p>
-        <form class="grid gap-3 sm:grid-cols-2" (submit)="save($event)">
+        <form class="grid gap-4 sm:grid-cols-2" (submit)="save($event)">
           <div>
-            <label for="placement" class="mb-1 block text-sm">{{ 'homeAdmin.placement' | t }}</label>
-            <select id="placement" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.placement">
+            <label for="placement" class="field-label">{{ 'homeAdmin.placement' | t }}</label>
+            <select id="placement" class="field w-full" [formField]="model.placement">
               @for (o of placements; track o.value) { <option [value]="o.value">{{ o.label }}</option> }
             </select>
           </div>
           <div>
-            <label for="title" class="mb-1 block text-sm">{{ isPromo() ? ('homeAdmin.titlePromo' | t) : ('homeAdmin.titleDefault' | t) }}</label>
-            <input id="title" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.title" />
+            <label for="title" class="field-label">{{ isPromo() ? ('homeAdmin.titlePromo' | t) : ('homeAdmin.titleDefault' | t) }}</label>
+            <input id="title" class="field w-full" [formField]="model.title" />
           </div>
           @if (!isPromo()) {
             <div class="sm:col-span-2">
-              <label for="subtitle" class="mb-1 block text-sm">{{ 'homeAdmin.subtitle' | t }}</label>
-              <input id="subtitle" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.subtitle" />
+              <label for="subtitle" class="field-label">{{ 'homeAdmin.subtitle' | t }}</label>
+              <input id="subtitle" class="field w-full" [formField]="model.subtitle" />
             </div>
           }
           <div>
-            <label for="cta" class="mb-1 block text-sm">{{ isPromo() ? ('homeAdmin.ctaLabelOptional' | t) : ('homeAdmin.ctaLabel' | t) }}</label>
-            <input id="cta" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.cta_label" />
+            <label for="cta" class="field-label">{{ isPromo() ? ('homeAdmin.ctaLabelOptional' | t) : ('homeAdmin.ctaLabel' | t) }}</label>
+            <input id="cta" class="field w-full" [formField]="model.cta_label" />
           </div>
           <div>
-            <label for="href" class="mb-1 block text-sm">{{ isPromo() ? ('homeAdmin.hrefOptional' | t) : ('homeAdmin.href' | t) }}</label>
-            <input id="href" class="w-full rounded-lg border border-input px-3 py-2" placeholder="/armazones" [formField]="model.cta_href" />
+            <label for="href" class="field-label">{{ isPromo() ? ('homeAdmin.hrefOptional' | t) : ('homeAdmin.href' | t) }}</label>
+            <input id="href" class="field w-full" placeholder="/armazones" [formField]="model.cta_href" />
           </div>
           @if (!isPromo()) {
             <div>
-              <label for="img" class="mb-1 block text-sm">{{ 'homeAdmin.image' | t }}</label>
-              <input id="img" type="file" [accept]="accept" class="block text-sm" (change)="upload($event)" [disabled]="uploading()" />
+              <label for="img" class="field-label">{{ 'homeAdmin.image' | t }}</label>
+              <input id="img" type="file" [accept]="accept" class="block" (change)="upload($event)" [disabled]="uploading()" />
               @if (preview()) { <img [src]="preview()" [attr.alt]="'homeAdmin.previewAlt' | t" class="mt-2 h-24 rounded-lg object-cover" /> }
             </div>
             <div>
-              <label for="alt" class="mb-1 block text-sm">{{ 'homeAdmin.imageAlt' | t }}</label>
-              <input id="alt" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.image_alt" />
+              <label for="alt" class="field-label">{{ 'homeAdmin.imageAlt' | t }}</label>
+              <input id="alt" class="field w-full" [formField]="model.image_alt" />
             </div>
           }
           <div>
-            <label for="starts" class="mb-1 block text-sm">{{ 'homeAdmin.starts' | t }}</label>
-            <input id="starts" type="datetime-local" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.starts_at" />
+            <label for="starts" class="field-label">{{ 'homeAdmin.starts' | t }}</label>
+            <input id="starts" type="datetime-local" class="field w-full" [formField]="model.starts_at" />
           </div>
           <div>
-            <label for="ends" class="mb-1 block text-sm">{{ 'homeAdmin.ends' | t }}</label>
-            <input id="ends" type="datetime-local" class="w-full rounded-lg border border-input px-3 py-2" [formField]="model.ends_at" />
+            <label for="ends" class="field-label">{{ 'homeAdmin.ends' | t }}</label>
+            <input id="ends" type="datetime-local" class="field w-full" [formField]="model.ends_at" />
           </div>
           <label class="flex items-center gap-2 text-sm sm:col-span-2"><input type="checkbox" [formField]="model.active" /> {{ 'common.active' | t }}</label>
-          @if (error()) { <p role="alert" class="text-sm text-destructive sm:col-span-2">{{ error() }}</p> }
-          <div class="flex gap-2 sm:col-span-2">
-            <button type="submit" class="rounded-full bg-primary px-3 py-2 text-primary-foreground disabled:opacity-50" [disabled]="busy() || uploading()">{{ 'common.save' | t }}</button>
-            <button type="button" class="rounded-full border border-input px-3 py-2" (click)="editing.set(false)">{{ 'common.cancel' | t }}</button>
+          @if (error()) { <p role="alert" class="alert-error sm:col-span-2">{{ error() }}</p> }
+          <div class="flex flex-wrap gap-2 border-t border-border pt-4 sm:col-span-2">
+            <button type="submit" class="btn btn-primary" [disabled]="busy() || uploading()">{{ 'common.save' | t }}</button>
+            <button type="button" class="btn btn-secondary" (click)="editing.set(false)">{{ 'common.cancel' | t }}</button>
           </div>
         </form>
       </section>
     }
 
-    @if (loadError()) { <p role="alert" class="mb-4 text-sm text-destructive">{{ loadError() }}</p> }
+    @if (loadError()) { <p role="alert" class="alert-error mb-4">{{ loadError() }}</p> }
 
     @for (group of groups(); track group.value) {
       <section class="mb-8" [attr.aria-labelledby]="'g-' + group.value">
-        <h2 [id]="'g-' + group.value" class="mb-2 font-medium">{{ group.label }}</h2>
-        <table class="w-full text-sm">
-          <thead><tr class="border-b text-left"><th class="py-2">{{ 'homeAdmin.bannerTitle' | t }}</th><th>{{ 'common.status' | t }}</th><th>{{ 'homeAdmin.validity' | t }}</th><th></th></tr></thead>
-          <tbody>
-            @for (b of group.items; track b.id; let i = $index) {
-              <tr class="border-b">
-                <td class="py-2">{{ b.title }}</td>
-                <td>{{ status(b) }} @if (shown().has(b.id)) { <span class="text-xs font-semibold text-primary">· {{ 'homeAdmin.shown' | t }}</span> }</td>
-                <td>{{ range(b) }}</td>
-                <td class="space-x-3 text-right">
-                  <button type="button" class="underline disabled:opacity-40" [attr.aria-label]="'micas.moveUp' | t: { name: b.title }" [disabled]="i === 0" (click)="shift(group.value, i, -1)">↑</button>
-                  <button type="button" class="underline disabled:opacity-40" [attr.aria-label]="'micas.moveDown' | t: { name: b.title }" [disabled]="i === group.items.length - 1" (click)="shift(group.value, i, 1)">↓</button>
-                  <button type="button" class="underline" (click)="startEdit(b)">{{ 'common.edit' | t }}</button>
-                  <button type="button" class="underline" (click)="remove(b)">{{ 'homeAdmin.delete' | t }}</button>
-                </td>
-              </tr>
-            } @empty {
-              <tr><td colspan="4" class="py-4 text-muted-foreground">{{ 'homeAdmin.noBanners' | t }}</td></tr>
-            }
-          </tbody>
-        </table>
+        <h2 [id]="'g-' + group.value" class="mb-3 text-lg">{{ group.label }}</h2>
+        <div class="panel overflow-x-auto">
+          <table class="data-table stack">
+            <thead><tr><th scope="col">{{ 'homeAdmin.bannerTitle' | t }}</th><th scope="col">{{ 'common.status' | t }}</th><th scope="col">{{ 'homeAdmin.validity' | t }}</th><th scope="col"><span class="sr-only">{{ 'common.edit' | t }}</span></th></tr></thead>
+            <tbody>
+              @for (b of group.items; track b.id; let i = $index) {
+                <tr>
+                  <td class="font-medium">{{ b.title }}</td>
+                  <td [attr.data-label]="'common.status' | t">
+                    <span class="inline-flex flex-wrap items-center justify-end gap-1.5">
+                      <span class="pill"><span class="size-1.5 rounded-full" [class]="tone(b)" aria-hidden="true"></span>{{ status(b) }}</span>
+                      @if (shown().has(b.id)) { <span class="pill bg-secondary font-semibold">{{ 'homeAdmin.shown' | t }}</span> }
+                    </span>
+                  </td>
+                  <td class="text-muted-foreground" [attr.data-label]="'homeAdmin.validity' | t">{{ range(b) }}</td>
+                  <td class="actions">
+                    <button type="button" class="btn btn-secondary btn-icon" [attr.aria-label]="'micas.moveUp' | t: { name: b.title }" [disabled]="i === 0" (click)="shift(group.value, i, -1)"><svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 15l6-6 6 6" /></svg></button>
+                    <button type="button" class="btn btn-secondary btn-icon" [attr.aria-label]="'micas.moveDown' | t: { name: b.title }" [disabled]="i === group.items.length - 1" (click)="shift(group.value, i, 1)"><svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg></button>
+                    <button type="button" class="link" (click)="startEdit(b)">{{ 'common.edit' | t }}</button>
+                    <button type="button" class="link" (click)="remove(b)">{{ 'homeAdmin.delete' | t }}</button>
+                  </td>
+                </tr>
+              } @empty {
+                <tr><td colspan="4" class="empty">{{ 'homeAdmin.noBanners' | t }}</td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
       </section>
     }
 
     <section class="max-w-3xl" aria-labelledby="ftitle">
-      <h2 id="ftitle" class="mb-1 font-medium">{{ 'homeAdmin.featured' | t }}</h2>
-      <p class="mb-3 text-sm text-muted-foreground">{{ 'homeAdmin.featuredHint' | t: { max: maxFeatured } }}</p>
-      <div class="mb-3 max-w-xs">
-        <label for="fcat" class="mb-1 block text-sm">{{ 'productos.category' | t }}</label>
-        <select id="fcat" class="w-full rounded-lg border border-input px-3 py-2 text-sm" (change)="pickCategory($event)">
+      <h2 id="ftitle" class="mb-1 text-lg">{{ 'homeAdmin.featured' | t }}</h2>
+      <p class="mb-4 text-sm text-muted-foreground">{{ 'homeAdmin.featuredHint' | t: { max: maxFeatured } }}</p>
+      <div class="mb-4 max-w-xs">
+        <label for="fcat" class="field-label">{{ 'productos.category' | t }}</label>
+        <select id="fcat" class="field w-full" (change)="pickCategory($event)">
           @for (o of categories; track o.value) { <option [value]="o.value" [selected]="o.value === category()">{{ o.label }}</option> }
         </select>
       </div>
-      <ol class="mb-4 space-y-1 text-sm">
+      <ol class="panel mb-4 divide-y divide-border text-sm">
         @for (p of featured(); track p.id; let i = $index) {
-          <li class="flex items-center justify-between rounded-2xl border border-border bg-card px-3 py-2">
-            <span>{{ i + 1 }}. <span class="text-muted-foreground">{{ p.brand.name }}</span> {{ p.name }}
-              @if (hidden(p)) { <span class="text-xs text-destructive">· {{ 'homeAdmin.notShown' | t }}</span> }
+          <li class="flex flex-wrap items-center justify-between gap-2 px-4 py-2.5">
+            <span class="flex flex-wrap items-center gap-2"><span class="grid size-6 place-items-center rounded-full bg-secondary text-xs font-semibold tabular-nums">{{ i + 1 }}</span> <span class="font-medium">{{ p.name }}</span> <span class="text-muted-foreground">{{ p.brand.name }}</span>
+              @if (hidden(p)) { <span class="pill bg-destructive/10 text-destructive">{{ 'homeAdmin.notShown' | t }}</span> }
             </span>
-            <span class="space-x-3">
-              <button type="button" class="underline disabled:opacity-40" [attr.aria-label]="'micas.moveUp' | t: { name: p.name }" [disabled]="i === 0" (click)="shiftFeatured(i, -1)">↑</button>
-              <button type="button" class="underline disabled:opacity-40" [attr.aria-label]="'micas.moveDown' | t: { name: p.name }" [disabled]="i === featured().length - 1" (click)="shiftFeatured(i, 1)">↓</button>
-              <button type="button" class="underline" (click)="removeFeatured(p.id)">{{ 'homeAdmin.removeFeatured' | t }}</button>
+            <span class="flex items-center gap-2">
+              <button type="button" class="btn btn-secondary btn-icon" [attr.aria-label]="'micas.moveUp' | t: { name: p.name }" [disabled]="i === 0" (click)="shiftFeatured(i, -1)"><svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 15l6-6 6 6" /></svg></button>
+              <button type="button" class="btn btn-secondary btn-icon" [attr.aria-label]="'micas.moveDown' | t: { name: p.name }" [disabled]="i === featured().length - 1" (click)="shiftFeatured(i, 1)"><svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg></button>
+              <button type="button" class="link" (click)="removeFeatured(p.id)">{{ 'homeAdmin.removeFeatured' | t }}</button>
             </span>
           </li>
         } @empty {
-          <li class="text-muted-foreground">{{ 'homeAdmin.noFeatured' | t }}</li>
+          <li class="px-4 py-6 text-center text-muted-foreground">{{ 'homeAdmin.noFeatured' | t }}</li>
         }
       </ol>
-      <form class="mb-2 flex items-end gap-2" (submit)="search($event)">
+      <form class="mb-3 flex items-end gap-2" (submit)="search($event)">
         <div class="grow">
-          <label for="fq" class="mb-1 block text-sm">{{ 'homeAdmin.searchProduct' | t }}</label>
-          <input id="fq" class="w-full rounded-lg border border-input px-3 py-2 text-sm" [value]="query()" (input)="query.set($any($event.target).value)" />
+          <label for="fq" class="field-label">{{ 'homeAdmin.searchProduct' | t }}</label>
+          <input id="fq" class="field w-full" [value]="query()" (input)="query.set($any($event.target).value)" />
         </div>
-        <button type="submit" class="rounded-full border border-input px-3 py-2 text-sm">{{ 'homeAdmin.search' | t }}</button>
+        <button type="submit" class="btn btn-secondary">{{ 'homeAdmin.search' | t }}</button>
       </form>
-      @if (featuredError()) { <p role="alert" class="mb-2 text-sm text-destructive">{{ featuredError() }}</p> }
-      <ul class="mb-4 space-y-1 text-sm">
+      @if (featuredError()) { <p role="alert" class="alert-error mb-2">{{ featuredError() }}</p> }
+      <ul class="mb-4 divide-y divide-border text-sm">
         @for (p of results(); track p.id) {
-          <li class="flex items-center justify-between border-b border-border py-1">
+          <li class="flex items-center justify-between gap-3 py-2">
             <span><span class="text-muted-foreground">{{ p.brand.name }}</span> {{ p.name }}</span>
-            <button type="button" class="underline disabled:opacity-40" [disabled]="isFeatured(p.id) || featured().length >= maxFeatured" (click)="addFeatured(p)">{{ 'homeAdmin.add' | t }}</button>
+            <button type="button" class="link" [disabled]="isFeatured(p.id) || featured().length >= maxFeatured" (click)="addFeatured(p)">{{ 'homeAdmin.add' | t }}</button>
           </li>
         }
       </ul>
-      <button type="button" class="rounded-full bg-primary px-3 py-2 text-sm text-primary-foreground disabled:opacity-50" [disabled]="busy()" (click)="saveFeatured()">{{ 'homeAdmin.saveFeatured' | t }}</button>
-      @if (featuredOk()) { <p role="status" class="mt-2 text-sm">{{ featuredOk() }}</p> }
+      <button type="button" class="btn btn-primary" [disabled]="busy()" (click)="saveFeatured()">{{ 'homeAdmin.saveFeatured' | t }}</button>
+      @if (featuredOk()) { <p role="status" class="alert-ok mt-3">{{ featuredOk() }}</p> }
     </section>
   `,
 })
@@ -215,6 +229,7 @@ export default class HomeContent implements OnInit {
     })),
   );
   protected status = (b: AdminHomeBanner) => STATUS_LABEL[bannerStatus(b)];
+  protected tone = (b: AdminHomeBanner) => STATUS_DOT[bannerStatus(b)];
   protected range = (b: AdminHomeBanner) =>
     t('homeAdmin.range', { start: utcToCdmxInput(b.starts_at).replace('T', ' ') || t('homeAdmin.noStart'), end: utcToCdmxInput(b.ends_at).replace('T', ' ') || t('homeAdmin.noEnd') });
 
