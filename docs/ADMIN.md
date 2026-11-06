@@ -10,7 +10,7 @@ Aquí se registran todas las decisiones de administración; `docs/SPEC.md` es la
 | Framework | Angular 22 (standalone, zoneless, signals, Signal Forms) | Panel con muchos formularios y tablas; el equipo lo separó de la tienda |
 | Estilos | Tailwind CSS v4 | Mismo sistema de utilidades que `lentes-web` |
 | Cliente API | orval (`client: angular`) generado desde `openapi/openapi.yaml` | Mismo enfoque que `lentes-web`; tipos y servicio `DefaultService` |
-| Auth | Supabase Auth (`@supabase/supabase-js`) | La misma cuenta/JWT que valida la API |
+| Auth | Endpoints `/v1/auth/*` de la API (que habla con Supabase Auth) | El panel no conoce Supabase; la misma cuenta/JWT que valida la API |
 | Pruebas | Vitest (`ng test`) | Viene con Angular 22 |
 
 Sin SSR: es un SPA interno, no necesita SEO.
@@ -24,7 +24,10 @@ Sin SSR: es un SPA interno, no necesita SEO.
 
 ## Autenticación y roles
 
-- Login con correo y contraseña contra Supabase.
+- Login con correo y contraseña contra la API (`POST /v1/auth/login`); la API es la única que habla con Supabase Auth.
+- El access token vive solo en memoria y se manda como Bearer. El refresh token es una cookie httpOnly de la API
+  (`lentes_rt`, `SameSite=None; Secure`, `Path=/v1/auth`): al recargar, el panel restaura la sesión con `POST /v1/auth/refresh`
+  y la renueva un minuto antes de que venza. Cerrar sesión (`POST /v1/auth/logout`) revoca el token y borra la cookie.
 - Solo entra quien tenga `app_metadata.role = admin` (`core/guards.ts`). **Nunca** `user_metadata`: el propio usuario puede editarlo.
 - El guard es comodidad de interfaz. La seguridad real es la API, que exige el rol en cada ruta `/v1/admin/*` (responde 403 si no).
 - Asignar el rol: en Supabase, editar `raw_app_meta_data` del usuario con `{"role": "admin"}` (solo desde el panel de Supabase o SQL con service role; no hay autoservicio).
@@ -87,15 +90,14 @@ Todo el admin usa el contrato real (`openapi/openapi.yaml`, copia de `lentes-api
 
 ## Entornos
 
-`src/environments/environment.development.ts` (local) y `environment.ts` (producción). Todos los valores son públicos
-(la *publishable key* de Supabase no es un secreto). No se guarda ningún secreto en este repo.
+`src/environments/environment.development.ts` (local) y `environment.ts` (producción). Todos los valores son públicos;
+el panel no lleva URL ni clave de Supabase. No se guarda ningún secreto en este repo.
 
 | Valor | Local | Producción |
 |---|---|---|
 | `apiUrl` | `http://localhost:8080` | `https://api.tutienda.com` |
-| `supabaseUrl` / `supabaseKey` | proyecto de **desarrollo** | proyecto de producción |
 
-La API debe permitir el origen del panel en `CORS_ALLOWED_ORIGINS` (p. ej. `https://admin.tutienda.com` y `http://localhost:4301` en local).
+La API debe permitir el origen del panel en `CORS_ALLOWED_ORIGINS` (p. ej. `https://admin.tutienda.com` y `http://localhost:4301` en local) y tener `SUPABASE_SECRET_KEY` (con forwarding de IP activo en Supabase); sin ella el login responde 503.
 
 ## Comandos
 

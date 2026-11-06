@@ -27,6 +27,67 @@ paths:
                     example: ok
         "503":
           $ref: "#/components/responses/Problem"
+  /v1/auth/login:
+    post:
+      operationId: login
+      summary: Inicia sesión con correo y contraseña (Supabase Auth vía backend)
+      description: >
+        Devuelve el access token en el cuerpo (el cliente lo guarda en memoria y lo manda como Bearer)
+        y deja el refresh token en una cookie httpOnly limitada a `/v1/auth`.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LoginInput" }
+      responses:
+        "200":
+          description: Sesión iniciada
+          headers:
+            Set-Cookie:
+              schema: { type: string }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AuthSession" }
+        "400":
+          $ref: "#/components/responses/Problem"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Problem"
+  /v1/auth/refresh:
+    post:
+      operationId: refreshSession
+      summary: Renueva el access token con la cookie de refresh (y la rota)
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/RefreshCookie"
+      responses:
+        "200":
+          description: Sesión renovada
+          headers:
+            Set-Cookie:
+              schema: { type: string }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AuthSession" }
+        "401":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Problem"
+  /v1/auth/logout:
+    post:
+      operationId: logout
+      summary: Cierra la sesión, revoca el refresh token y borra la cookie
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/RefreshCookie"
+      responses:
+        "204":
+          description: Sesión cerrada
+          headers:
+            Set-Cookie:
+              schema: { type: string }
   /v1/products:
     get:
       operationId: listProducts
@@ -1505,6 +1566,12 @@ components:
       bearerFormat: JWT
       description: Access token de Supabase Auth. El scope `admin` exige app_metadata.role = admin.
   parameters:
+    RefreshCookie:
+      name: lentes_rt
+      in: cookie
+      required: false
+      description: Refresh token (httpOnly, lo pone /v1/auth/login)
+      schema: { type: string }
     CartToken:
       name: X-Cart-Token
       in: header
@@ -1528,6 +1595,20 @@ components:
         application/problem+json:
           schema: { $ref: "#/components/schemas/Problem" }
   schemas:
+    LoginInput:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email, maxLength: 254 }
+        password: { type: string, minLength: 1, maxLength: 128 }
+    AuthSession:
+      type: object
+      required: [access_token, expires_in, email, role]
+      properties:
+        access_token: { type: string }
+        expires_in: { type: integer, description: Segundos de vigencia del access token }
+        email: { type: string }
+        role: { type: string, description: "app_metadata.role (vacío si no tiene)", example: admin }
     Problem:
       type: object
       required: [type, title, status]

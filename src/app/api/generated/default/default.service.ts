@@ -59,6 +59,7 @@ import type {
   AdminSetHomeFeatured200,
   AdminSetHomeFeaturedBody,
   AdminVariant,
+  AuthSession,
   Brand,
   BrandInput,
   Cart,
@@ -87,6 +88,7 @@ import type {
   ListPrescriptions200,
   ListProducts200,
   ListProductsParams,
+  LoginInput,
   MercadoPagoWebhookBody,
   MercadoPagoWebhookParams,
   Order,
@@ -260,6 +262,115 @@ export class DefaultService {
 
     return this.http.get<TData>(
       `/healthz`,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+      }
+    );
+  }
+/**
+ * Devuelve el access token en el cuerpo (el cliente lo guarda en memoria y lo manda como Bearer) y deja el refresh token en una cookie httpOnly limitada a `/v1/auth`.
+ * @summary Inicia sesión con correo y contraseña (Supabase Auth vía backend)
+ */
+ login<TData = AuthSession>(loginInput: LoginInput, options?: HttpClientBodyOptions): Observable<TData>;
+ login<TData = AuthSession>(loginInput: LoginInput, options?: HttpClientEventOptions): Observable<HttpEvent<TData>>;
+ login<TData = AuthSession>(loginInput: LoginInput, options?: HttpClientResponseOptions): Observable<AngularHttpResponse<TData>>;
+  login<TData = AuthSession>(
+    loginInput: LoginInput, options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.post<TData>(
+      `/v1/auth/login`,
+      loginInput,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+      }
+    );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.post<TData>(
+      `/v1/auth/login`,
+      loginInput,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+      }
+    );
+    }
+
+    return this.http.post<TData>(
+      `/v1/auth/login`,
+      loginInput,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+      }
+    );
+  }
+/**
+ * @summary Renueva el access token con la cookie de refresh (y la rota)
+ */
+ refreshSession<TData = AuthSession>( options?: HttpClientBodyOptions): Observable<TData>;
+ refreshSession<TData = AuthSession>( options?: HttpClientEventOptions): Observable<HttpEvent<TData>>;
+ refreshSession<TData = AuthSession>( options?: HttpClientResponseOptions): Observable<AngularHttpResponse<TData>>;
+  refreshSession<TData = AuthSession>(
+     options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.post<TData>(
+      `/v1/auth/refresh`,
+      undefined,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+      }
+    );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.post<TData>(
+      `/v1/auth/refresh`,
+      undefined,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+      }
+    );
+    }
+
+    return this.http.post<TData>(
+      `/v1/auth/refresh`,
+      undefined,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+      }
+    );
+  }
+/**
+ * @summary Cierra la sesión, revoca el refresh token y borra la cookie
+ */
+ logout<TData = void>( options?: HttpClientBodyOptions): Observable<TData>;
+ logout<TData = void>( options?: HttpClientEventOptions): Observable<HttpEvent<TData>>;
+ logout<TData = void>( options?: HttpClientResponseOptions): Observable<AngularHttpResponse<TData>>;
+  logout<TData = void>(
+     options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.post<TData>(
+      `/v1/auth/logout`,
+      undefined,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+      }
+    );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.post<TData>(
+      `/v1/auth/logout`,
+      undefined,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+      }
+    );
+    }
+
+    return this.http.post<TData>(
+      `/v1/auth/logout`,
+      undefined,{
         ...(options as Omit<NonNullable<typeof options>, 'observe'>),
         observe: 'body',
       }
@@ -2472,6 +2583,9 @@ export class DefaultService {
 };
 
 export type GetHealthClientResult = NonNullable<GetHealth200>
+export type LoginClientResult = NonNullable<AuthSession>
+export type RefreshSessionClientResult = NonNullable<AuthSession>
+export type LogoutClientResult = NonNullable<void>
 export type ListProductsClientResult = NonNullable<ListProducts200>
 export type ListBrandsClientResult = NonNullable<ListBrands200>
 export type GetCatalogFacetsClientResult = NonNullable<CatalogFacets>
