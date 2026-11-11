@@ -27,6 +27,67 @@ paths:
                     example: ok
         "503":
           $ref: "#/components/responses/Problem"
+  /v1/auth/login:
+    post:
+      operationId: login
+      summary: Inicia sesión con correo y contraseña (Supabase Auth vía backend)
+      description: >
+        Devuelve el access token en el cuerpo (el cliente lo guarda en memoria y lo manda como Bearer)
+        y deja el refresh token en una cookie httpOnly limitada a `/v1/auth`.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LoginInput" }
+      responses:
+        "200":
+          description: Sesión iniciada
+          headers:
+            Set-Cookie:
+              schema: { type: string }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AuthSession" }
+        "400":
+          $ref: "#/components/responses/Problem"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Problem"
+  /v1/auth/refresh:
+    post:
+      operationId: refreshSession
+      summary: Renueva el access token con la cookie de refresh (y la rota)
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/RefreshCookie"
+      responses:
+        "200":
+          description: Sesión renovada
+          headers:
+            Set-Cookie:
+              schema: { type: string }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AuthSession" }
+        "401":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Problem"
+  /v1/auth/logout:
+    post:
+      operationId: logout
+      summary: Cierra la sesión, revoca el refresh token y borra la cookie
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/RefreshCookie"
+      responses:
+        "204":
+          description: Sesión cerrada
+          headers:
+            Set-Cookie:
+              schema: { type: string }
   /v1/products:
     get:
       operationId: listProducts
@@ -1505,6 +1566,12 @@ components:
       bearerFormat: JWT
       description: Access token de Supabase Auth. El scope `admin` exige app_metadata.role = admin.
   parameters:
+    RefreshCookie:
+      name: lentes_rt
+      in: cookie
+      required: false
+      description: Refresh token (httpOnly, lo pone /v1/auth/login)
+      schema: { type: string }
     CartToken:
       name: X-Cart-Token
       in: header
@@ -1528,6 +1595,20 @@ components:
         application/problem+json:
           schema: { $ref: "#/components/schemas/Problem" }
   schemas:
+    LoginInput:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email, maxLength: 254 }
+        password: { type: string, minLength: 1, maxLength: 128 }
+    AuthSession:
+      type: object
+      required: [access_token, expires_in, email, role]
+      properties:
+        access_token: { type: string }
+        expires_in: { type: integer, description: Segundos de vigencia del access token }
+        email: { type: string }
+        role: { type: string, description: "app_metadata.role (vacío si no tiene)", example: admin }
     Problem:
       type: object
       required: [type, title, status]
@@ -1665,7 +1746,40 @@ components:
     FrameColor:
       type: string
       enum: [black, tortoise, brown, transparent, gray, blue, green, red, pink, purple, gold, silver, multicolor]
+    FrameSize:
+      type: string
+      enum: [small, medium, large]
+    FrameInclude:
+      type: string
+      enum: [case, cleaning_cloth, scratch_resistant, warranty, blue_light_filter, anti_reflective, optician_fitting]
     FrameDetails:
+      type: object
+      required: [shape, material, rim, gender, lens_width_mm, bridge_mm, temple_mm, lens_height_mm, frame_width_mm, weight_g, size, spring_hinges, adjustable_nose_pads, progressive_eligible, includes, warranty_months]
+      properties:
+        shape: { $ref: "#/components/schemas/FrameShape" }
+        material: { $ref: "#/components/schemas/FrameMaterial" }
+        rim: { $ref: "#/components/schemas/FrameRim" }
+        gender: { $ref: "#/components/schemas/FrameGender" }
+        lens_width_mm: { type: integer, minimum: 30, maximum: 80 }
+        bridge_mm: { type: integer, minimum: 10, maximum: 30 }
+        temple_mm: { type: integer, minimum: 100, maximum: 170 }
+        lens_height_mm: { type: integer, minimum: 20, maximum: 60, nullable: true, description: Alto de mica. }
+        frame_width_mm: { type: integer, minimum: 100, maximum: 160, nullable: true, description: Ancho total del armazón. }
+        weight_g: { type: integer, minimum: 5, maximum: 80, nullable: true }
+        size: { allOf: [{ $ref: "#/components/schemas/FrameSize" }], nullable: true }
+        spring_hinges: { type: boolean, nullable: true }
+        adjustable_nose_pads: { type: boolean, nullable: true }
+        progressive_eligible:
+          type: boolean
+          nullable: true
+          description: Solo lectura (no existe en FrameInput); calculado, no se guarda. `true` si `lens_height_mm` >= 28; `null` sin alto de mica.
+        includes:
+          description: Qué incluye el armazón; puede ser vacío.
+          type: array
+          items: { $ref: "#/components/schemas/FrameInclude" }
+        warranty_months: { type: integer, minimum: 1, maximum: 60, nullable: true, description: Solo con `warranty` en `includes`. }
+    FrameInput:
+      description: Atributos de un armazón al crear o editar. Los opcionales omitidos quedan en `null` (o `[]` en `includes`).
       type: object
       required: [shape, material, rim, gender, lens_width_mm, bridge_mm, temple_mm]
       properties:
@@ -1676,6 +1790,17 @@ components:
         lens_width_mm: { type: integer, minimum: 30, maximum: 80 }
         bridge_mm: { type: integer, minimum: 10, maximum: 30 }
         temple_mm: { type: integer, minimum: 100, maximum: 170 }
+        lens_height_mm: { type: integer, minimum: 20, maximum: 60, nullable: true, description: Alto de mica. }
+        frame_width_mm: { type: integer, minimum: 100, maximum: 160, nullable: true, description: Ancho total del armazón. }
+        weight_g: { type: integer, minimum: 5, maximum: 80, nullable: true }
+        size: { allOf: [{ $ref: "#/components/schemas/FrameSize" }], nullable: true }
+        spring_hinges: { type: boolean, nullable: true }
+        adjustable_nose_pads: { type: boolean, nullable: true }
+        includes:
+          description: Los valores repetidos se guardan una sola vez.
+          type: array
+          items: { $ref: "#/components/schemas/FrameInclude" }
+        warranty_months: { type: integer, minimum: 1, maximum: 60, nullable: true, description: "Exige `warranty` en `includes` (si no, `400`)." }
     FrameVariant:
       type: object
       required: [id, sku, color, price_cents, available, in_stock]
@@ -1723,7 +1848,7 @@ components:
         slug: { type: string }
     Product:
       type: object
-      required: [id, category, brand, name, slug, lens_type, replacement, pieces_per_box, requires_prescription, from_price_cents, image_url, frame, color_count]
+      required: [id, category, brand, name, slug, lens_type, replacement, pieces_per_box, requires_prescription, from_price_cents, image_url, frame, color_count, manufacturer, uv_blocking, visibility_tint, package_note]
       properties:
         id: { type: string, format: uuid }
         category: { $ref: "#/components/schemas/ProductCategory" }
@@ -1738,6 +1863,10 @@ components:
         color_count: { type: integer, description: Colores distintos en variantes activas }
         material: { type: string, nullable: true }
         water_content_pct: { type: number, nullable: true }
+        manufacturer: { type: string, nullable: true, description: "Fabricante. `null` en armazones" }
+        uv_blocking: { type: boolean, nullable: true, description: "`null` en armazones" }
+        visibility_tint: { type: boolean, nullable: true, description: "`null` en armazones" }
+        package_note: { type: string, maxLength: 160, nullable: true, description: "Descripción del empaque. `null` en armazones" }
         requires_prescription: { type: boolean }
         from_price_cents:
           type: integer
@@ -1882,9 +2011,13 @@ components:
         lens_type: { allOf: [{ $ref: "#/components/schemas/LensType" }], nullable: true, description: Requerido en lentes de contacto; prohibido en armazones. }
         replacement: { allOf: [{ $ref: "#/components/schemas/Replacement" }], nullable: true, description: Requerido en lentes de contacto; prohibido en armazones. }
         pieces_per_box: { type: integer, nullable: true, description: Requerido en lentes de contacto; prohibido en armazones. }
-        frame: { allOf: [{ $ref: "#/components/schemas/FrameDetails" }], nullable: true, description: Requerido en armazones; prohibido en lentes de contacto. }
+        frame: { allOf: [{ $ref: "#/components/schemas/FrameInput" }], nullable: true, description: Requerido en armazones; prohibido en lentes de contacto. }
         material: { type: string, nullable: true }
         water_content_pct: { type: number, nullable: true }
+        manufacturer: { type: string, nullable: true, description: "Fabricante. Prohibido en armazones." }
+        uv_blocking: { type: boolean, nullable: true, description: Prohibido en armazones. }
+        visibility_tint: { type: boolean, nullable: true, description: Prohibido en armazones. }
+        package_note: { type: string, maxLength: 160, nullable: true, description: "Descripción del empaque. Prohibido en armazones." }
         requires_prescription: { type: boolean }
         active: { type: boolean }
     AdminProduct:

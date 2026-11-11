@@ -5,7 +5,7 @@
  * API de la tienda en línea de lentes de contacto. Fuente de verdad del contrato con lentes-web.
  * OpenAPI spec version: 0.1.0
  */
-import type { FrameDetails } from './frameDetails';
+import type { FrameInput } from './frameInput';
 import type { LensType } from './lensType';
 import type { ProductCategory } from './productCategory';
 import type { Replacement } from './replacement';
@@ -28,11 +28,32 @@ export interface ProductInput {
      */
   pieces_per_box?: number | null;
   /** Requerido en armazones; prohibido en lentes de contacto. */
-  frame?: FrameDetails | null;
+  frame?: FrameInput | null;
   /** @nullable */
   material?: string | null;
   /** @nullable */
   water_content_pct?: number | null;
+  /**
+     * Fabricante. Prohibido en armazones.
+     * @nullable
+     */
+  manufacturer?: string | null;
+  /**
+     * Prohibido en armazones.
+     * @nullable
+     */
+  uv_blocking?: boolean | null;
+  /**
+     * Prohibido en armazones.
+     * @nullable
+     */
+  visibility_tint?: boolean | null;
+  /**
+     * Descripción del empaque. Prohibido en armazones.
+     * @maxLength 160
+     * @nullable
+     */
+  package_note?: string | null;
   requires_prescription: boolean;
   active: boolean;
 }

@@ -36,6 +36,27 @@ export interface Product {
   material?: string | null;
   /** @nullable */
   water_content_pct?: number | null;
+  /**
+     * Fabricante. `null` en armazones
+     * @nullable
+     */
+  manufacturer: string | null;
+  /**
+     * `null` en armazones
+     * @nullable
+     */
+  uv_blocking: boolean | null;
+  /**
+     * `null` en armazones
+     * @nullable
+     */
+  visibility_tint: boolean | null;
+  /**
+     * Descripción del empaque. `null` en armazones
+     * @maxLength 160
+     * @nullable
+     */
+  package_note: string | null;
   requires_prescription: boolean;
   /**
      * Precio mínimo (centavos MXN) entre las variantes activas con existencia disponible (stock - reserved > 0).
