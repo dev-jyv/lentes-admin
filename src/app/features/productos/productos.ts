@@ -1,48 +1,22 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
-import { disabled, form, FormField, required } from '@angular/forms/signals';
+import { form, FormField } from '@angular/forms/signals';
 import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { DefaultService } from '../../api/generated/default/default.service';
-import { FrameGender, FrameMaterial, FrameRim, FrameShape, LensType, ProductCategory, Replacement } from '../../api/generated/model';
-import type { AdminProduct, Brand, ProductInput } from '../../api/generated/model';
-import { CATEGORY_LABEL, GENDER_LABEL, MATERIAL_LABEL, RIM_LABEL, SHAPE_LABEL, toOptions } from '../../core/frame-labels';
+import { FrameInclude, LensType, ProductCategory, Replacement } from '../../api/generated/model';
+import type { AdminProduct, Brand } from '../../api/generated/model';
+import {
+  CATEGORY_LABEL, GENDER_LABEL, INCLUDE_LABEL, MATERIAL_LABEL, RIM_LABEL, SHAPE_LABEL, SIZE_LABEL, toOptions,
+} from '../../core/frame-labels';
 import { problemMessage } from '../../core/problem';
+import {
+  emptyProductForm, productBody, productFormFrom, productFormSchema, progressiveEligible,
+} from '../../core/product-form';
 import { slugify } from '../../core/slug';
 import { t, TPipe } from '../../core/i18n';
 
 const LENS_LABEL: Record<string, string> = t('labels.lensType', { returnObjects: true });
 const REPL_LABEL: Record<string, string> = t('labels.replacement', { returnObjects: true });
-
-interface ProductForm {
-  category: ProductCategory;
-  shape: FrameShape;
-  frame_material: FrameMaterial;
-  rim: FrameRim;
-  gender: FrameGender;
-  lens_width_mm: number | null;
-  bridge_mm: number | null;
-  temple_mm: number | null;
-  brand_id: string;
-  name: string;
-  slug: string;
-  description: string;
-  lens_type: string;
-  replacement: string;
-  pieces_per_box: number;
-  material: string;
-  water_content_pct: number | null;
-  requires_prescription: boolean;
-  active: boolean;
-}
-
-const empty = (): ProductForm => ({
-  category: ProductCategory.contact_lens,
-  shape: FrameShape.rectangular, frame_material: FrameMaterial.acetate, rim: FrameRim.full, gender: FrameGender.unisex,
-  lens_width_mm: null, bridge_mm: null, temple_mm: null,
-  brand_id: '', name: '', slug: '', description: '', lens_type: LensType.spherical,
-  replacement: Replacement.monthly, pieces_per_box: 6, material: '', water_content_pct: null,
-  requires_prescription: true, active: true,
-});
 
 @Component({
   selector: 'app-productos',
@@ -116,6 +90,56 @@ const empty = (): ProductForm => ({
               <label for="temple" class="field-label">{{ 'productos.temple' | t }}</label>
               <input id="temple" type="number" class="field w-full" [formField]="model.temple_mm" />
             </div>
+            <div>
+              <label for="lheight" class="field-label">{{ 'productos.lensHeight' | t }}</label>
+              <input id="lheight" type="number" class="field w-full" [formField]="model.lens_height_mm" aria-describedby="progressive" />
+              <p id="progressive" class="mt-1 text-xs text-muted-foreground" aria-live="polite">
+                {{ 'productos.progressive' | t }}: {{ progressiveText() }}
+              </p>
+            </div>
+            <div>
+              <label for="fwidth" class="field-label">{{ 'productos.frameWidth' | t }}</label>
+              <input id="fwidth" type="number" class="field w-full" [formField]="model.frame_width_mm" />
+            </div>
+            <div>
+              <label for="weight" class="field-label">{{ 'productos.weight' | t }}</label>
+              <input id="weight" type="number" class="field w-full" [formField]="model.weight_g" />
+            </div>
+            <div>
+              <label for="fsize" class="field-label">{{ 'productos.size' | t }}</label>
+              <select id="fsize" class="field w-full" [formField]="model.size">
+                <option value="">{{ 'productos.unknown' | t }}</option>
+                @for (o of sizes; track o.value) { <option [value]="o.value">{{ o.label }}</option> }
+              </select>
+            </div>
+            <div>
+              <label for="hinges" class="field-label">{{ 'productos.springHinges' | t }}</label>
+              <select id="hinges" class="field w-full" [formField]="model.spring_hinges">
+                @for (o of tri; track o.value) { <option [value]="o.value">{{ o.label }}</option> }
+              </select>
+            </div>
+            <div>
+              <label for="pads" class="field-label">{{ 'productos.nosePads' | t }}</label>
+              <select id="pads" class="field w-full" [formField]="model.adjustable_nose_pads">
+                @for (o of tri; track o.value) { <option [value]="o.value">{{ o.label }}</option> }
+              </select>
+            </div>
+            <fieldset class="sm:col-span-2">
+              <legend class="field-label">{{ 'productos.includes' | t }}</legend>
+              <div class="grid gap-2 sm:grid-cols-2">
+                @for (o of includes; track o.value) {
+                  <label class="flex items-center gap-2 text-sm"><input type="checkbox" [formField]="model.includes[o.value]" /> {{ o.label }}</label>
+                }
+              </div>
+            </fieldset>
+            <div>
+              <label for="warranty" class="field-label">{{ 'productos.warrantyMonths' | t }}</label>
+              <input id="warranty" type="number" class="field w-full" [formField]="model.warranty_months"
+                [attr.aria-describedby]="state().includes.warranty ? null : 'warranty-hint'" />
+              @if (!state().includes.warranty) {
+                <p id="warranty-hint" class="mt-1 text-xs text-muted-foreground">{{ 'productos.warrantyHint' | t }}</p>
+              }
+            </div>
           } @else {
           <div>
             <label for="lens" class="field-label">{{ 'productos.lensType' | t }}</label>
@@ -140,6 +164,26 @@ const empty = (): ProductForm => ({
           <div>
             <label for="water" class="field-label">{{ 'productos.water' | t }}</label>
             <input id="water" type="number" step="0.1" class="field w-full" [formField]="model.water_content_pct" />
+          </div>
+          <div>
+            <label for="manufacturer" class="field-label">{{ 'productos.manufacturer' | t }}</label>
+            <input id="manufacturer" class="field w-full" [formField]="model.manufacturer" />
+          </div>
+          <div>
+            <label for="uv" class="field-label">{{ 'productos.uvBlocking' | t }}</label>
+            <select id="uv" class="field w-full" [formField]="model.uv_blocking">
+              @for (o of tri; track o.value) { <option [value]="o.value">{{ o.label }}</option> }
+            </select>
+          </div>
+          <div>
+            <label for="tint" class="field-label">{{ 'productos.visibilityTint' | t }}</label>
+            <select id="tint" class="field w-full" [formField]="model.visibility_tint">
+              @for (o of tri; track o.value) { <option [value]="o.value">{{ o.label }}</option> }
+            </select>
+          </div>
+          <div class="sm:col-span-2">
+            <label for="pnote" class="field-label">{{ 'productos.packageNote' | t }}</label>
+            <input id="pnote" class="field w-full" [formField]="model.package_note" />
           </div>
           }
           <div class="sm:col-span-2">
@@ -224,20 +268,26 @@ export default class Productos implements OnInit {
   protected readonly frameMaterials = toOptions(MATERIAL_LABEL);
   protected readonly rims = toOptions(RIM_LABEL);
   protected readonly genders = toOptions(GENDER_LABEL);
+  protected readonly sizes = toOptions(SIZE_LABEL);
+  protected readonly includes = Object.values(FrameInclude).map((v) => ({ value: v, label: INCLUDE_LABEL[v] }));
+  protected readonly tri = [
+    { value: '', label: t('productos.unknown') },
+    { value: 'yes', label: t('productos.yes') },
+    { value: 'no', label: t('productos.no') },
+  ];
   protected readonly categoryLabel = CATEGORY_LABEL;
   protected readonly shapeLabel = SHAPE_LABEL;
   protected lensLabel = (v: string | null) => (v ? (LENS_LABEL[v] ?? v) : '—');
   protected replLabel = (v: string | null) => (v ? (REPL_LABEL[v] ?? v) : '—');
   private readonly category = signal<ProductCategory | null>(null);
 
-  private readonly state = signal<ProductForm>(empty());
-  protected readonly model = form(this.state, (f) => {
-    required(f.brand_id);
-    required(f.name);
-    required(f.slug);
-    disabled(f.category, () => this.editingId() !== null);
-  });
+  protected readonly state = signal(emptyProductForm());
+  protected readonly model = form(this.state, productFormSchema(() => this.editingId() !== null));
   protected readonly isFrame = computed(() => this.state().category === ProductCategory.frame);
+  protected readonly progressiveText = computed(() => {
+    const ok = progressiveEligible(this.state().lens_height_mm);
+    return ok == null ? '—' : t(ok ? 'productos.yes' : 'productos.no');
+  });
   private slugTouched = false;
 
   async ngOnInit() {
@@ -274,7 +324,7 @@ export default class Productos implements OnInit {
   protected startCreate() {
     this.slugTouched = false;
     this.editingId.set(null);
-    this.state.set(empty());
+    this.state.set(emptyProductForm());
     this.error.set(null);
     this.editing.set(true);
   }
@@ -282,21 +332,7 @@ export default class Productos implements OnInit {
   protected startEdit(p: AdminProduct) {
     this.slugTouched = true;
     this.editingId.set(p.id);
-    this.state.set({
-      ...empty(),
-      category: p.category,
-      ...(p.frame
-        ? {
-            shape: p.frame.shape, frame_material: p.frame.material, rim: p.frame.rim, gender: p.frame.gender,
-            lens_width_mm: p.frame.lens_width_mm, bridge_mm: p.frame.bridge_mm, temple_mm: p.frame.temple_mm,
-          }
-        : {}),
-      brand_id: p.brand.id, name: p.name, slug: p.slug, description: p.description ?? '',
-      lens_type: p.lens_type ?? LensType.spherical, replacement: p.replacement ?? Replacement.monthly,
-      pieces_per_box: p.pieces_per_box ?? 6,
-      material: p.material ?? '', water_content_pct: p.water_content_pct ?? null,
-      requires_prescription: p.requires_prescription, active: p.active,
-    });
+    this.state.set(productFormFrom(p));
     this.error.set(null);
     this.editing.set(true);
   }
@@ -308,34 +344,8 @@ export default class Productos implements OnInit {
   protected async save(event: Event) {
     event.preventDefault();
     if (this.model().invalid()) return this.error.set(t('common.checkRequired'));
-    const s = this.state();
-    const common = {
-      category: s.category, brand_id: s.brand_id, name: s.name.trim(), slug: s.slug.trim(),
-      description: s.description.trim() || null, active: s.active,
-    };
-    let body: ProductInput;
-    if (s.category === ProductCategory.frame) {
-      if (s.lens_width_mm == null || s.bridge_mm == null || s.temple_mm == null) {
-        return this.error.set(t('productos.measuresRequired'));
-      }
-      body = {
-        ...common, requires_prescription: false,
-        frame: {
-          shape: s.shape, material: s.frame_material, rim: s.rim, gender: s.gender,
-          lens_width_mm: s.lens_width_mm, bridge_mm: s.bridge_mm, temple_mm: s.temple_mm,
-        },
-      };
-    } else {
-      if (s.pieces_per_box < 1) return this.error.set(t('productos.piecesMin'));
-      body = {
-        ...common,
-        lens_type: s.lens_type as ProductInput['lens_type'],
-        replacement: s.replacement as ProductInput['replacement'],
-        pieces_per_box: s.pieces_per_box, material: s.material.trim() || null,
-        water_content_pct: s.water_content_pct,
-        requires_prescription: s.requires_prescription,
-      };
-    }
+    const body = productBody(this.state());
+    if (typeof body === 'string') return this.error.set(body);
     this.busy.set(true);
     this.error.set(null);
     try {

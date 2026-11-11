@@ -1,4 +1,4 @@
-import { FrameColor, FrameGender, FrameMaterial, FrameRim, FrameShape, ProductCategory } from '../api/generated/model';
+import { FrameColor, FrameGender, FrameInclude, FrameMaterial, FrameRim, FrameShape, FrameSize, ProductCategory } from '../api/generated/model';
 import { t } from './i18n';
 
 export const CATEGORY_LABEL: Record<ProductCategory, string> = t('labels.category', { returnObjects: true });
@@ -12,6 +12,10 @@ export const RIM_LABEL: Record<FrameRim, string> = t('labels.rim', { returnObjec
 export const GENDER_LABEL: Record<FrameGender, string> = t('labels.gender', { returnObjects: true });
 
 export const COLOR_LABEL: Record<FrameColor, string> = t('labels.color', { returnObjects: true });
+
+export const SIZE_LABEL: Record<FrameSize, string> = t('labels.frameSize', { returnObjects: true });
+
+export const INCLUDE_LABEL: Record<FrameInclude, string> = t('labels.frameInclude', { returnObjects: true });
 
 /** Convierte un mapa de etiquetas en opciones de un select, en el orden declarado. */
 export const toOptions = <T extends string>(labels: Record<T, string>) =>
