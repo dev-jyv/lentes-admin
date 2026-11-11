@@ -6,9 +6,11 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { FrameGender } from './frameGender';
+import type { FrameInclude } from './frameInclude';
 import type { FrameMaterial } from './frameMaterial';
 import type { FrameRim } from './frameRim';
 import type { FrameShape } from './frameShape';
+import type { FrameSize } from './frameSize';
 
 export interface FrameDetails {
   shape: FrameShape;
@@ -30,4 +32,43 @@ export interface FrameDetails {
      * @maximum 170
      */
   temple_mm: number;
+  /**
+     * Alto de mica.
+     * @minimum 20
+     * @maximum 60
+     * @nullable
+     */
+  lens_height_mm: number | null;
+  /**
+     * Ancho total del armazón.
+     * @minimum 100
+     * @maximum 160
+     * @nullable
+     */
+  frame_width_mm: number | null;
+  /**
+     * @minimum 5
+     * @maximum 80
+     * @nullable
+     */
+  weight_g: number | null;
+  size: FrameSize | null;
+  /** @nullable */
+  spring_hinges: boolean | null;
+  /** @nullable */
+  adjustable_nose_pads: boolean | null;
+  /**
+     * Solo lectura (no existe en FrameInput); calculado, no se guarda. `true` si `lens_height_mm` >= 28; `null` sin alto de mica.
+     * @nullable
+     */
+  progressive_eligible: boolean | null;
+  /** Qué incluye el armazón; puede ser vacío. */
+  includes: FrameInclude[];
+  /**
+     * Solo con `warranty` en `includes`.
+     * @minimum 1
+     * @maximum 60
+     * @nullable
+     */
+  warranty_months: number | null;
 }
