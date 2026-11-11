@@ -54,6 +54,20 @@
       "silver": "Plateado",
       "multicolor": "Multicolor"
     },
+    "frameSize": {
+      "small": "Chica",
+      "medium": "Mediana",
+      "large": "Grande"
+    },
+    "frameInclude": {
+      "case": "Estuche",
+      "cleaning_cloth": "Paño de limpieza",
+      "scratch_resistant": "Capa antirrayas",
+      "warranty": "Garantía",
+      "blue_light_filter": "Filtro de luz azul",
+      "anti_reflective": "Antirreflejante",
+      "optician_fitting": "Ajuste en óptica"
+    },
     "stockReason": {
       "receipt": "Recepción de mercancía",
       "count_correction": "Corrección por conteo",
@@ -427,7 +441,24 @@
     "piecesMin": "Las piezas por caja deben ser al menos 1.",
     "saveFailed": "No se pudo guardar el producto (¿slug repetido?).",
     "requiresPrescription": "Requiere receta",
-    "activeVisible": "Activo (visible en la tienda)"
+    "activeVisible": "Activo (visible en la tienda)",
+    "manufacturer": "Fabricante",
+    "uvBlocking": "Bloqueo UV",
+    "visibilityTint": "Tinte de visibilidad",
+    "packageNote": "Nota de empaque (máx. 160)",
+    "lensHeight": "Alto de mica (mm, 20–60)",
+    "progressive": "Apto para progresivos",
+    "frameWidth": "Ancho total (mm, 100–160)",
+    "weight": "Peso (g, 5–80)",
+    "size": "Talla",
+    "springHinges": "Bisagras de resorte",
+    "nosePads": "Plaquetas ajustables",
+    "includes": "Qué incluye",
+    "warrantyMonths": "Meses de garantía (1–60)",
+    "warrantyHint": "Marca «Garantía» para capturar los meses.",
+    "unknown": "Sin dato",
+    "yes": "Sí",
+    "no": "No"
   },
   "variantes": {
     "edit": "Editar variante",
