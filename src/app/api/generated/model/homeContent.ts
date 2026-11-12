@@ -7,17 +7,28 @@
  */
 import type { HomeBanner } from './homeBanner';
 import type { HomeContentFeatured } from './homeContentFeatured';
+import type { HomeContentMenuCards } from './homeContentMenuCards';
+import type { HomeContentMosaic } from './homeContentMosaic';
 
 export interface HomeContent {
   promo_bar: HomeBanner | null;
   /** Primer banner de `heroes`; se conserva para clientes que aún no usan el carrusel. */
   hero: HomeBanner | null;
   /**
-     * Banners principales vigentes, en orden, para el carrusel del home.
+     * Banners principales vigentes, en orden, para el carrusel del home. Incluye los de marca sin imagen (con `art`).
      * @maxItems 5
      */
   heroes: HomeBanner[];
   /** @maxItems 3 */
   secondary: HomeBanner[];
+  /** Tarjetas vigentes de cada megamenú, en orden. */
+  menu_cards: HomeContentMenuCards;
+  /** Banner vigente de cada celda del mosaico, por `slot`. Una celda sin banner no aparece. */
+  mosaic: HomeContentMosaic;
+  /**
+     * Promesas vigentes, en orden.
+     * @maxItems 3
+     */
+  promises: HomeBanner[];
   featured: HomeContentFeatured;
 }

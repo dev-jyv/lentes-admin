@@ -49,6 +49,7 @@ import type {
   AdminOrder,
   AdminPrescription,
   AdminProduct,
+  AdminReorderCatalog200,
   AdminReorderHomeBanners200,
   AdminReorderHomeBannersBody,
   AdminReorderLensPackages200,
@@ -66,10 +67,18 @@ import type {
   CartItemInput,
   CartItemUpdate,
   CatalogFacets,
+  CatalogKind,
+  CatalogOrderInput,
+  CatalogValue,
+  CatalogValueInput,
+  CatalogValuePatch,
+  Catalogs,
   CheckoutInput,
   CheckoutResult,
   Customer,
   CustomerUpdate,
+  Favorite,
+  FavoriteMergeInput,
   GetCatalogFacetsParams,
   GetHealth200,
   GetProductVariantParams,
@@ -83,6 +92,7 @@ import type {
   ListAddresses200,
   ListBrands200,
   ListBrandsParams,
+  ListFavorites200,
   ListMyOrders200,
   ListMyOrdersParams,
   ListPrescriptions200,
@@ -91,6 +101,7 @@ import type {
   LoginInput,
   MercadoPagoWebhookBody,
   MercadoPagoWebhookParams,
+  MergeFavorites200,
   Order,
   OrderUpdate,
   Prescription,
@@ -101,6 +112,7 @@ import type {
   ProductDetail,
   ProductImageAdmin,
   ProductInput,
+  PublicCatalogs,
   ReorderResult,
   RepurchaseReport,
   SalesReport,
@@ -479,6 +491,40 @@ export class DefaultService {
     ...(options as Omit<NonNullable<typeof options>, 'observe'>),
         observe: 'body',
         params: filteredParams,}
+    );
+  }
+/**
+ * Etiquetas, orden y muestras de color de los atributos de producto. Los valores ocultos no aparecen.
+ * @summary Catálogos de atributos con sus valores activos
+ */
+ getCatalogs<TData = PublicCatalogs>( options?: HttpClientBodyOptions): Observable<TData>;
+ getCatalogs<TData = PublicCatalogs>( options?: HttpClientEventOptions): Observable<HttpEvent<TData>>;
+ getCatalogs<TData = PublicCatalogs>( options?: HttpClientResponseOptions): Observable<AngularHttpResponse<TData>>;
+  getCatalogs<TData = PublicCatalogs>(
+     options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.get<TData>(
+      `/v1/catalogs`,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+      }
+    );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.get<TData>(
+      `/v1/catalogs`,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+      }
+    );
+    }
+
+    return this.http.get<TData>(
+      `/v1/catalogs`,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+      }
     );
   }
 /**
@@ -974,6 +1020,150 @@ export class DefaultService {
 
     return this.http.delete<TData>(
       `/v1/me/addresses/${id}`,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+      }
+    );
+  }
+/**
+ * Del más reciente al más antiguo. No incluye productos desactivados.
+ * @summary Favoritos del cliente
+ */
+ listFavorites<TData = ListFavorites200>( options?: HttpClientBodyOptions): Observable<TData>;
+ listFavorites<TData = ListFavorites200>( options?: HttpClientEventOptions): Observable<HttpEvent<TData>>;
+ listFavorites<TData = ListFavorites200>( options?: HttpClientResponseOptions): Observable<AngularHttpResponse<TData>>;
+  listFavorites<TData = ListFavorites200>(
+     options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.get<TData>(
+      `/v1/me/favorites`,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+      }
+    );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.get<TData>(
+      `/v1/me/favorites`,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+      }
+    );
+    }
+
+    return this.http.get<TData>(
+      `/v1/me/favorites`,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+      }
+    );
+  }
+/**
+ * Agrega hasta 50 productos y devuelve la lista completa. Ignora duplicados y productos inexistentes o
+ * desactivados; un favorito que ya existía conserva su `added_at` (el más antiguo).
+ * `409` si se rebasa el límite de 200 favoritos: entonces no se agrega ninguno.
+ * @summary Fusiona los favoritos guardados sin sesión
+ */
+ mergeFavorites<TData = MergeFavorites200>(favoriteMergeInput: FavoriteMergeInput, options?: HttpClientBodyOptions): Observable<TData>;
+ mergeFavorites<TData = MergeFavorites200>(favoriteMergeInput: FavoriteMergeInput, options?: HttpClientEventOptions): Observable<HttpEvent<TData>>;
+ mergeFavorites<TData = MergeFavorites200>(favoriteMergeInput: FavoriteMergeInput, options?: HttpClientResponseOptions): Observable<AngularHttpResponse<TData>>;
+  mergeFavorites<TData = MergeFavorites200>(
+    favoriteMergeInput: FavoriteMergeInput, options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.post<TData>(
+      `/v1/me/favorites/merge`,
+      favoriteMergeInput,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+      }
+    );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.post<TData>(
+      `/v1/me/favorites/merge`,
+      favoriteMergeInput,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+      }
+    );
+    }
+
+    return this.http.post<TData>(
+      `/v1/me/favorites/merge`,
+      favoriteMergeInput,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+      }
+    );
+  }
+/**
+ * Idempotente: si ya era favorito devuelve el mismo `added_at`. `404` si el producto no existe o está desactivado.
+ * `409` si el cliente ya tiene 200 favoritos (el `detail` en español se muestra al cliente).
+ * @summary Marca un producto como favorito
+ */
+ addFavorite<TData = Favorite>(productId: string, options?: HttpClientBodyOptions): Observable<TData>;
+ addFavorite<TData = Favorite>(productId: string, options?: HttpClientEventOptions): Observable<HttpEvent<TData>>;
+ addFavorite<TData = Favorite>(productId: string, options?: HttpClientResponseOptions): Observable<AngularHttpResponse<TData>>;
+  addFavorite<TData = Favorite>(
+    productId: string, options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.put<TData>(
+      `/v1/me/favorites/${productId}`,
+      undefined,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+      }
+    );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.put<TData>(
+      `/v1/me/favorites/${productId}`,
+      undefined,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+      }
+    );
+    }
+
+    return this.http.put<TData>(
+      `/v1/me/favorites/${productId}`,
+      undefined,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+      }
+    );
+  }
+/**
+ * @summary Quita un favorito
+ */
+ removeFavorite<TData = void>(productId: string, options?: HttpClientBodyOptions): Observable<TData>;
+ removeFavorite<TData = void>(productId: string, options?: HttpClientEventOptions): Observable<HttpEvent<TData>>;
+ removeFavorite<TData = void>(productId: string, options?: HttpClientResponseOptions): Observable<AngularHttpResponse<TData>>;
+  removeFavorite<TData = void>(
+    productId: string, options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.delete<TData>(
+      `/v1/me/favorites/${productId}`,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+      }
+    );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.delete<TData>(
+      `/v1/me/favorites/${productId}`,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+      }
+    );
+    }
+
+    return this.http.delete<TData>(
+      `/v1/me/favorites/${productId}`,{
         ...(options as Omit<NonNullable<typeof options>, 'observe'>),
         observe: 'body',
       }
@@ -2283,6 +2473,202 @@ export class DefaultService {
     );
   }
 /**
+ * @summary Todos los catálogos, con valores ocultos y cuántos productos usan cada valor
+ */
+ adminListCatalogs<TData = Catalogs>( options?: HttpClientBodyOptions): Observable<TData>;
+ adminListCatalogs<TData = Catalogs>( options?: HttpClientEventOptions): Observable<HttpEvent<TData>>;
+ adminListCatalogs<TData = Catalogs>( options?: HttpClientResponseOptions): Observable<AngularHttpResponse<TData>>;
+  adminListCatalogs<TData = Catalogs>(
+     options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.get<TData>(
+      `/v1/admin/catalogs`,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+      }
+    );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.get<TData>(
+      `/v1/admin/catalogs`,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+      }
+    );
+    }
+
+    return this.http.get<TData>(
+      `/v1/admin/catalogs`,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+      }
+    );
+  }
+/**
+ * `400` en `lens_type` y `replacement`, con código inválido o repetido, o con `swatch` faltante o inválido. `404` si el catálogo no existe.
+ * @summary Agrega un valor al final de un catálogo descriptivo
+ */
+ adminCreateCatalogValue<TData = CatalogValue>(catalog: CatalogKind,
+    catalogValueInput: CatalogValueInput, options?: HttpClientBodyOptions): Observable<TData>;
+ adminCreateCatalogValue<TData = CatalogValue>(catalog: CatalogKind,
+    catalogValueInput: CatalogValueInput, options?: HttpClientEventOptions): Observable<HttpEvent<TData>>;
+ adminCreateCatalogValue<TData = CatalogValue>(catalog: CatalogKind,
+    catalogValueInput: CatalogValueInput, options?: HttpClientResponseOptions): Observable<AngularHttpResponse<TData>>;
+  adminCreateCatalogValue<TData = CatalogValue>(
+    catalog: CatalogKind,
+    catalogValueInput: CatalogValueInput, options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.post<TData>(
+      `/v1/admin/catalogs/${catalog}/values`,
+      catalogValueInput,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+      }
+    );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.post<TData>(
+      `/v1/admin/catalogs/${catalog}/values`,
+      catalogValueInput,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+      }
+    );
+    }
+
+    return this.http.post<TData>(
+      `/v1/admin/catalogs/${catalog}/values`,
+      catalogValueInput,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+      }
+    );
+  }
+/**
+ * @summary Cambia etiqueta, visibilidad o muestra de color de un valor, incluidos los de sistema
+ */
+ adminUpdateCatalogValue<TData = CatalogValue>(catalog: CatalogKind,
+    code: string,
+    catalogValuePatch: CatalogValuePatch, options?: HttpClientBodyOptions): Observable<TData>;
+ adminUpdateCatalogValue<TData = CatalogValue>(catalog: CatalogKind,
+    code: string,
+    catalogValuePatch: CatalogValuePatch, options?: HttpClientEventOptions): Observable<HttpEvent<TData>>;
+ adminUpdateCatalogValue<TData = CatalogValue>(catalog: CatalogKind,
+    code: string,
+    catalogValuePatch: CatalogValuePatch, options?: HttpClientResponseOptions): Observable<AngularHttpResponse<TData>>;
+  adminUpdateCatalogValue<TData = CatalogValue>(
+    catalog: CatalogKind,
+    code: string,
+    catalogValuePatch: CatalogValuePatch, options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.patch<TData>(
+      `/v1/admin/catalogs/${catalog}/values/${code}`,
+      catalogValuePatch,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+      }
+    );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.patch<TData>(
+      `/v1/admin/catalogs/${catalog}/values/${code}`,
+      catalogValuePatch,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+      }
+    );
+    }
+
+    return this.http.patch<TData>(
+      `/v1/admin/catalogs/${catalog}/values/${code}`,
+      catalogValuePatch,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+      }
+    );
+  }
+/**
+ * `409` si es de sistema o si lo usa algún producto (el `detail` dice cuántos): en ese caso se oculta.
+ * @summary Borra un valor que no es de sistema y que ningún producto usa
+ */
+ adminDeleteCatalogValue<TData = void>(catalog: CatalogKind,
+    code: string, options?: HttpClientBodyOptions): Observable<TData>;
+ adminDeleteCatalogValue<TData = void>(catalog: CatalogKind,
+    code: string, options?: HttpClientEventOptions): Observable<HttpEvent<TData>>;
+ adminDeleteCatalogValue<TData = void>(catalog: CatalogKind,
+    code: string, options?: HttpClientResponseOptions): Observable<AngularHttpResponse<TData>>;
+  adminDeleteCatalogValue<TData = void>(
+    catalog: CatalogKind,
+    code: string, options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.delete<TData>(
+      `/v1/admin/catalogs/${catalog}/values/${code}`,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+      }
+    );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.delete<TData>(
+      `/v1/admin/catalogs/${catalog}/values/${code}`,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+      }
+    );
+    }
+
+    return this.http.delete<TData>(
+      `/v1/admin/catalogs/${catalog}/values/${code}`,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+      }
+    );
+  }
+/**
+ * @summary Fija el orden completo de un catálogo
+ */
+ adminReorderCatalog<TData = AdminReorderCatalog200>(catalog: CatalogKind,
+    catalogOrderInput: CatalogOrderInput, options?: HttpClientBodyOptions): Observable<TData>;
+ adminReorderCatalog<TData = AdminReorderCatalog200>(catalog: CatalogKind,
+    catalogOrderInput: CatalogOrderInput, options?: HttpClientEventOptions): Observable<HttpEvent<TData>>;
+ adminReorderCatalog<TData = AdminReorderCatalog200>(catalog: CatalogKind,
+    catalogOrderInput: CatalogOrderInput, options?: HttpClientResponseOptions): Observable<AngularHttpResponse<TData>>;
+  adminReorderCatalog<TData = AdminReorderCatalog200>(
+    catalog: CatalogKind,
+    catalogOrderInput: CatalogOrderInput, options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.put<TData>(
+      `/v1/admin/catalogs/${catalog}/order`,
+      catalogOrderInput,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+      }
+    );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.put<TData>(
+      `/v1/admin/catalogs/${catalog}/order`,
+      catalogOrderInput,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+      }
+    );
+    }
+
+    return this.http.put<TData>(
+      `/v1/admin/catalogs/${catalog}/order`,
+      catalogOrderInput,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+      }
+    );
+  }
+/**
  * @summary Crea una marca
  */
  adminCreateBrand<TData = Brand>(brandInput: BrandInput, options?: HttpClientBodyOptions): Observable<TData>;
@@ -2589,6 +2975,7 @@ export type LogoutClientResult = NonNullable<void>
 export type ListProductsClientResult = NonNullable<ListProducts200>
 export type ListBrandsClientResult = NonNullable<ListBrands200>
 export type GetCatalogFacetsClientResult = NonNullable<CatalogFacets>
+export type GetCatalogsClientResult = NonNullable<PublicCatalogs>
 export type GetHomeClientResult = NonNullable<HomeContent>
 export type GetProductClientResult = NonNullable<ProductDetail>
 export type GetProductVariantClientResult = NonNullable<Variant>
@@ -2603,6 +2990,10 @@ export type ListAddressesClientResult = NonNullable<ListAddresses200>
 export type CreateAddressClientResult = NonNullable<Address>
 export type UpdateAddressClientResult = NonNullable<Address>
 export type DeleteAddressClientResult = NonNullable<void>
+export type ListFavoritesClientResult = NonNullable<ListFavorites200>
+export type MergeFavoritesClientResult = NonNullable<MergeFavorites200>
+export type AddFavoriteClientResult = NonNullable<Favorite>
+export type RemoveFavoriteClientResult = NonNullable<void>
 export type CreateCheckoutClientResult = NonNullable<CheckoutResult>
 export type ListMyOrdersClientResult = NonNullable<ListMyOrders200>
 export type GetOrderClientResult = NonNullable<Order>
@@ -2638,6 +3029,11 @@ export type AdminListLensPackagesClientResult = NonNullable<AdminListLensPackage
 export type AdminCreateLensPackageClientResult = NonNullable<AdminLensPackage>
 export type AdminReorderLensPackagesClientResult = NonNullable<AdminReorderLensPackages200>
 export type AdminUpdateLensPackageClientResult = NonNullable<AdminLensPackage>
+export type AdminListCatalogsClientResult = NonNullable<Catalogs>
+export type AdminCreateCatalogValueClientResult = NonNullable<CatalogValue>
+export type AdminUpdateCatalogValueClientResult = NonNullable<CatalogValue>
+export type AdminDeleteCatalogValueClientResult = NonNullable<void>
+export type AdminReorderCatalogClientResult = NonNullable<AdminReorderCatalog200>
 export type AdminCreateBrandClientResult = NonNullable<Brand>
 export type AdminListProductsClientResult = NonNullable<AdminListProducts200>
 export type AdminCreateProductClientResult = NonNullable<AdminProduct>

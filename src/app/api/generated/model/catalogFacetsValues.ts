@@ -8,6 +8,6 @@
 import type { CatalogFacetsValuesItem } from './catalogFacetsValuesItem';
 
 /**
- * Llaves según la categoría. frame usa shape, material, rim, gender y color. contact_lens usa lens_type y replacement.
+ * Llaves según la categoría. frame usa shape, material, rim, gender y color. contact_lens usa lens_type y replacement. Solo trae valores activos del catálogo con al menos un producto activo, en el orden del catálogo (`position`).
  */
 export type CatalogFacetsValues = {[key: string]: CatalogFacetsValuesItem[]};

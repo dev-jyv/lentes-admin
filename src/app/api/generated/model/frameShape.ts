@@ -6,16 +6,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type FrameShape = typeof FrameShape[keyof typeof FrameShape];
-
-
-export const FrameShape = {
-  rectangular: 'rectangular',
-  square: 'square',
-  round: 'round',
-  oval: 'oval',
-  cat_eye: 'cat_eye',
-  aviator: 'aviator',
-  browline: 'browline',
-  geometric: 'geometric',
-} as const;
+/**
+ * Código de un valor del catálogo `frame_shape` (ver `GET /v1/catalogs`). Los valores los administra el admin.
+ * @pattern ^[a-z][a-z0-9_]{1,39}$
+ */
+export type FrameShape = string;

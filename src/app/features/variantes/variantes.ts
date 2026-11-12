@@ -4,7 +4,7 @@ import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { DefaultService } from '../../api/generated/default/default.service';
 import type { AdminVariant, VariantInput } from '../../api/generated/model';
-import { COLOR_LABEL, toOptions } from '../../core/frame-labels';
+import { CatalogStore } from '../../core/catalogs';
 import { centsToPesos, formatMxn, pesosToCents } from '../../core/money';
 import { importErrors, problemMessage } from '../../core/problem';
 import { StockAdjust } from '../inventario/stock-adjust';
@@ -60,7 +60,7 @@ const fmt = (n: number | null | undefined) => (n == null ? '—' : String(n));
               <label for="fcolor" class="field-label">{{ 'variantes.color' | t }}</label>
               <select id="fcolor" class="field w-full" [formField]="model.color">
                 <option value="">{{ 'common.choose' | t }}</option>
-                @for (o of frameColors; track o.value) { <option [value]="o.value">{{ o.label }}</option> }
+                @for (o of frameColors(); track o.value) { <option [value]="o.value">{{ o.label }}</option> }
               </select>
             </div>
           } @else {
@@ -176,7 +176,12 @@ const fmt = (n: number | null | undefined) => (n == null ? '—' : String(n));
             <tr>
               <td class="optic font-medium">{{ v.sku }}</td>
               @if (isFrame()) {
-                <td>{{ colorLabel(v.color) }}</td>
+                <td>
+                  <span class="inline-flex items-center gap-2">
+                    @if (swatchOf(v.color); as sw) { <span class="size-3.5 shrink-0 rounded-full border border-border" [style.background]="sw" aria-hidden="true"></span> }
+                    {{ colorLabel(v.color) }}
+                  </span>
+                </td>
               } @else {
                 <td class="optic text-right">{{ f(v.sphere) }}</td><td class="optic text-right">{{ f(v.cylinder) }}</td><td class="optic text-right">{{ f(v.axis) }}</td>
                 <td class="optic text-right">{{ v.addition ?? '—' }}</td><td class="optic text-center">{{ v.dominance ?? '—' }}</td><td class="optic text-right">{{ f(v.base_curve) }}</td><td class="optic text-right">{{ f(v.diameter) }}</td>
@@ -206,8 +211,12 @@ export default class Variantes implements OnInit {
   /** ?categoria= del enlace en Productos (withComponentInputBinding). Sin ella se asume lente de contacto; la API valida de todos modos. */
   readonly categoria = input<string>();
   protected readonly isFrame = computed(() => this.categoria() === 'frame');
-  protected readonly frameColors = toOptions(COLOR_LABEL);
-  protected colorLabel = (c: string | null | undefined) => (c ? (COLOR_LABEL[c as keyof typeof COLOR_LABEL] ?? c) : '—');
+  private readonly catalogs = inject(CatalogStore);
+  /** Color de la variante en edición: si está oculto en el catálogo se ofrece igual, marcado "(oculto)". */
+  private readonly originalColor = signal<string | null>(null);
+  protected readonly frameColors = computed(() => this.catalogs.options('frame_color', this.originalColor()));
+  protected colorLabel = (c: string | null | undefined) => this.catalogs.label('frame_color', c);
+  protected swatchOf = (c: string | null | undefined) => this.catalogs.swatch('frame_color', c);
   private readonly api = inject(DefaultService);
   protected readonly variants = signal<AdminVariant[]>([]);
   protected readonly maxRows = MAX_ROWS;
@@ -246,8 +255,9 @@ export default class Variantes implements OnInit {
     disabled(p.stock, ({ valueOf }) => this.editingId() !== null || valueOf(p.on_demand));
   });
 
-  ngOnInit() {
-    return this.load();
+  async ngOnInit() {
+    const [catalogs] = await Promise.all([this.isFrame() ? this.catalogs.load() : Promise.resolve(null), this.load()]);
+    if (this.isFrame() && !catalogs) this.loadError.set(this.catalogs.error());
   }
 
   private async load() {
@@ -262,6 +272,7 @@ export default class Variantes implements OnInit {
 
   protected startCreate() {
     this.editingId.set(null);
+    this.originalColor.set(null);
     this.state.set(empty());
     this.error.set(null);
     this.editing.set(true);
@@ -269,6 +280,7 @@ export default class Variantes implements OnInit {
 
   protected startEdit(v: AdminVariant) {
     this.editingId.set(v.id);
+    this.originalColor.set(v.color ?? null);
     this.state.set({
       sku: v.sku, sphere: v.sphere ?? null, cylinder: v.cylinder ?? null, axis: v.axis ?? null,
       addition: v.addition ?? '', dominance: v.dominance ?? '', base_curve: v.base_curve ?? null, diameter: v.diameter ?? null, color: v.color ?? '',

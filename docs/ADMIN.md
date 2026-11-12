@@ -42,6 +42,8 @@ Sin SSR: es un SPA interno, no necesita SEO.
 | A3 | Recetas: pendientes/aprobadas/rechazadas, ver archivo (URL prefirmada de R2), aprobar o rechazar con motivo | **Hecha contra el contrato real** (`lentes-api` B6) | Existe (`GET/PATCH /v1/admin/prescriptions`) |
 | A4 | Fotos de producto: subida a R2 con URL prefirmada, orden de galería, eliminar | **Hecha contra el contrato real** (`lentes-api` B8) | Existe (`/v1/admin/uploads/image-url`, `/v1/admin/products/{id}/images*`) |
 | A5 | Inventario (ajustes con motivo e historial, stock bajo) y reportes (ventas, recompra) | **Real** (`lentes-api`: inventario B9, reportes B10) | `/v1/admin/variants/{id}/stock-adjustments`, `/v1/admin/inventory/low-stock`, `/v1/admin/reports/sales` y `/repurchase` |
+| A6 | Contenido de la tienda (SPEC 15): pantalla "Home" con barra, heroes (con imagen o ilustración de marca), secundarios, megamenú, mosaico y promesas | **Contra el contrato real, sin desplegar** (`lentes-api` rama `feature/catalog-values`) | `/v1/admin/home/banners*` con `menu`, `slot`, `icon` y `art` |
+| A7 | Catálogos de atributos (SPEC 16): pantalla "Catálogos"; formularios de producto y variante con opciones del catálogo | **Contra el contrato real, sin desplegar** (misma rama) | `/v1/admin/catalogs*` |
 
 Regla: una fase se **cierra** cuando su endpoint existe en `lentes-api/api/openapi.yaml`. Si el endpoint aún no existe, la UI se construye
 contra una propuesta de contrato (que pasa a `lentes-api` al publicarse) para no frenar al admin.
@@ -75,6 +77,16 @@ Todo el admin usa el contrato real (`openapi/openapi.yaml`, copia de `lentes-api
 13. **Reportes (A5):** ventas cuentan pedidos pagados en adelante (sin cancelados ni reembolsados), fechas en America/Mexico_City. "Recompra" = clientes que repiten
     y conversión de recordatorios (pedidos que vinieron del enlace ÷ recordatorios enviados). Si no hay base, se muestra "—" en vez de 0%.
 14. **Sin datos de recetas en analítica ni en logs del panel.** Las recetas son datos de salud; se ven solo en la pantalla de revisión (fase A3).
+15. **Banners de toda la tienda (A6, SPEC 15).** El formulario pide solo los campos de la ubicación (`core/banner-form.ts`, con pruebas) y valida lo mismo que la API antes de enviar.
+    El megamenú se lista por menú (hasta 4 tarjetas vigentes cada uno; la API reordena todas las tarjetas juntas, así que se envía el orden completo).
+    El mosaico se ve como una cuadrícula que imita el home, con la foto vigente de cada celda o el aviso "Sin foto: se muestra un bloque de color";
+    no se reordena porque cada celda tiene un solo banner vigente (un segundo vigente responde `409` y se muestra su mensaje).
+    Las promesas eligen un ícono de un conjunto cerrado con vista previa; junto a "Entrega" se avisa que solo se use con promesas que la tienda cumple (`docs/BRAND.md` de `lentes-web`).
+16. **Catálogos (A7, SPEC 16).** Etiquetas, orden y visibilidad salen de `GET /v1/admin/catalogs`, que el panel pide una vez por sesión (`core/catalogs.ts`, `CatalogStore`)
+    y la pantalla Catálogos mantiene al día; el i18n del panel ya no tiene etiquetas de atributos. Tipo de lente y reemplazo no admiten valores nuevos.
+    Se ordena con botones, como las imágenes. "Borrar" solo aparece en valores sin uso que no son de sistema; si la API responde `409`, se muestra su mensaje.
+    Un color nuevo exige muestra (`#rrggbb` o `conic-gradient` de 2 a 12 colores). En los formularios, un valor oculto no se ofrece para altas;
+    al editar un producto que ya lo tiene aparece como "(oculto)" y se conserva.
 
 ## Pendientes de decisión (necesitan tu confirmación)
 

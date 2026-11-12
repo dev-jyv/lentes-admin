@@ -207,6 +207,20 @@ paths:
               schema: { $ref: "#/components/schemas/CatalogFacets" }
         "400":
           $ref: "#/components/responses/Problem"
+  /v1/catalogs:
+    get:
+      operationId: getCatalogs
+      summary: Catálogos de atributos con sus valores activos
+      description: Etiquetas, orden y muestras de color de los atributos de producto. Los valores ocultos no aparecen.
+      responses:
+        "200":
+          description: Valores activos de cada catálogo, en su orden
+          headers:
+            Cache-Control:
+              schema: { type: string, example: "public, s-maxage=300" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PublicCatalogs" }
   /v1/home:
     get:
       operationId: getHome
@@ -486,6 +500,90 @@ paths:
       responses:
         "204":
           description: Eliminada
+        "404":
+          $ref: "#/components/responses/Problem"
+  /v1/me/favorites:
+    get:
+      operationId: listFavorites
+      summary: Favoritos del cliente
+      description: Del más reciente al más antiguo. No incluye productos desactivados.
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Favoritos
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: "#/components/schemas/Favorite" }
+  /v1/me/favorites/merge:
+    post:
+      operationId: mergeFavorites
+      summary: Fusiona los favoritos guardados sin sesión
+      description: |
+        Agrega hasta 50 productos y devuelve la lista completa. Ignora duplicados y productos inexistentes o
+        desactivados; un favorito que ya existía conserva su `added_at` (el más antiguo).
+        `409` si se rebasa el límite de 200 favoritos: entonces no se agrega ninguno.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/FavoriteMergeInput" }
+      responses:
+        "200":
+          description: Favoritos después de fusionar
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: "#/components/schemas/Favorite" }
+        "400":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+  /v1/me/favorites/{productId}:
+    parameters:
+      - name: productId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    put:
+      operationId: addFavorite
+      summary: Marca un producto como favorito
+      description: |
+        Idempotente: si ya era favorito devuelve el mismo `added_at`. `404` si el producto no existe o está desactivado.
+        `409` si el cliente ya tiene 200 favoritos (el `detail` en español se muestra al cliente).
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Favorito
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Favorite" }
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+    delete:
+      operationId: removeFavorite
+      summary: Quita un favorito
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Quitado
         "404":
           $ref: "#/components/responses/Problem"
   /v1/checkout:
@@ -1105,6 +1203,8 @@ paths:
               schema: { $ref: "#/components/schemas/AdminHomeBanner" }
         "400":
           $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
   /v1/admin/home/banners/order:
     put:
       operationId: adminReorderHomeBanners
@@ -1191,6 +1291,8 @@ paths:
         "400":
           $ref: "#/components/responses/Problem"
         "404":
+          $ref: "#/components/responses/Problem"
+        "409":
           $ref: "#/components/responses/Problem"
     delete:
       operationId: adminDeleteHomeBanner
@@ -1353,6 +1455,120 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/AdminLensPackage" }
+        "400":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+  /v1/admin/catalogs:
+    get:
+      operationId: adminListCatalogs
+      summary: Todos los catálogos, con valores ocultos y cuántos productos usan cada valor
+      security:
+        - bearerAuth: [admin]
+      responses:
+        "200":
+          description: Valores de cada catálogo en su orden
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Catalogs" }
+  /v1/admin/catalogs/{catalog}/values:
+    parameters:
+      - name: catalog
+        in: path
+        required: true
+        schema: { $ref: "#/components/schemas/CatalogKind" }
+    post:
+      operationId: adminCreateCatalogValue
+      summary: Agrega un valor al final de un catálogo descriptivo
+      description: "`400` en `lens_type` y `replacement`, con código inválido o repetido, o con `swatch` faltante o inválido. `404` si el catálogo no existe."
+      security:
+        - bearerAuth: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CatalogValueInput" }
+      responses:
+        "201":
+          description: Valor creado
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CatalogValue" }
+        "400":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+  /v1/admin/catalogs/{catalog}/values/{code}:
+    parameters:
+      - name: catalog
+        in: path
+        required: true
+        schema: { $ref: "#/components/schemas/CatalogKind" }
+      - name: code
+        in: path
+        required: true
+        schema: { type: string }
+    patch:
+      operationId: adminUpdateCatalogValue
+      summary: Cambia etiqueta, visibilidad o muestra de color de un valor, incluidos los de sistema
+      security:
+        - bearerAuth: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CatalogValuePatch" }
+      responses:
+        "200":
+          description: Valor actualizado
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CatalogValue" }
+        "400":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+    delete:
+      operationId: adminDeleteCatalogValue
+      summary: Borra un valor que no es de sistema y que ningún producto usa
+      description: "`409` si es de sistema o si lo usa algún producto (el `detail` dice cuántos): en ese caso se oculta."
+      security:
+        - bearerAuth: [admin]
+      responses:
+        "204":
+          description: Eliminado
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+  /v1/admin/catalogs/{catalog}/order:
+    parameters:
+      - name: catalog
+        in: path
+        required: true
+        schema: { $ref: "#/components/schemas/CatalogKind" }
+    put:
+      operationId: adminReorderCatalog
+      summary: Fija el orden completo de un catálogo
+      security:
+        - bearerAuth: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CatalogOrderInput" }
+      responses:
+        "200":
+          description: Valores en su nuevo orden
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: "#/components/schemas/CatalogValue" }
         "400":
           $ref: "#/components/responses/Problem"
         "404":
@@ -1625,19 +1841,42 @@ components:
       enum: [daily, biweekly, monthly, quarterly, yearly]
     BannerPlacement:
       type: string
-      enum: [promo_bar, hero, secondary]
+      enum: [promo_bar, hero, secondary, menu_card, mosaic, promise]
+    PromiseIcon:
+      type: string
+      description: Ícono de una promesa, de un conjunto cerrado.
+      enum: [prescription, reorder, payment, support, delivery, quality]
+    HeroArt:
+      type: string
+      description: Ilustración de un hero sin imagen, sobre el fondo de marca. `none` no lleva ilustración.
+      enum: [lens, frame, reorder, none]
+    BannerSlot:
+      type: string
+      description: >-
+        Celda del mosaico del home. Se aceptan `frames`, `contact_lens`, `reorder`, `lens_type:spherical`,
+        `lens_type:toric`, `lens_type:multifocal` y `lens_type:cosmetic`.
+      pattern: "^(frames|contact_lens|reorder|lens_type:[a-z_]+)$"
+      example: "lens_type:toric"
     HomeBanner:
       type: object
-      required: [id, placement, title, subtitle, cta_label, cta_href, image_url, image_alt]
+      description: >-
+        Campos por ubicación. `menu_card`: `menu`, `title` (40), `cta_href`, imagen. `mosaic`: `slot`; con foto solo imagen
+        (`title` vacío, la etiqueta y el enlace salen del catálogo); `reorder` lleva `title` (40) y `subtitle` (80), sin imagen,
+        y enlaza a `/cuenta/pedidos`. `promise`: `title` (60) e `icon`, sin imagen ni enlace. `hero`: imagen, o `art` sin imagen.
+      required: [id, placement, title, subtitle, cta_label, cta_href, image_url, image_alt, menu, slot, icon, art]
       properties:
         id: { type: string, format: uuid }
         placement: { $ref: "#/components/schemas/BannerPlacement" }
-        title: { type: string, maxLength: 120 }
+        title: { type: string, maxLength: 120, description: Vacío en las celdas del mosaico con foto. }
         subtitle: { type: string, maxLength: 240, nullable: true }
         cta_label: { type: string, maxLength: 40, nullable: true }
         cta_href: { type: string, maxLength: 200, nullable: true, description: Ruta interna; empieza con una sola diagonal. }
-        image_url: { type: string, format: uri, nullable: true }
+        image_url: { type: string, format: uri, nullable: true, description: "`null` en un hero de marca (con `art`), la barra, el bloque de reposición y las promesas." }
         image_alt: { type: string, maxLength: 160, nullable: true }
+        menu: { allOf: [{ $ref: "#/components/schemas/ProductCategory" }], nullable: true, description: Megamenú de una `menu_card`. }
+        slot: { allOf: [{ $ref: "#/components/schemas/BannerSlot" }], nullable: true, description: Celda de un `mosaic`. }
+        icon: { allOf: [{ $ref: "#/components/schemas/PromiseIcon" }], nullable: true, description: Ícono de una `promise`. }
+        art: { allOf: [{ $ref: "#/components/schemas/HeroArt" }], nullable: true, description: Ilustración de un `hero` sin imagen. }
     AdminHomeBanner:
       allOf:
         - $ref: "#/components/schemas/HomeBanner"
@@ -1660,12 +1899,16 @@ components:
         cta_href: { type: string, nullable: true }
         image_key: { type: string, nullable: true }
         image_alt: { type: string, nullable: true }
+        menu: { allOf: [{ $ref: "#/components/schemas/ProductCategory" }], nullable: true, description: Requerido en `menu_card`; prohibido en otras ubicaciones. }
+        slot: { allOf: [{ $ref: "#/components/schemas/BannerSlot" }], nullable: true, description: Requerido en `mosaic`; prohibido en otras ubicaciones. }
+        icon: { allOf: [{ $ref: "#/components/schemas/PromiseIcon" }], nullable: true, description: Requerido en `promise`; prohibido en otras ubicaciones. }
+        art: { allOf: [{ $ref: "#/components/schemas/HeroArt" }], nullable: true, description: Requerido en un `hero` sin imagen; prohibido en lo demás. }
         active: { type: boolean }
         starts_at: { type: string, format: date-time, nullable: true }
         ends_at: { type: string, format: date-time, nullable: true }
     HomeContent:
       type: object
-      required: [promo_bar, hero, heroes, secondary, featured]
+      required: [promo_bar, hero, heroes, secondary, featured, menu_cards, mosaic, promises]
       properties:
         promo_bar: { allOf: [{ $ref: "#/components/schemas/HomeBanner" }], nullable: true }
         hero:
@@ -1675,11 +1918,33 @@ components:
         heroes:
           type: array
           maxItems: 5
-          description: Banners principales vigentes, en orden, para el carrusel del home.
+          description: Banners principales vigentes, en orden, para el carrusel del home. Incluye los de marca sin imagen (con `art`).
           items: { $ref: "#/components/schemas/HomeBanner" }
         secondary:
           type: array
           maxItems: 3
+          items: { $ref: "#/components/schemas/HomeBanner" }
+        menu_cards:
+          type: object
+          description: Tarjetas vigentes de cada megamenú, en orden.
+          required: [frame, contact_lens]
+          properties:
+            frame:
+              type: array
+              maxItems: 4
+              items: { $ref: "#/components/schemas/HomeBanner" }
+            contact_lens:
+              type: array
+              maxItems: 4
+              items: { $ref: "#/components/schemas/HomeBanner" }
+        mosaic:
+          type: object
+          description: Banner vigente de cada celda del mosaico, por `slot`. Una celda sin banner no aparece.
+          additionalProperties: { $ref: "#/components/schemas/HomeBanner" }
+        promises:
+          type: array
+          maxItems: 3
+          description: Promesas vigentes, en orden.
           items: { $ref: "#/components/schemas/HomeBanner" }
         featured:
           type: object
@@ -1732,26 +1997,106 @@ components:
       type: string
       enum: [contact_lens, frame]
     FrameShape:
+      description: Código de un valor del catálogo `frame_shape` (ver `GET /v1/catalogs`). Los valores los administra el admin.
       type: string
-      enum: [rectangular, square, round, oval, cat_eye, aviator, browline, geometric]
+      pattern: "^[a-z][a-z0-9_]{1,39}$"
     FrameMaterial:
+      description: Código de un valor del catálogo `frame_material` (ver `GET /v1/catalogs`). Los valores los administra el admin.
       type: string
-      enum: [acetate, metal, titanium, tr90, mixed]
+      pattern: "^[a-z][a-z0-9_]{1,39}$"
     FrameRim:
+      description: Código de un valor del catálogo `frame_rim` (ver `GET /v1/catalogs`). Los valores los administra el admin.
       type: string
-      enum: [full, semi, rimless]
+      pattern: "^[a-z][a-z0-9_]{1,39}$"
     FrameGender:
+      description: Código de un valor del catálogo `frame_gender` (ver `GET /v1/catalogs`). Los valores los administra el admin.
       type: string
-      enum: [women, men, unisex, kids]
+      pattern: "^[a-z][a-z0-9_]{1,39}$"
     FrameColor:
+      description: Código de un valor del catálogo `frame_color` (ver `GET /v1/catalogs`). Los valores los administra el admin.
       type: string
-      enum: [black, tortoise, brown, transparent, gray, blue, green, red, pink, purple, gold, silver, multicolor]
+      pattern: "^[a-z][a-z0-9_]{1,39}$"
     FrameSize:
+      description: Código de un valor del catálogo `frame_size` (ver `GET /v1/catalogs`). Los valores los administra el admin.
       type: string
-      enum: [small, medium, large]
+      pattern: "^[a-z][a-z0-9_]{1,39}$"
     FrameInclude:
+      description: Código de un valor del catálogo `frame_include` (ver `GET /v1/catalogs`). Los valores los administra el admin.
       type: string
-      enum: [case, cleaning_cloth, scratch_resistant, warranty, blue_light_filter, anti_reflective, optician_fitting]
+      pattern: "^[a-z][a-z0-9_]{1,39}$"
+    CatalogKind:
+      type: string
+      enum: [lens_type, replacement, frame_shape, frame_material, frame_rim, frame_gender, frame_color, frame_size, frame_include]
+    CatalogEntry:
+      description: Valor visible de un catálogo, para la tienda.
+      type: object
+      required: [code, label]
+      properties:
+        code: { type: string, pattern: "^[a-z][a-z0-9_]{1,39}$" }
+        label: { type: string, minLength: 1, maxLength: 40 }
+        swatch: { type: string, description: "Solo en `frame_color`: `#rrggbb` o `conic-gradient(#rrggbb, #rrggbb, ...)`." }
+    CatalogValue:
+      allOf:
+        - $ref: "#/components/schemas/CatalogEntry"
+        - type: object
+          required: [position, active, system]
+          properties:
+            position: { type: integer }
+            active: { type: boolean, description: "`false`: oculto en filtros, facetas y opciones para asignaciones nuevas." }
+            system: { type: boolean, description: "`true`: no se puede borrar." }
+            product_count: { type: integer, description: "Productos que lo usan, activos o no. Un color cuenta armazones, no variantes." }
+    CatalogValueInput:
+      type: object
+      required: [label]
+      properties:
+        code:
+          type: string
+          pattern: "^[a-z][a-z0-9_]{1,39}$"
+          description: Sin código se genera de la etiqueta (minúsculas, sin acentos, espacios a `_`). No cambia después de creado.
+        label: { type: string, minLength: 1, maxLength: 40 }
+        swatch: { type: string, description: "Obligatorio en `frame_color` y prohibido en los demás." }
+    CatalogValuePatch:
+      type: object
+      properties:
+        label: { type: string, minLength: 1, maxLength: 40 }
+        active: { type: boolean }
+        swatch: { type: string, description: Solo en `frame_color`. }
+    CatalogOrderInput:
+      type: object
+      required: [codes]
+      properties:
+        codes:
+          description: Todos los códigos del catálogo, incluidos los ocultos, en el orden nuevo.
+          type: array
+          items: { type: string }
+    PublicCatalogs:
+      description: Valores activos de cada catálogo, en su orden.
+      type: object
+      required: [lens_type, replacement, frame_shape, frame_material, frame_rim, frame_gender, frame_color, frame_size, frame_include]
+      properties:
+        lens_type: { type: array, items: { $ref: "#/components/schemas/CatalogEntry" } }
+        replacement: { type: array, items: { $ref: "#/components/schemas/CatalogEntry" } }
+        frame_shape: { type: array, items: { $ref: "#/components/schemas/CatalogEntry" } }
+        frame_material: { type: array, items: { $ref: "#/components/schemas/CatalogEntry" } }
+        frame_rim: { type: array, items: { $ref: "#/components/schemas/CatalogEntry" } }
+        frame_gender: { type: array, items: { $ref: "#/components/schemas/CatalogEntry" } }
+        frame_color: { type: array, items: { $ref: "#/components/schemas/CatalogEntry" } }
+        frame_size: { type: array, items: { $ref: "#/components/schemas/CatalogEntry" } }
+        frame_include: { type: array, items: { $ref: "#/components/schemas/CatalogEntry" } }
+    Catalogs:
+      description: Todos los valores de cada catálogo, incluidos los ocultos, en su orden y con su uso.
+      type: object
+      required: [lens_type, replacement, frame_shape, frame_material, frame_rim, frame_gender, frame_color, frame_size, frame_include]
+      properties:
+        lens_type: { type: array, items: { $ref: "#/components/schemas/CatalogValue" } }
+        replacement: { type: array, items: { $ref: "#/components/schemas/CatalogValue" } }
+        frame_shape: { type: array, items: { $ref: "#/components/schemas/CatalogValue" } }
+        frame_material: { type: array, items: { $ref: "#/components/schemas/CatalogValue" } }
+        frame_rim: { type: array, items: { $ref: "#/components/schemas/CatalogValue" } }
+        frame_gender: { type: array, items: { $ref: "#/components/schemas/CatalogValue" } }
+        frame_color: { type: array, items: { $ref: "#/components/schemas/CatalogValue" } }
+        frame_size: { type: array, items: { $ref: "#/components/schemas/CatalogValue" } }
+        frame_include: { type: array, items: { $ref: "#/components/schemas/CatalogValue" } }
     FrameDetails:
       type: object
       required: [shape, material, rim, gender, lens_width_mm, bridge_mm, temple_mm, lens_height_mm, frame_width_mm, weight_g, size, spring_hinges, adjustable_nose_pads, progressive_eligible, includes, warranty_months]
@@ -1829,15 +2174,18 @@ components:
         min_price_cents: { type: integer, format: int64, nullable: true }
         max_price_cents: { type: integer, format: int64, nullable: true }
         values:
-          description: Llaves según la categoría. frame usa shape, material, rim, gender y color. contact_lens usa lens_type y replacement.
+          description: >
+            Llaves según la categoría. frame usa shape, material, rim, gender y color. contact_lens usa lens_type y replacement.
+            Solo trae valores activos del catálogo con al menos un producto activo, en el orden del catálogo (`position`).
           type: object
           additionalProperties:
             type: array
             items:
               type: object
-              required: [value, count]
+              required: [value, label, count]
               properties:
                 value: { type: string }
+                label: { type: string, description: Etiqueta del catálogo. }
                 count: { type: integer }
     Brand:
       type: object
@@ -1880,6 +2228,24 @@ components:
           format: uri
           nullable: true
           description: Imagen principal (la de menor posición); `null` si el modelo no tiene imágenes.
+    Favorite:
+      type: object
+      required: [product, added_at]
+      properties:
+        product: { $ref: "#/components/schemas/Product" }
+        added_at: { type: string, format: date-time }
+    FavoriteMergeInput:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          maxItems: 50
+          items:
+            type: object
+            required: [product_id]
+            properties:
+              product_id: { type: string, format: uuid }
     ProductImage:
       type: object
       required: [url, position]
@@ -2041,7 +2407,7 @@ components:
         on_demand: { type: boolean, default: false, description: "Solo en lentes de contacto; exige `stock` 0." }
         base_curve: { type: number, format: double, nullable: true, description: Requerido en lentes de contacto; prohibido en armazones. }
         diameter: { type: number, format: double, nullable: true, description: Requerido en lentes de contacto; prohibido en armazones. }
-        color: { type: string, nullable: true, description: En armazones es requerido y debe ser un FrameColor. }
+        color: { type: string, nullable: true, description: "En armazones es requerido y debe existir en el catálogo `frame_color` (si no, `400`)." }
         price_cents: { type: integer, format: int64 }
         compare_at_cents: { type: integer, format: int64, nullable: true }
         stock: { type: integer }

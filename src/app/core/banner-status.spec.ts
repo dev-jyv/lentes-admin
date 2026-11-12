@@ -34,4 +34,21 @@ describe('banner-status', () => {
     );
     expect([...shown].sort()).toEqual(['h2', 'h3', 'h4', 'h5', 'h6', 's1', 's2', 's3']);
   });
+
+  it('marca hasta 4 tarjetas por megamenú, una por celda del mosaico y hasta 3 promesas', () => {
+    const card = (id: string, menu: 'frame' | 'contact_lens', position: number) => banner(id, 'menu_card', position, { menu });
+    const shown = shownBannerIds(
+      [
+        card('c1', 'contact_lens', 0), card('c2', 'contact_lens', 1), card('c3', 'contact_lens', 2), card('c4', 'contact_lens', 3),
+        card('c5', 'contact_lens', 4), card('f1', 'frame', 5),
+        banner('m1', 'mosaic', 0, { slot: 'lens_type:toric' }),
+        banner('m2', 'mosaic', 1, { slot: 'lens_type:toric' }),
+        banner('m3', 'mosaic', 2, { slot: 'frames', starts_at: '2026-12-01T00:00:00Z' }),
+        banner('m4', 'mosaic', 3, { slot: 'frames' }),
+        banner('p1', 'promise', 0), banner('p2', 'promise', 1), banner('p3', 'promise', 2), banner('p4', 'promise', 3),
+      ],
+      now,
+    );
+    expect([...shown].sort()).toEqual(['c1', 'c2', 'c3', 'c4', 'f1', 'm1', 'm4', 'p1', 'p2', 'p3']);
+  });
 });

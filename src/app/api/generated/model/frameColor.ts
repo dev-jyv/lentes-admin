@@ -6,21 +6,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type FrameColor = typeof FrameColor[keyof typeof FrameColor];
-
-
-export const FrameColor = {
-  black: 'black',
-  tortoise: 'tortoise',
-  brown: 'brown',
-  transparent: 'transparent',
-  gray: 'gray',
-  blue: 'blue',
-  green: 'green',
-  red: 'red',
-  pink: 'pink',
-  purple: 'purple',
-  gold: 'gold',
-  silver: 'silver',
-  multicolor: 'multicolor',
-} as const;
+/**
+ * Código de un valor del catálogo `frame_color` (ver `GET /v1/catalogs`). Los valores los administra el admin.
+ * @pattern ^[a-z][a-z0-9_]{1,39}$
+ */
+export type FrameColor = string;
