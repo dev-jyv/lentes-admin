@@ -10,6 +10,7 @@ Admin panel (internal SPA, no SSR) for a contact-lens store. Angular 22, zoneles
 
 - `pnpm start --port 4301` — dev server (uses `environment.development.ts`)
 - `pnpm build` / `pnpm test` (Vitest via `ng test`)
+- `pnpm deploy` — `ng build` + `wrangler deploy` to the `lentes-admin` Worker (static assets, `wrangler.jsonc`); production values in `environment.ts`
 - Single test: `pnpm test --include src/app/core/money.spec.ts`
 - `pnpm api:gen` — regenerate API clients with orval; `pnpm api:sync` — first copies `../lentes-api/api/openapi.yaml` into `openapi/openapi.yaml`
 

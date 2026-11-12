@@ -1,0 +1,10 @@
+// Worker de solo archivos estáticos del panel. `pnpm deploy` compila y lo publica en lentes-admin.lentes-web.workers.dev.
+{
+  "name": "lentes-admin",
+  "compatibility_date": "2026-11-01",
+  "assets": {
+    "directory": "./dist/lentes-admin/browser",
+    // Las rutas del SPA (p. ej. /productos/123) responden index.html.
+    "not_found_handling": "single-page-application"
+  }
+}
