@@ -5,6 +5,7 @@
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
+    "deploy": "ng build && pnpm dlx wrangler@4.152.0 deploy",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "api:sync": "cp ../lentes-api/api/openapi.yaml openapi/openapi.yaml && orval",

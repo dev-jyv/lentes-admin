@@ -42,9 +42,9 @@ Sin SSR: es un SPA interno, no necesita SEO.
 | A3 | Recetas: pendientes/aprobadas/rechazadas, ver archivo (URL prefirmada de R2), aprobar o rechazar con motivo | **Hecha contra el contrato real** (`lentes-api` B6) | Existe (`GET/PATCH /v1/admin/prescriptions`) |
 | A4 | Fotos de producto: subida a R2 con URL prefirmada, orden de galería, eliminar | **Hecha contra el contrato real** (`lentes-api` B8) | Existe (`/v1/admin/uploads/image-url`, `/v1/admin/products/{id}/images*`) |
 | A5 | Inventario (ajustes con motivo e historial, stock bajo) y reportes (ventas, recompra) | **Real** (`lentes-api`: inventario B9, reportes B10) | `/v1/admin/variants/{id}/stock-adjustments`, `/v1/admin/inventory/low-stock`, `/v1/admin/reports/sales` y `/repurchase` |
-| A6 | Contenido de la tienda (SPEC 15): pantalla "Home" con barra, heroes (con imagen o ilustración de marca), secundarios, megamenú, mosaico y promesas | **Contra el contrato real, sin desplegar** (`lentes-api` rama `feature/catalog-values`) | `/v1/admin/home/banners*` con `menu`, `slot`, `icon` y `art` |
-| A7 | Catálogos de atributos (SPEC 16): pantalla "Catálogos"; formularios de producto y variante con opciones del catálogo | **Contra el contrato real, sin desplegar** (misma rama) | `/v1/admin/catalogs*` |
-| A8 | Micas por pasos (SPEC 17): pestañas "Necesidades visuales" (paquetes, con `frame_only` y etiqueta) y "Tratamientos"; tratamiento y su precio en el detalle del pedido | **Contra el contrato real, sin desplegar** (`lentes-api` rama `feature/lens-treatments`) | `/v1/admin/lens-treatments*`, `badge` en `/v1/admin/lens-packages*` |
+| A6 | Contenido de la tienda (SPEC 15): pantalla "Home" con barra, heroes (con imagen o ilustración de marca), secundarios, megamenú, mosaico y promesas | **Real, desplegada** | `/v1/admin/home/banners*` con `menu`, `slot`, `icon` y `art` |
+| A7 | Catálogos de atributos (SPEC 16): pantalla "Catálogos"; formularios de producto y variante con opciones del catálogo | **Real, desplegada** | `/v1/admin/catalogs*` |
+| A8 | Micas por pasos (SPEC 17): pestañas "Necesidades visuales" (paquetes, con `frame_only` y etiqueta) y "Tratamientos"; tratamiento y su precio en el detalle del pedido | **Real, desplegada** | `/v1/admin/lens-treatments*`, `badge` en `/v1/admin/lens-packages*` |
 
 Regla: una fase se **cierra** cuando su endpoint existe en `lentes-api/api/openapi.yaml`. Si el endpoint aún no existe, la UI se construye
 contra una propuesta de contrato (que pasa a `lentes-api` al publicarse) para no frenar al admin.
@@ -114,9 +114,10 @@ el panel no lleva URL ni clave de Supabase. No se guarda ningún secreto en este
 
 | Valor | Local | Producción |
 |---|---|---|
-| `apiUrl` | `http://localhost:8080` | `https://api.tutienda.com` |
+| `apiUrl` | `http://localhost:8080` | `https://lentes-api-production.up.railway.app` |
+| `imgUrl` | (vacío) | `https://pub-90197bf5a56f40bdb2590bcead9006d4.r2.dev` |
 
-La API debe permitir el origen del panel en `CORS_ALLOWED_ORIGINS` (p. ej. `https://admin.tutienda.com` y `http://localhost:4301` en local) y tener `SUPABASE_SECRET_KEY` (con forwarding de IP activo en Supabase); sin ella el login responde 503.
+La API debe permitir el origen del panel en `CORS_ALLOWED_ORIGINS` (`https://lentes-admin.lentes-web.workers.dev` y `http://localhost:4301` en local) y tener `SUPABASE_SECRET_KEY` (con forwarding de IP activo en Supabase); sin ella el login responde 503.
 
 ## Comandos
 
@@ -125,10 +126,17 @@ pnpm install
 pnpm start            # ng serve (usa --port si 4200 está ocupado)
 pnpm test             # ng test (Vitest)
 pnpm build            # dist/lentes-admin/browser
+pnpm deploy           # ng build + wrangler deploy (wrangler.jsonc)
 pnpm api:sync         # copia ../lentes-api/api/openapi.yaml y regenera el cliente
 ```
 
-## Despliegue sugerido
+## Despliegue
 
-Archivos estáticos (`dist/lentes-admin/browser`) en Cloudflare Workers/Pages en `admin.tutienda.com`, con fallback a `index.html`
-para las rutas del SPA y Cloudflare Access delante. Sin servidor propio.
+Archivos estáticos (`dist/lentes-admin/browser`) en un Worker de Cloudflare de solo assets, `lentes-admin`
+(`https://lentes-admin.lentes-web.workers.dev`), configurado en `wrangler.jsonc` con `not_found_handling: single-page-application`
+para las rutas del SPA. Sin servidor propio.
+
+`pnpm deploy` compila con `environment.ts` y publica con wrangler; requiere sesión de wrangler (`wrangler login`) en la cuenta de
+Cloudflare de la tienda. El bucket R2 `lentes` debe permitir el origen del panel en su CORS para subir imágenes.
+
+Pendiente recomendado: dominio propio y Cloudflare Access delante del panel.
