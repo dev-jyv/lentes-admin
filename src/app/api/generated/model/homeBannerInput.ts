@@ -6,6 +6,10 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { BannerPlacement } from './bannerPlacement';
+import type { BannerSlot } from './bannerSlot';
+import type { HeroArt } from './heroArt';
+import type { ProductCategory } from './productCategory';
+import type { PromiseIcon } from './promiseIcon';
 
 export interface HomeBannerInput {
   placement: BannerPlacement;
@@ -20,6 +24,14 @@ export interface HomeBannerInput {
   image_key?: string | null;
   /** @nullable */
   image_alt?: string | null;
+  /** Requerido en `menu_card`; prohibido en otras ubicaciones. */
+  menu?: ProductCategory | null;
+  /** Requerido en `mosaic`; prohibido en otras ubicaciones. */
+  slot?: BannerSlot | null;
+  /** Requerido en `promise`; prohibido en otras ubicaciones. */
+  icon?: PromiseIcon | null;
+  /** Requerido en un `hero` sin imagen; prohibido en lo demás. */
+  art?: HeroArt | null;
   active: boolean;
   /** @nullable */
   starts_at?: string | null;

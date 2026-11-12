@@ -6,11 +6,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type FrameRim = typeof FrameRim[keyof typeof FrameRim];
-
-
-export const FrameRim = {
-  full: 'full',
-  semi: 'semi',
-  rimless: 'rimless',
-} as const;
+/**
+ * Código de un valor del catálogo `frame_rim` (ver `GET /v1/catalogs`). Los valores los administra el admin.
+ * @pattern ^[a-z][a-z0-9_]{1,39}$
+ */
+export type FrameRim = string;

@@ -11,63 +11,6 @@
       "contact_lens": "Lente de contacto",
       "frame": "Armazón"
     },
-    "shape": {
-      "rectangular": "Rectangular",
-      "square": "Cuadrado",
-      "round": "Redondo",
-      "oval": "Ovalado",
-      "cat_eye": "Ojo de gato",
-      "aviator": "Aviador",
-      "browline": "Browline",
-      "geometric": "Geométrico"
-    },
-    "material": {
-      "acetate": "Acetato",
-      "metal": "Metal",
-      "titanium": "Titanio",
-      "tr90": "TR90",
-      "mixed": "Mixto"
-    },
-    "rim": {
-      "full": "Completo",
-      "semi": "Semi al aire",
-      "rimless": "Al aire"
-    },
-    "gender": {
-      "women": "Mujer",
-      "men": "Hombre",
-      "unisex": "Unisex",
-      "kids": "Niños"
-    },
-    "color": {
-      "black": "Negro",
-      "tortoise": "Carey",
-      "brown": "Café",
-      "transparent": "Transparente",
-      "gray": "Gris",
-      "blue": "Azul",
-      "green": "Verde",
-      "red": "Rojo",
-      "pink": "Rosa",
-      "purple": "Morado",
-      "gold": "Dorado",
-      "silver": "Plateado",
-      "multicolor": "Multicolor"
-    },
-    "frameSize": {
-      "small": "Chica",
-      "medium": "Mediana",
-      "large": "Grande"
-    },
-    "frameInclude": {
-      "case": "Estuche",
-      "cleaning_cloth": "Paño de limpieza",
-      "scratch_resistant": "Capa antirrayas",
-      "warranty": "Garantía",
-      "blue_light_filter": "Filtro de luz azul",
-      "anti_reflective": "Antirreflejante",
-      "optician_fitting": "Ajuste en óptica"
-    },
     "stockReason": {
       "receipt": "Recepción de mercancía",
       "count_correction": "Corrección por conteo",
@@ -98,29 +41,33 @@
       "approved": "Aprobada",
       "rejected": "Rechazada"
     },
-    "lensType": {
-      "spherical": "Esférico",
-      "toric": "Tórico",
-      "multifocal": "Multifocal",
-      "cosmetic": "Cosmético"
-    },
-    "replacement": {
-      "daily": "Diario",
-      "biweekly": "Quincenal",
-      "monthly": "Mensual",
-      "quarterly": "Trimestral",
-      "yearly": "Anual"
-    },
     "placement": {
       "promo_bar": "Barra promocional",
       "hero": "Banner principal",
-      "secondary": "Banners secundarios"
+      "secondary": "Banners secundarios",
+      "menu_card": "Tarjeta del megamenú",
+      "mosaic": "Celda del mosaico",
+      "promise": "Promesa"
     },
     "bannerStatus": {
       "current": "Vigente",
       "scheduled": "Programado",
       "expired": "Vencido",
       "inactive": "Inactivo"
+    },
+    "promiseIcon": {
+      "prescription": "Receta revisada",
+      "reorder": "Recompra",
+      "payment": "Pago seguro",
+      "support": "Atención",
+      "delivery": "Entrega",
+      "quality": "Calidad"
+    },
+    "heroArt": {
+      "lens": "Lente de contacto",
+      "frame": "Armazón",
+      "reorder": "Recompra",
+      "none": "Sin ilustración"
     }
   },
   "stock": {
@@ -210,6 +157,7 @@
     "inventario": "Inventario",
     "reportes": "Reportes",
     "marcas": "Marcas",
+    "catalogos": "Catálogos",
     "micas": "Micas",
     "home": "Home",
     "more": "Más"
@@ -507,8 +455,6 @@
   "homeAdmin": {
     "editBanner": "Editar banner",
     "newBanner": "Nuevo banner",
-    "titlePromo": "Título (máx. 90)",
-    "titleDefault": "Título (máx. 120)",
     "ctaLabelOptional": "Texto del enlace (opcional)",
     "ctaLabel": "Texto del enlace",
     "hrefOptional": "Ruta interna (opcional)",
@@ -522,7 +468,6 @@
     "confirmDelete": "¿Borrar el banner \"{{title}}\"?",
     "honesty": "Publica solo promociones que la tienda pueda cumplir: el sistema no las valida.",
     "placement": "Ubicación",
-    "subtitle": "Subtítulo (opcional)",
     "image": "Imagen (JPG, PNG o WebP, máx. 5 MB)",
     "previewAlt": "Vista previa del banner",
     "imageAlt": "Descripción de la imagen",
@@ -546,6 +491,107 @@
     "featuredLoadFailed": "No se pudieron cargar los destacados.",
     "searchFailed": "No se pudo buscar. Escribe al menos 2 caracteres.",
     "featuredSaved": "Destacados guardados. La tienda los muestra en menos de un minuto.",
-    "featuredSaveFailed": "No se pudieron guardar los destacados."
+    "featuredSaveFailed": "No se pudieron guardar los destacados.",
+    "titleMax": "Título (máx. {{max}})",
+    "subtitleMax": "Subtítulo (opcional, máx. {{max}})",
+    "menu": "Megamenú",
+    "slot": "Celda del mosaico",
+    "slotPhotoHint": "Solo lleva foto: la etiqueta y el enlace salen del catálogo.",
+    "slotReorderHint": "Sin foto. Enlaza siempre a los pedidos del cliente.",
+    "icon": "Ícono",
+    "deliveryWarning": "Usa este ícono solo con promesas de entrega que la tienda cumple",
+    "heroMode": "Fondo",
+    "heroImage": "Imagen",
+    "heroArt": "Ilustración de marca",
+    "art": "Ilustración",
+    "artHint": "Se dibuja sobre el fondo de marca, sin foto.",
+    "artDetail": "Ilustración: {{art}}",
+    "sections": {
+      "menu": "Megamenú",
+      "mosaic": "Mosaico",
+      "promise": "Promesas"
+    },
+    "menuHint": "Hasta {{max}} tarjetas vigentes por menú, en este orden. La tienda oculta las que llevan a un filtro sin productos.",
+    "addCard": "Agregar tarjeta a {{menu}}",
+    "mosaicHint": "Así se acomodan las celdas en el home. Cada celda muestra un banner vigente a la vez.",
+    "mosaicAll": "Todos los banners del mosaico",
+    "mosaicNoPhoto": "Sin foto: se muestra un bloque de color",
+    "mosaicNoReorder": "Sin bloque vigente.",
+    "changePhoto": "Cambiar foto",
+    "addPhoto": "Agregar foto",
+    "mosaicChangePhoto": "Cambiar foto de {{cell}}",
+    "mosaicAddPhoto": "Agregar foto a {{cell}}",
+    "mosaicEditCell": "Editar {{cell}}",
+    "mosaicAddCell": "Agregar {{cell}}",
+    "slots": {
+      "frames": "Armazones",
+      "contact_lens": "Lentes de contacto",
+      "reorder": "Volver a pedir"
+    },
+    "addPromise": "Agregar promesa",
+    "promiseHint": "La franja bajo el hero muestra hasta {{max}} promesas vigentes, en este orden.",
+    "errors": {
+      "menu": "Elige el megamenú de la tarjeta.",
+      "slot": "Elige la celda del mosaico.",
+      "icon": "Elige el ícono de la promesa.",
+      "art": "Elige una ilustración o cambia a imagen.",
+      "titleMax": "El título admite hasta {{max}} caracteres aquí.",
+      "subtitleMax": "El subtítulo admite hasta {{max}} caracteres aquí.",
+      "cta": "Captura el texto y la ruta del enlace.",
+      "ctaPair": "El texto y la ruta del enlace van juntos.",
+      "image": "Sube la imagen y escribe su descripción."
+    }
+  },
+  "catalogos": {
+    "hint": "Etiquetas, orden y visibilidad de los atributos de producto. La tienda refleja los cambios en hasta 5 minutos.",
+    "listLabel": "Catálogos",
+    "kinds": {
+      "lens_type": "Tipo de lente",
+      "replacement": "Reemplazo",
+      "frame_shape": "Forma",
+      "frame_material": "Material del armazón",
+      "frame_rim": "Aro",
+      "frame_gender": "Para quién",
+      "frame_color": "Color",
+      "frame_size": "Talla",
+      "frame_include": "Qué incluye"
+    },
+    "fixedHint": "Sus valores son fijos porque la tienda depende de ellos (por ejemplo, tórico exige cilindro y eje). Solo cambian su etiqueta, orden y visibilidad.",
+    "openHint": "Un valor en uso o de sistema no se borra: ocúltalo y los productos que ya lo tienen lo conservan.",
+    "new": "Nuevo valor",
+    "edit": "Editar valor",
+    "label": "Etiqueta (máx. 40)",
+    "labelColumn": "Etiqueta",
+    "code": "Código",
+    "codeHint": "Se genera de la etiqueta; ajústalo antes de guardar si hace falta. Después no cambia.",
+    "codeLocked": "El código no cambia después de creado.",
+    "swatch": "Muestra de color",
+    "swatchHint": "#rrggbb, o conic-gradient(#rrggbb, #rrggbb, …) para varios colores (de 2 a 12).",
+    "swatchPreview": "Vista previa de la muestra",
+    "pickColor": "Elegir color",
+    "products": "Productos",
+    "visible": "Visible",
+    "hidden": "Oculto",
+    "system": "Sistema",
+    "hide": "Ocultar",
+    "show": "Mostrar",
+    "editLabel": "Editar {{label}}",
+    "hideLabel": "Ocultar {{label}}",
+    "showLabel": "Mostrar {{label}}",
+    "deleteLabel": "Borrar {{label}}",
+    "confirmDelete": "¿Borrar «{{label}}» del catálogo?",
+    "hiddenOption": "{{label}} (oculto)",
+    "empty": "Este catálogo no tiene valores.",
+    "loadFailed": "No se pudieron cargar los catálogos.",
+    "saveFailed": "No se pudo guardar el valor.",
+    "updateFailed": "No se pudo cambiar la visibilidad.",
+    "deleteFailed": "No se pudo borrar el valor.",
+    "errors": {
+      "fixed": "Tipo de lente y reemplazo no admiten valores nuevos.",
+      "label": "Escribe una etiqueta de hasta {{max}} caracteres.",
+      "code": "El código debe empezar con letra y llevar de 2 a 40 minúsculas, números o guiones bajos.",
+      "swatchRequired": "Un color nuevo necesita su muestra de color.",
+      "swatchInvalid": "Usa #rrggbb, o conic-gradient(#rrggbb, #rrggbb, …) con 2 a 12 colores."
+    }
   }
 }

@@ -21,6 +21,7 @@ const ICON = {
   recetas: 'M7 3h7l4 4v14H7zM14 3v4h4M10 14.5l1.8 1.8 3.2-3.8',
   productos: 'M3.5 12.5V4h8.5l8.5 8.5-8 8zM8 8.5h.01',
   marcas: 'M12 3.5l2.5 5.2 5.7.7-4.2 3.9 1.1 5.6-5.1-2.8-5.1 2.8 1.1-5.6-4.2-3.9 5.7-.7z',
+  catalogos: 'M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01',
   micas: 'M3 12a9 9 0 1 0 18 0 9 9 0 1 0-18 0M9 12a3 3 0 1 0 6 0 3 3 0 1 0-6 0',
   inventario: 'M12 3.5l8.5 4.5-8.5 4.5L3.5 8zM3.5 12.5l8.5 4.5 8.5-4.5M3.5 16.5 12 21l8.5-4.5',
   home: 'M4 10 5.5 4h13L20 10M4 10v10h16V10M4 10h16M10 20v-5h4v5',
@@ -239,6 +240,7 @@ export default class Shell {
     },
     productos: { path: '/productos', label: t('nav.productos'), icon: ICON.productos },
     marcas: { path: '/marcas', label: t('nav.marcas'), icon: ICON.marcas },
+    catalogos: { path: '/catalogos', label: t('nav.catalogos'), icon: ICON.catalogos },
     micas: { path: '/micas', label: t('nav.micas'), icon: ICON.micas },
     inventario: {
       path: '/inventario',
@@ -254,7 +256,7 @@ export default class Shell {
   protected readonly groups = [
     { label: '', items: [this.items['resumen']] },
     { label: t('navGroups.sales'), items: [this.items['pedidos'], this.items['recetas']] },
-    { label: t('navGroups.catalog'), items: [this.items['productos'], this.items['marcas'], this.items['micas'], this.items['inventario']] },
+    { label: t('navGroups.catalog'), items: [this.items['productos'], this.items['marcas'], this.items['catalogos'], this.items['micas'], this.items['inventario']] },
     { label: t('navGroups.store'), items: [this.items['home']] },
     { label: t('navGroups.insights'), items: [this.items['reportes']] },
   ];

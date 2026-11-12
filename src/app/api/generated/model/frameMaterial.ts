@@ -6,13 +6,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type FrameMaterial = typeof FrameMaterial[keyof typeof FrameMaterial];
-
-
-export const FrameMaterial = {
-  acetate: 'acetate',
-  metal: 'metal',
-  titanium: 'titanium',
-  tr90: 'tr90',
-  mixed: 'mixed',
-} as const;
+/**
+ * Código de un valor del catálogo `frame_material` (ver `GET /v1/catalogs`). Los valores los administra el admin.
+ * @pattern ^[a-z][a-z0-9_]{1,39}$
+ */
+export type FrameMaterial = string;

@@ -13,4 +13,7 @@ export const BannerPlacement = {
   promo_bar: 'promo_bar',
   hero: 'hero',
   secondary: 'secondary',
+  menu_card: 'menu_card',
+  mosaic: 'mosaic',
+  promise: 'promise',
 } as const;

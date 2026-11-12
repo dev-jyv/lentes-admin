@@ -1,57 +1,39 @@
 import { HttpClient } from '@angular/common/http';
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { afterNextRender, Component, computed, ElementRef, inject, Injector, OnInit, signal, viewChild } from '@angular/core';
 import { form, FormField, required } from '@angular/forms/signals';
 import { firstValueFrom } from 'rxjs';
 import { DefaultService } from '../../api/generated/default/default.service';
-import { BannerPlacement, ProductCategory } from '../../api/generated/model';
-import type { AdminHomeBanner, AdminProduct, HomeBannerInput, Product } from '../../api/generated/model';
-import { bannerStatus, shownBannerIds, type BannerStatus } from '../../core/banner-status';
-import { cdmxInputToUtc, utcToCdmxInput } from '../../core/cdmx-time';
+import { BannerPlacement, HeroArt, ProductCategory, PromiseIcon } from '../../api/generated/model';
+import type { AdminHomeBanner, AdminProduct, Product } from '../../api/generated/model';
+import {
+  bannerBody, bannerFields, bannerFormFrom, emptyBannerForm, HERO_ARTS, MAX_MENU_CARDS, MAX_PROMISES, MOSAIC_SLOTS,
+  PROMISE_ICONS, REORDER_SLOT, reorderWithin, type BannerForm,
+} from '../../core/banner-form';
+import { shownBannerIds } from '../../core/banner-status';
+import { CatalogStore } from '../../core/catalogs';
 import { CATEGORY_LABEL, toOptions } from '../../core/frame-labels';
 import { IMAGE_TYPES, ImageType, move, validateImage } from '../../core/images';
 import { problemMessage } from '../../core/problem';
 import { t, TPipe } from '../../core/i18n';
+import { PromiseIconView } from '../../shared/promise-icon';
+import { BannerTable } from './banner-table';
+import { MosaicGrid, type MosaicCell } from './mosaic-grid';
 
 const PLACEMENT_LABEL: Record<BannerPlacement, string> = t('labels.placement', { returnObjects: true });
-
-// El código del estado lo fija core/banner-status; aquí solo se traduce para mostrarlo.
-const STATUS_LABEL: Record<BannerStatus, string> = {
-  Vigente: t('labels.bannerStatus.current'),
-  Programado: t('labels.bannerStatus.scheduled'),
-  Vencido: t('labels.bannerStatus.expired'),
-  Inactivo: t('labels.bannerStatus.inactive'),
-};
-
-const STATUS_DOT: Record<BannerStatus, string> = {
-  Vigente: 'bg-good',
-  Programado: 'bg-primary',
-  Vencido: 'bg-muted-foreground',
-  Inactivo: 'bg-muted-foreground',
-};
+const ICON_LABEL: Record<PromiseIcon, string> = t('labels.promiseIcon', { returnObjects: true });
+const ART_LABEL: Record<HeroArt, string> = t('labels.heroArt', { returnObjects: true });
+const SLOT_LABEL: Record<string, string> = t('homeAdmin.slots', { returnObjects: true });
 
 const MAX_FEATURED = 8;
 
-interface BannerForm {
-  placement: BannerPlacement;
-  title: string;
-  subtitle: string;
-  cta_label: string;
-  cta_href: string;
-  image_alt: string;
-  starts_at: string;
-  ends_at: string;
-  active: boolean;
-}
-
-const empty = (placement: BannerPlacement = BannerPlacement.promo_bar): BannerForm => ({
-  placement, title: '', subtitle: '', cta_label: '', cta_href: '', image_alt: '', starts_at: '', ends_at: '', active: true,
-});
+/** Ubicaciones de SPEC 02 que se listan en una tabla simple; megamenú, mosaico y promesas tienen su propia sección. */
+const SIMPLE: BannerPlacement[] = [BannerPlacement.promo_bar, BannerPlacement.hero, BannerPlacement.secondary];
 
 type FeaturedItem = Pick<Product, 'id' | 'name' | 'brand'> & { active?: boolean; from_price_cents?: number | null };
 
 @Component({
   selector: 'app-home-content',
-  imports: [FormField, TPipe],
+  imports: [FormField, TPipe, BannerTable, MosaicGrid, PromiseIconView],
   template: `
     <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
       <h1 class="page-title">{{ 'nav.home' | t }}</h1>
@@ -60,7 +42,7 @@ type FeaturedItem = Pick<Product, 'id' | 'name' | 'brand'> & { active?: boolean;
 
     @if (editing()) {
       <section class="panel mb-8 max-w-3xl p-5 shadow-[0_4px_16px_rgb(14_34_48/0.08)]" aria-labelledby="btitle">
-        <h2 id="btitle" class="mb-1 text-lg">{{ editingId() ? ('homeAdmin.editBanner' | t) : ('homeAdmin.newBanner' | t) }}</h2>
+        <h2 #formTitle id="btitle" tabindex="-1" class="mb-1 text-lg outline-none">{{ editingId() ? ('homeAdmin.editBanner' | t) : ('homeAdmin.newBanner' | t) }}</h2>
         <p class="mb-3 text-sm text-muted-foreground">{{ 'homeAdmin.honesty' | t }}</p>
         <form class="grid gap-4 sm:grid-cols-2" (submit)="save($event)">
           <div>
@@ -69,25 +51,91 @@ type FeaturedItem = Pick<Product, 'id' | 'name' | 'brand'> & { active?: boolean;
               @for (o of placements; track o.value) { <option [value]="o.value">{{ o.label }}</option> }
             </select>
           </div>
-          <div>
-            <label for="title" class="field-label">{{ isPromo() ? ('homeAdmin.titlePromo' | t) : ('homeAdmin.titleDefault' | t) }}</label>
-            <input id="title" class="field w-full" [formField]="model.title" />
-          </div>
-          @if (!isPromo()) {
+          @if (fields().menu) {
+            <div>
+              <label for="menu" class="field-label">{{ 'homeAdmin.menu' | t }}</label>
+              <select id="menu" class="field w-full" [formField]="model.menu">
+                <option value="">{{ 'common.choose' | t }}</option>
+                @for (o of categories; track o.value) { <option [value]="o.value">{{ o.label }}</option> }
+              </select>
+            </div>
+          }
+          @if (fields().slot) {
+            <div>
+              <label for="slot" class="field-label">{{ 'homeAdmin.slot' | t }}</label>
+              <select id="slot" class="field w-full" [formField]="model.slot">
+                <option value="">{{ 'common.choose' | t }}</option>
+                @for (o of slots(); track o.value) { <option [value]="o.value">{{ o.label }}</option> }
+              </select>
+              @if (state().slot && state().slot !== reorderSlot) {
+                <p class="mt-1 text-xs text-muted-foreground">{{ 'homeAdmin.slotPhotoHint' | t }}</p>
+              }
+              @if (state().slot === reorderSlot) {
+                <p class="mt-1 text-xs text-muted-foreground">{{ 'homeAdmin.slotReorderHint' | t }}</p>
+              }
+            </div>
+          }
+          @if (fields().icon) {
+            <fieldset class="sm:col-span-2" aria-describedby="icon-warning">
+              <legend class="field-label">{{ 'homeAdmin.icon' | t }}</legend>
+              <div class="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                @for (o of icons; track o.value) {
+                  <label class="flex min-h-11 cursor-pointer items-center gap-2.5 rounded-lg border border-input px-3 text-sm has-checked:border-primary has-checked:bg-accent">
+                    <input type="radio" [value]="o.value" [formField]="model.icon" />
+                    <app-promise-icon class="size-5 text-primary" [icon]="o.value" />
+                    {{ o.label }}
+                  </label>
+                }
+              </div>
+              @if (state().icon === 'delivery') {
+                <p id="icon-warning" class="mt-2 rounded-lg bg-amber-soft px-3 py-2 text-sm text-foreground">{{ 'homeAdmin.deliveryWarning' | t }}</p>
+              }
+            </fieldset>
+          }
+          @if (fields().heroMode) {
+            <fieldset class="sm:col-span-2">
+              <legend class="field-label">{{ 'homeAdmin.heroMode' | t }}</legend>
+              <div class="flex flex-wrap gap-4 text-sm">
+                <label class="flex items-center gap-2"><input type="radio" value="image" [formField]="model.hero_mode" /> {{ 'homeAdmin.heroImage' | t }}</label>
+                <label class="flex items-center gap-2"><input type="radio" value="art" [formField]="model.hero_mode" /> {{ 'homeAdmin.heroArt' | t }}</label>
+              </div>
+            </fieldset>
+          }
+          @if (fields().art) {
+            <div>
+              <label for="art" class="field-label">{{ 'homeAdmin.art' | t }}</label>
+              <select id="art" class="field w-full" aria-describedby="art-hint" [formField]="model.art">
+                <option value="">{{ 'common.choose' | t }}</option>
+                @for (o of arts; track o.value) { <option [value]="o.value">{{ o.label }}</option> }
+              </select>
+              <p id="art-hint" class="mt-1 text-xs text-muted-foreground">{{ 'homeAdmin.artHint' | t }}</p>
+            </div>
+          }
+          @if (fields().title) {
+            <div>
+              <label for="title" class="field-label">{{ 'homeAdmin.titleMax' | t: { max: fields().titleMax } }}</label>
+              <input id="title" class="field w-full" [formField]="model.title" />
+            </div>
+          }
+          @if (fields().subtitle) {
             <div class="sm:col-span-2">
-              <label for="subtitle" class="field-label">{{ 'homeAdmin.subtitle' | t }}</label>
+              <label for="subtitle" class="field-label">{{ 'homeAdmin.subtitleMax' | t: { max: fields().subtitleMax } }}</label>
               <input id="subtitle" class="field w-full" [formField]="model.subtitle" />
             </div>
           }
-          <div>
-            <label for="cta" class="field-label">{{ isPromo() ? ('homeAdmin.ctaLabelOptional' | t) : ('homeAdmin.ctaLabel' | t) }}</label>
-            <input id="cta" class="field w-full" [formField]="model.cta_label" />
-          </div>
-          <div>
-            <label for="href" class="field-label">{{ isPromo() ? ('homeAdmin.hrefOptional' | t) : ('homeAdmin.href' | t) }}</label>
-            <input id="href" class="field w-full" placeholder="/armazones" [formField]="model.cta_href" />
-          </div>
-          @if (!isPromo()) {
+          @if (fields().ctaLabel) {
+            <div>
+              <label for="cta" class="field-label">{{ fields().ctaLabel === 'optional' ? ('homeAdmin.ctaLabelOptional' | t) : ('homeAdmin.ctaLabel' | t) }}</label>
+              <input id="cta" class="field w-full" [formField]="model.cta_label" />
+            </div>
+          }
+          @if (fields().ctaHref) {
+            <div>
+              <label for="href" class="field-label">{{ fields().ctaHref === 'optional' ? ('homeAdmin.hrefOptional' | t) : ('homeAdmin.href' | t) }}</label>
+              <input id="href" class="field w-full" placeholder="/armazones" [formField]="model.cta_href" />
+            </div>
+          }
+          @if (fields().image) {
             <div>
               <label for="img" class="field-label">{{ 'homeAdmin.image' | t }}</label>
               <input id="img" type="file" [accept]="accept" class="block" (change)="upload($event)" [disabled]="uploading()" />
@@ -121,35 +169,44 @@ type FeaturedItem = Pick<Product, 'id' | 'name' | 'brand'> & { active?: boolean;
     @for (group of groups(); track group.value) {
       <section class="mb-8" [attr.aria-labelledby]="'g-' + group.value">
         <h2 [id]="'g-' + group.value" class="mb-3 text-lg">{{ group.label }}</h2>
-        <div class="panel overflow-x-auto">
-          <table class="data-table stack">
-            <thead><tr><th scope="col">{{ 'homeAdmin.bannerTitle' | t }}</th><th scope="col">{{ 'common.status' | t }}</th><th scope="col">{{ 'homeAdmin.validity' | t }}</th><th scope="col"><span class="sr-only">{{ 'common.edit' | t }}</span></th></tr></thead>
-            <tbody>
-              @for (b of group.items; track b.id; let i = $index) {
-                <tr>
-                  <td class="font-medium">{{ b.title }}</td>
-                  <td [attr.data-label]="'common.status' | t">
-                    <span class="inline-flex flex-wrap items-center justify-end gap-1.5">
-                      <span class="pill"><span class="size-1.5 rounded-full" [class]="tone(b)" aria-hidden="true"></span>{{ status(b) }}</span>
-                      @if (shown().has(b.id)) { <span class="pill bg-secondary font-semibold">{{ 'homeAdmin.shown' | t }}</span> }
-                    </span>
-                  </td>
-                  <td class="text-muted-foreground" [attr.data-label]="'homeAdmin.validity' | t">{{ range(b) }}</td>
-                  <td class="actions">
-                    <button type="button" class="btn btn-secondary btn-icon" [attr.aria-label]="'micas.moveUp' | t: { name: b.title }" [disabled]="i === 0" (click)="shift(group.value, i, -1)"><svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 15l6-6 6 6" /></svg></button>
-                    <button type="button" class="btn btn-secondary btn-icon" [attr.aria-label]="'micas.moveDown' | t: { name: b.title }" [disabled]="i === group.items.length - 1" (click)="shift(group.value, i, 1)"><svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg></button>
-                    <button type="button" class="link" (click)="startEdit(b)">{{ 'common.edit' | t }}</button>
-                    <button type="button" class="link" (click)="remove(b)">{{ 'homeAdmin.delete' | t }}</button>
-                  </td>
-                </tr>
-              } @empty {
-                <tr><td colspan="4" class="empty">{{ 'homeAdmin.noBanners' | t }}</td></tr>
-              }
-            </tbody>
-          </table>
-        </div>
+        <app-banner-table [items]="group.items" [shown]="shown()" [detail]="heroDetail"
+          (edit)="startEdit($event)" (remove)="remove($event)" (shift)="shift(group.value, $event.index, $event.dir)" />
       </section>
     }
+
+    <section class="mb-8" aria-labelledby="g-menu_card">
+      <div class="mb-1 flex flex-wrap items-center justify-between gap-3">
+        <h2 id="g-menu_card" class="text-lg">{{ 'homeAdmin.sections.menu' | t }}</h2>
+      </div>
+      <p class="mb-3 max-w-3xl text-sm text-muted-foreground">{{ 'homeAdmin.menuHint' | t: { max: maxMenuCards } }}</p>
+      <div class="space-y-4">
+        @for (m of menus(); track m.value) {
+          <div>
+            <app-banner-table [items]="m.items" [shown]="shown()" [caption]="m.label"
+              (edit)="startEdit($event)" (remove)="remove($event)" (shift)="shiftMenu(m.value, $event.index, $event.dir)" />
+            <button type="button" class="btn btn-secondary btn-sm mt-2" (click)="startCreate(placement.menu_card, { menu: m.value })">{{ 'homeAdmin.addCard' | t: { menu: m.label } }}</button>
+          </div>
+        }
+      </div>
+    </section>
+
+    <section class="mb-8" aria-labelledby="g-mosaic">
+      <h2 id="g-mosaic" class="mb-1 text-lg">{{ 'homeAdmin.sections.mosaic' | t }}</h2>
+      <p class="mb-3 max-w-3xl text-sm text-muted-foreground">{{ 'homeAdmin.mosaicHint' | t }}</p>
+      <div class="mb-4"><app-mosaic-grid [cells]="mosaicCells()" (pick)="pickCell($event)" /></div>
+      <app-banner-table [items]="mosaicItems()" [shown]="shown()" [reorderable]="false" [name]="mosaicName"
+        [caption]="'homeAdmin.mosaicAll' | t" (edit)="startEdit($event)" (remove)="remove($event)" />
+    </section>
+
+    <section class="mb-8" aria-labelledby="g-promise">
+      <div class="mb-1 flex flex-wrap items-center justify-between gap-3">
+        <h2 id="g-promise" class="text-lg">{{ 'homeAdmin.sections.promise' | t }}</h2>
+        <button type="button" class="btn btn-secondary btn-sm" (click)="startCreate(placement.promise)">{{ 'homeAdmin.addPromise' | t }}</button>
+      </div>
+      <p class="mb-3 max-w-3xl text-sm text-muted-foreground">{{ 'homeAdmin.promiseHint' | t: { max: maxPromises } }}</p>
+      <app-banner-table [items]="promises()" [shown]="shown()" [detail]="iconDetail"
+        (edit)="startEdit($event)" (remove)="remove($event)" (shift)="shift(placement.promise, $event.index, $event.dir)" />
+    </section>
 
     <section class="max-w-3xl" aria-labelledby="ftitle">
       <h2 id="ftitle" class="mb-1 text-lg">{{ 'homeAdmin.featured' | t }}</h2>
@@ -200,6 +257,9 @@ type FeaturedItem = Pick<Product, 'id' | 'name' | 'brand'> & { active?: boolean;
 export default class HomeContent implements OnInit {
   private readonly api = inject(DefaultService);
   private readonly http = inject(HttpClient);
+  private readonly injector = inject(Injector);
+  private readonly catalogs = inject(CatalogStore);
+  private readonly formTitle = viewChild<ElementRef<HTMLElement>>('formTitle');
 
   protected readonly banners = signal<AdminHomeBanner[]>([]);
   protected readonly editing = signal(false);
@@ -213,25 +273,61 @@ export default class HomeContent implements OnInit {
 
   protected readonly accept = IMAGE_TYPES.join(',');
   protected readonly maxFeatured = MAX_FEATURED;
+  protected readonly maxMenuCards = MAX_MENU_CARDS;
+  protected readonly maxPromises = MAX_PROMISES;
+  protected readonly placement = BannerPlacement;
+  protected readonly reorderSlot = REORDER_SLOT;
   protected readonly placements = toOptions(PLACEMENT_LABEL);
   protected readonly categories = toOptions(CATEGORY_LABEL);
+  protected readonly icons = PROMISE_ICONS.map((value) => ({ value, label: ICON_LABEL[value] }));
+  protected readonly arts = HERO_ARTS.map((value) => ({ value, label: ART_LABEL[value] }));
 
-  private readonly state = signal<BannerForm>(empty());
-  protected readonly model = form(this.state, (f) => {
-    required(f.title);
+  /** Etiqueta de una celda: los tipos de lente usan la etiqueta del catálogo (SPEC 16). */
+  protected readonly slotLabel = (slot: string | null | undefined): string => {
+    if (!slot) return '—';
+    if (slot.startsWith('lens_type:')) return this.catalogs.label('lens_type', slot.slice('lens_type:'.length));
+    return SLOT_LABEL[slot] ?? slot;
+  };
+  protected readonly slots = computed(() => {
+    this.catalogs.catalogs(); // se recalcula cuando llega el catálogo
+    return MOSAIC_SLOTS.map((value) => ({ value, label: this.slotLabel(value) }));
   });
-  protected readonly isPromo = computed(() => this.state().placement === BannerPlacement.promo_bar);
+
+  protected readonly state = signal<BannerForm>(emptyBannerForm());
+  protected readonly fields = computed(() => bannerFields(this.state()));
+  protected readonly model = form(this.state, (f) => {
+    required(f.title, { when: () => this.fields().title === 'required' });
+  });
+
   protected readonly shown = computed(() => shownBannerIds(this.banners()));
+  private readonly sorted = computed(() => [...this.banners()].sort((a, b) => a.position - b.position));
+  private readonly of = (p: BannerPlacement) => this.sorted().filter((b) => b.placement === p);
   protected readonly groups = computed(() =>
-    this.placements.map((p) => ({
-      ...p,
-      items: this.banners().filter((b) => b.placement === p.value).sort((a, b) => a.position - b.position),
-    })),
+    SIMPLE.map((value) => ({ value, label: PLACEMENT_LABEL[value], items: this.of(value) })),
   );
-  protected status = (b: AdminHomeBanner) => STATUS_LABEL[bannerStatus(b)];
-  protected tone = (b: AdminHomeBanner) => STATUS_DOT[bannerStatus(b)];
-  protected range = (b: AdminHomeBanner) =>
-    t('homeAdmin.range', { start: utcToCdmxInput(b.starts_at).replace('T', ' ') || t('homeAdmin.noStart'), end: utcToCdmxInput(b.ends_at).replace('T', ' ') || t('homeAdmin.noEnd') });
+  protected readonly menus = computed(() =>
+    this.categories.map((c) => ({ ...c, items: this.of(BannerPlacement.menu_card).filter((b) => b.menu === c.value) })),
+  );
+  protected readonly mosaicItems = computed(() =>
+    [...this.of(BannerPlacement.mosaic)].sort((a, b) => MOSAIC_SLOTS.indexOf(a.slot as never) - MOSAIC_SLOTS.indexOf(b.slot as never)),
+  );
+  /** La celda muestra el banner vigente que la tienda usa en ese slot. */
+  protected readonly mosaicCells = computed<MosaicCell[]>(() => {
+    const shown = this.shown();
+    this.catalogs.catalogs();
+    return MOSAIC_SLOTS.map((slot) => ({
+      slot,
+      label: this.slotLabel(slot),
+      banner: this.mosaicItems().find((b) => b.slot === slot && shown.has(b.id)) ?? null,
+    }));
+  });
+  protected readonly promises = computed(() => this.of(BannerPlacement.promise));
+
+  protected readonly heroDetail = (b: AdminHomeBanner) =>
+    b.placement === BannerPlacement.hero && !b.image_key && b.art ? t('homeAdmin.artDetail', { art: ART_LABEL[b.art] }) : null;
+  protected readonly iconDetail = (b: AdminHomeBanner) => (b.icon ? ICON_LABEL[b.icon] : null);
+  protected readonly mosaicName = (b: AdminHomeBanner) =>
+    b.slot === REORDER_SLOT ? `${this.slotLabel(b.slot)} · ${b.title}` : this.slotLabel(b.slot);
 
   protected readonly category = signal<ProductCategory>(ProductCategory.frame);
   protected readonly featured = signal<FeaturedItem[]>([]);
@@ -243,7 +339,8 @@ export default class HomeContent implements OnInit {
   protected isFeatured = (id: string) => this.featured().some((p) => p.id === id);
 
   async ngOnInit() {
-    await Promise.all([this.loadBanners(), this.loadFeatured()]);
+    // El catálogo solo aporta etiquetas de tipos de lente; si falla, se usa el código legible.
+    await Promise.all([this.loadBanners(), this.loadFeatured(), this.catalogs.load()]);
   }
 
   private async loadBanners() {
@@ -254,25 +351,37 @@ export default class HomeContent implements OnInit {
     }
   }
 
-  protected startCreate() {
-    this.editingId.set(null);
-    this.state.set(empty());
-    this.imageKey.set(null);
-    this.preview.set(null);
+  /** Abre el formulario y lleva el foco a su título (las secciones de abajo también lo abren). */
+  private open() {
     this.error.set(null);
     this.editing.set(true);
+    afterNextRender(() => {
+      const el = this.formTitle()?.nativeElement;
+      el?.focus();
+      el?.scrollIntoView?.({ block: 'start' });
+    }, { injector: this.injector });
+  }
+
+  protected startCreate(placement: BannerPlacement = BannerPlacement.promo_bar, extra: Partial<BannerForm> = {}) {
+    this.editingId.set(null);
+    this.state.set(emptyBannerForm(placement, extra));
+    this.imageKey.set(null);
+    this.preview.set(null);
+    this.open();
   }
 
   protected startEdit(b: AdminHomeBanner) {
     this.editingId.set(b.id);
-    this.state.set({
-      placement: b.placement, title: b.title, subtitle: b.subtitle ?? '', cta_label: b.cta_label ?? '', cta_href: b.cta_href ?? '',
-      image_alt: b.image_alt ?? '', starts_at: utcToCdmxInput(b.starts_at), ends_at: utcToCdmxInput(b.ends_at), active: b.active,
-    });
+    this.state.set(bannerFormFrom(b));
     this.imageKey.set(b.image_key ?? null);
     this.preview.set(b.image_url ?? null);
-    this.error.set(null);
-    this.editing.set(true);
+    this.open();
+  }
+
+  /** Una celda del mosaico: edita su banner vigente o crea uno para ese slot. */
+  protected pickCell(cell: MosaicCell) {
+    if (cell.banner) this.startEdit(cell.banner);
+    else this.startCreate(BannerPlacement.mosaic, { slot: cell.slot });
   }
 
   protected async upload(event: Event) {
@@ -301,19 +410,8 @@ export default class HomeContent implements OnInit {
 
   protected async save(event: Event) {
     event.preventDefault();
-    if (this.model().invalid()) return this.error.set(t('common.checkRequired'));
-    const s = this.state();
-    const promo = this.isPromo();
-    const body: HomeBannerInput = {
-      placement: s.placement, title: s.title.trim(), active: s.active,
-      subtitle: promo ? null : s.subtitle.trim() || null,
-      cta_label: s.cta_label.trim() || null,
-      cta_href: s.cta_href.trim() || null,
-      image_key: promo ? null : this.imageKey(),
-      image_alt: promo ? null : s.image_alt.trim() || null,
-      starts_at: cdmxInputToUtc(s.starts_at),
-      ends_at: cdmxInputToUtc(s.ends_at),
-    };
+    const body = bannerBody(this.state(), this.imageKey());
+    if (typeof body === 'string') return this.error.set(body);
     this.busy.set(true);
     this.error.set(null);
     try {
@@ -322,15 +420,14 @@ export default class HomeContent implements OnInit {
       await this.loadBanners();
       this.editing.set(false);
     } catch (e) {
+      // 409: otro banner del mosaico vigente en la misma celda; la API dice cuál y qué hacer.
       this.error.set(problemMessage(e, t('homeAdmin.saveFailed')));
     } finally {
       this.busy.set(false);
     }
   }
 
-  protected async shift(placement: BannerPlacement, index: number, dir: -1 | 1) {
-    const items = this.groups().find((g) => g.value === placement)?.items ?? [];
-    const ids = move(items, index, dir).map((b) => b.id);
+  private async reorder(placement: BannerPlacement, ids: string[]) {
     try {
       await firstValueFrom(this.api.adminReorderHomeBanners({ placement, banner_ids: ids }));
       await this.loadBanners();
@@ -339,8 +436,19 @@ export default class HomeContent implements OnInit {
     }
   }
 
+  protected shift(placement: BannerPlacement, index: number, dir: -1 | 1) {
+    return this.reorder(placement, reorderWithin(this.of(placement), () => true, index, dir));
+  }
+
+  /** Las tarjetas se ordenan dentro de su menú; la API recibe todas las tarjetas de ambos menús. */
+  protected shiftMenu(menu: ProductCategory, index: number, dir: -1 | 1) {
+    const all = this.of(BannerPlacement.menu_card);
+    return this.reorder(BannerPlacement.menu_card, reorderWithin(all, (b) => b.menu === menu, index, dir));
+  }
+
   protected async remove(b: AdminHomeBanner) {
-    if (!confirm(t('homeAdmin.confirmDelete', { title: b.title }))) return;
+    const name = b.title || this.slotLabel(b.slot);
+    if (!confirm(t('homeAdmin.confirmDelete', { title: name }))) return;
     try {
       await firstValueFrom(this.api.adminDeleteHomeBanner(b.id));
       await this.loadBanners();

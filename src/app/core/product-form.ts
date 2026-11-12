@@ -1,8 +1,7 @@
 import { disabled, required, type SchemaFn } from '@angular/forms/signals';
-import {
-  FrameGender, FrameInclude, FrameMaterial, FrameRim, FrameShape, LensType, ProductCategory, Replacement,
-} from '../api/generated/model';
-import type { AdminProduct, FrameSize, ProductInput } from '../api/generated/model';
+import { LensType, ProductCategory, Replacement } from '../api/generated/model';
+import type { AdminProduct, CatalogValue, Catalogs, ProductInput } from '../api/generated/model';
+import { defaultCode } from './catalogs';
 import { t } from './i18n';
 
 /** Booleano opcional en un select: '' es "Sin dato" (`null` en la API). */
@@ -15,25 +14,33 @@ export const PROGRESSIVE_MIN_LENS_HEIGHT_MM = 28;
 export const progressiveEligible = (lensHeightMm: number | null): boolean | null =>
   lensHeightMm == null ? null : lensHeightMm >= PROGRESSIVE_MIN_LENS_HEIGHT_MM;
 
-const noIncludes = () =>
-  Object.fromEntries(Object.values(FrameInclude).map((v) => [v, false])) as Record<FrameInclude, boolean>;
+/** Código de "qué incluye" que habilita los meses de garantía; es de sistema, así que siempre existe. */
+export const WARRANTY = 'warranty';
+
+/** Una casilla por valor del catálogo "qué incluye", en su orden; `warranty` siempre está porque rige otro campo. */
+const noIncludes = (values: readonly CatalogValue[] = []): Record<string, boolean> => {
+  const codes = values.map((v) => v.code);
+  if (!codes.includes(WARRANTY)) codes.push(WARRANTY);
+  return Object.fromEntries(codes.map((c) => [c, false]));
+};
 
 export interface ProductForm {
   category: ProductCategory;
-  shape: FrameShape;
-  frame_material: FrameMaterial;
-  rim: FrameRim;
-  gender: FrameGender;
+  // Códigos de catálogo (SPEC 16): texto libre validado por la API contra `catalog_values`.
+  shape: string;
+  frame_material: string;
+  rim: string;
+  gender: string;
   lens_width_mm: number | null;
   bridge_mm: number | null;
   temple_mm: number | null;
   lens_height_mm: number | null;
   frame_width_mm: number | null;
   weight_g: number | null;
-  size: FrameSize | '';
+  size: string;
   spring_hinges: Tri;
   adjustable_nose_pads: Tri;
-  includes: Record<FrameInclude, boolean>;
+  includes: Record<string, boolean>;
   warranty_months: number | null;
   brand_id: string;
   name: string;
@@ -52,22 +59,28 @@ export interface ProductForm {
   active: boolean;
 }
 
-export const emptyProductForm = (): ProductForm => ({
+/**
+ * Formulario vacío. Con el catálogo cargado, cada atributo empieza en su valor habitual si está visible
+ * (o en el primero visible); un valor oculto nunca se propone para un producto nuevo.
+ */
+export const emptyProductForm = (c: Catalogs | null = null): ProductForm => ({
   category: ProductCategory.contact_lens,
-  shape: FrameShape.rectangular, frame_material: FrameMaterial.acetate, rim: FrameRim.full, gender: FrameGender.unisex,
+  shape: defaultCode(c?.frame_shape, 'rectangular'), frame_material: defaultCode(c?.frame_material, 'acetate'),
+  rim: defaultCode(c?.frame_rim, 'full'), gender: defaultCode(c?.frame_gender, 'unisex'),
   lens_width_mm: null, bridge_mm: null, temple_mm: null,
   lens_height_mm: null, frame_width_mm: null, weight_g: null, size: '',
-  spring_hinges: '', adjustable_nose_pads: '', includes: noIncludes(), warranty_months: null,
-  brand_id: '', name: '', slug: '', description: '', lens_type: LensType.spherical,
-  replacement: Replacement.monthly, pieces_per_box: 6, material: '', water_content_pct: null,
+  spring_hinges: '', adjustable_nose_pads: '', includes: noIncludes(c?.frame_include), warranty_months: null,
+  brand_id: '', name: '', slug: '', description: '', lens_type: defaultCode(c?.lens_type, LensType.spherical),
+  replacement: defaultCode(c?.replacement, Replacement.monthly), pieces_per_box: 6, material: '', water_content_pct: null,
   manufacturer: '', uv_blocking: '', visibility_tint: '', package_note: '',
   requires_prescription: true, active: true,
 });
 
-export const productFormFrom = (p: AdminProduct): ProductForm => {
+/** Formulario de un producto existente: conserva sus valores aunque estén ocultos en el catálogo. */
+export const productFormFrom = (p: AdminProduct, c: Catalogs | null = null): ProductForm => {
   const f = p.frame;
   return {
-    ...emptyProductForm(),
+    ...emptyProductForm(c),
     category: p.category,
     ...(f
       ? {
@@ -76,7 +89,7 @@ export const productFormFrom = (p: AdminProduct): ProductForm => {
           lens_height_mm: f.lens_height_mm ?? null, frame_width_mm: f.frame_width_mm ?? null,
           weight_g: f.weight_g ?? null, size: f.size ?? '',
           spring_hinges: toTri(f.spring_hinges), adjustable_nose_pads: toTri(f.adjustable_nose_pads),
-          includes: { ...noIncludes(), ...Object.fromEntries((f.includes ?? []).map((v) => [v, true])) },
+          includes: { ...noIncludes(c?.frame_include), ...Object.fromEntries((f.includes ?? []).map((v) => [v, true])) },
           warranty_months: f.warranty_months ?? null,
         }
       : {}),
@@ -96,7 +109,7 @@ export const productFormSchema = (locked: () => boolean): SchemaFn<ProductForm> 
   required(f.name);
   required(f.slug);
   disabled(f.category, locked);
-  disabled(f.warranty_months, ({ valueOf }) => !valueOf(f.includes.warranty));
+  disabled(f.warranty_months, ({ valueOf }) => !valueOf(f.includes)[WARRANTY]);
 };
 
 /**
@@ -111,7 +124,7 @@ export function productBody(s: ProductForm): ProductInput | string {
   };
   if (s.category === ProductCategory.frame) {
     if (s.lens_width_mm == null || s.bridge_mm == null || s.temple_mm == null) return t('productos.measuresRequired');
-    const includes = Object.values(FrameInclude).filter((v) => s.includes[v]);
+    const includes = Object.keys(s.includes).filter((v) => s.includes[v]);
     return {
       ...common, requires_prescription: false,
       frame: {
@@ -122,7 +135,7 @@ export function productBody(s: ProductForm): ProductInput | string {
         spring_hinges: fromTri(s.spring_hinges), adjustable_nose_pads: fromTri(s.adjustable_nose_pads),
         includes,
         // Sin "garantía" el campo está deshabilitado; la API rechaza meses sin ella.
-        warranty_months: s.includes.warranty ? s.warranty_months : null,
+        warranty_months: s.includes[WARRANTY] ? s.warranty_months : null,
       },
     };
   }

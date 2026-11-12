@@ -6,11 +6,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type FrameSize = typeof FrameSize[keyof typeof FrameSize];
-
-
-export const FrameSize = {
-  small: 'small',
-  medium: 'medium',
-  large: 'large',
-} as const;
+/**
+ * Código de un valor del catálogo `frame_size` (ver `GET /v1/catalogs`). Los valores los administra el admin.
+ * @pattern ^[a-z][a-z0-9_]{1,39}$
+ */
+export type FrameSize = string;

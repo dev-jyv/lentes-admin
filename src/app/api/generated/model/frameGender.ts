@@ -6,12 +6,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type FrameGender = typeof FrameGender[keyof typeof FrameGender];
-
-
-export const FrameGender = {
-  women: 'women',
-  men: 'men',
-  unisex: 'unisex',
-  kids: 'kids',
-} as const;
+/**
+ * Código de un valor del catálogo `frame_gender` (ver `GET /v1/catalogs`). Los valores los administra el admin.
+ * @pattern ^[a-z][a-z0-9_]{1,39}$
+ */
+export type FrameGender = string;

@@ -35,7 +35,7 @@ export interface VariantInput {
      */
   diameter?: number | null;
   /**
-     * En armazones es requerido y debe ser un FrameColor.
+     * En armazones es requerido y debe existir en el catálogo `frame_color` (si no, `400`).
      * @nullable
      */
   color?: string | null;

@@ -8,5 +8,7 @@
 
 export type CatalogFacetsValuesItem = {
   value: string;
+  /** Etiqueta del catálogo. */
+  label: string;
   count: number;
 };

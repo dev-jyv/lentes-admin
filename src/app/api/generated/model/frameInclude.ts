@@ -6,15 +6,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type FrameInclude = typeof FrameInclude[keyof typeof FrameInclude];
-
-
-export const FrameInclude = {
-  case: 'case',
-  cleaning_cloth: 'cleaning_cloth',
-  scratch_resistant: 'scratch_resistant',
-  warranty: 'warranty',
-  blue_light_filter: 'blue_light_filter',
-  anti_reflective: 'anti_reflective',
-  optician_fitting: 'optician_fitting',
-} as const;
+/**
+ * Código de un valor del catálogo `frame_include` (ver `GET /v1/catalogs`). Los valores los administra el admin.
+ * @pattern ^[a-z][a-z0-9_]{1,39}$
+ */
+export type FrameInclude = string;

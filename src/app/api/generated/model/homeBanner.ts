@@ -6,11 +6,21 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { BannerPlacement } from './bannerPlacement';
+import type { BannerSlot } from './bannerSlot';
+import type { HeroArt } from './heroArt';
+import type { ProductCategory } from './productCategory';
+import type { PromiseIcon } from './promiseIcon';
 
+/**
+ * Campos por ubicación. `menu_card`: `menu`, `title` (40), `cta_href`, imagen. `mosaic`: `slot`; con foto solo imagen (`title` vacío, la etiqueta y el enlace salen del catálogo); `reorder` lleva `title` (40) y `subtitle` (80), sin imagen, y enlaza a `/cuenta/pedidos`. `promise`: `title` (60) e `icon`, sin imagen ni enlace. `hero`: imagen, o `art` sin imagen.
+ */
 export interface HomeBanner {
   id: string;
   placement: BannerPlacement;
-  /** @maxLength 120 */
+  /**
+     * Vacío en las celdas del mosaico con foto.
+     * @maxLength 120
+     */
   title: string;
   /**
      * @maxLength 240
@@ -28,11 +38,22 @@ export interface HomeBanner {
      * @nullable
      */
   cta_href: string | null;
-  /** @nullable */
+  /**
+     * `null` en un hero de marca (con `art`), la barra, el bloque de reposición y las promesas.
+     * @nullable
+     */
   image_url: string | null;
   /**
      * @maxLength 160
      * @nullable
      */
   image_alt: string | null;
+  /** Megamenú de una `menu_card`. */
+  menu: ProductCategory | null;
+  /** Celda de un `mosaic`. */
+  slot: BannerSlot | null;
+  /** Ícono de una `promise`. */
+  icon: PromiseIcon | null;
+  /** Ilustración de un `hero` sin imagen. */
+  art: HeroArt | null;
 }

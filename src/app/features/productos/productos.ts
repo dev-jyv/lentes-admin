@@ -3,20 +3,16 @@ import { form, FormField } from '@angular/forms/signals';
 import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { DefaultService } from '../../api/generated/default/default.service';
-import { FrameInclude, LensType, ProductCategory, Replacement } from '../../api/generated/model';
+import { ProductCategory } from '../../api/generated/model';
 import type { AdminProduct, Brand } from '../../api/generated/model';
-import {
-  CATEGORY_LABEL, GENDER_LABEL, INCLUDE_LABEL, MATERIAL_LABEL, RIM_LABEL, SHAPE_LABEL, SIZE_LABEL, toOptions,
-} from '../../core/frame-labels';
+import { CatalogStore } from '../../core/catalogs';
+import { CATEGORY_LABEL, toOptions } from '../../core/frame-labels';
 import { problemMessage } from '../../core/problem';
 import {
-  emptyProductForm, productBody, productFormFrom, productFormSchema, progressiveEligible,
+  emptyProductForm, productBody, productFormFrom, productFormSchema, progressiveEligible, WARRANTY,
 } from '../../core/product-form';
 import { slugify } from '../../core/slug';
 import { t, TPipe } from '../../core/i18n';
-
-const LENS_LABEL: Record<string, string> = t('labels.lensType', { returnObjects: true });
-const REPL_LABEL: Record<string, string> = t('labels.replacement', { returnObjects: true });
 
 @Component({
   selector: 'app-productos',
@@ -57,25 +53,25 @@ const REPL_LABEL: Record<string, string> = t('labels.replacement', { returnObjec
             <div>
               <label for="shape" class="field-label">{{ 'productos.shape' | t }}</label>
               <select id="shape" class="field w-full" [formField]="model.shape">
-                @for (o of shapes; track o.value) { <option [value]="o.value">{{ o.label }}</option> }
+                @for (o of shapes(); track o.value) { <option [value]="o.value">{{ o.label }}</option> }
               </select>
             </div>
             <div>
               <label for="fmaterial" class="field-label">{{ 'productos.frameMaterial' | t }}</label>
               <select id="fmaterial" class="field w-full" [formField]="model.frame_material">
-                @for (o of frameMaterials; track o.value) { <option [value]="o.value">{{ o.label }}</option> }
+                @for (o of frameMaterials(); track o.value) { <option [value]="o.value">{{ o.label }}</option> }
               </select>
             </div>
             <div>
               <label for="rim" class="field-label">{{ 'productos.rim' | t }}</label>
               <select id="rim" class="field w-full" [formField]="model.rim">
-                @for (o of rims; track o.value) { <option [value]="o.value">{{ o.label }}</option> }
+                @for (o of rims(); track o.value) { <option [value]="o.value">{{ o.label }}</option> }
               </select>
             </div>
             <div>
               <label for="gender" class="field-label">{{ 'productos.gender' | t }}</label>
               <select id="gender" class="field w-full" [formField]="model.gender">
-                @for (o of genders; track o.value) { <option [value]="o.value">{{ o.label }}</option> }
+                @for (o of genders(); track o.value) { <option [value]="o.value">{{ o.label }}</option> }
               </select>
             </div>
             <div>
@@ -109,7 +105,7 @@ const REPL_LABEL: Record<string, string> = t('labels.replacement', { returnObjec
               <label for="fsize" class="field-label">{{ 'productos.size' | t }}</label>
               <select id="fsize" class="field w-full" [formField]="model.size">
                 <option value="">{{ 'productos.unknown' | t }}</option>
-                @for (o of sizes; track o.value) { <option [value]="o.value">{{ o.label }}</option> }
+                @for (o of sizes(); track o.value) { <option [value]="o.value">{{ o.label }}</option> }
               </select>
             </div>
             <div>
@@ -127,7 +123,7 @@ const REPL_LABEL: Record<string, string> = t('labels.replacement', { returnObjec
             <fieldset class="sm:col-span-2">
               <legend class="field-label">{{ 'productos.includes' | t }}</legend>
               <div class="grid gap-2 sm:grid-cols-2">
-                @for (o of includes; track o.value) {
+                @for (o of includes(); track o.value) {
                   <label class="flex items-center gap-2 text-sm"><input type="checkbox" [formField]="model.includes[o.value]" /> {{ o.label }}</label>
                 }
               </div>
@@ -135,8 +131,8 @@ const REPL_LABEL: Record<string, string> = t('labels.replacement', { returnObjec
             <div>
               <label for="warranty" class="field-label">{{ 'productos.warrantyMonths' | t }}</label>
               <input id="warranty" type="number" class="field w-full" [formField]="model.warranty_months"
-                [attr.aria-describedby]="state().includes.warranty ? null : 'warranty-hint'" />
-              @if (!state().includes.warranty) {
+                [attr.aria-describedby]="hasWarranty() ? null : 'warranty-hint'" />
+              @if (!hasWarranty()) {
                 <p id="warranty-hint" class="mt-1 text-xs text-muted-foreground">{{ 'productos.warrantyHint' | t }}</p>
               }
             </div>
@@ -144,13 +140,13 @@ const REPL_LABEL: Record<string, string> = t('labels.replacement', { returnObjec
           <div>
             <label for="lens" class="field-label">{{ 'productos.lensType' | t }}</label>
             <select id="lens" class="field w-full" [formField]="model.lens_type">
-              @for (o of lensTypes; track o.value) { <option [value]="o.value">{{ o.label }}</option> }
+              @for (o of lensTypes(); track o.value) { <option [value]="o.value">{{ o.label }}</option> }
             </select>
           </div>
           <div>
             <label for="repl" class="field-label">{{ 'productos.replacement' | t }}</label>
             <select id="repl" class="field w-full" [formField]="model.replacement">
-              @for (o of replacements; track o.value) { <option [value]="o.value">{{ o.label }}</option> }
+              @for (o of replacements(); track o.value) { <option [value]="o.value">{{ o.label }}</option> }
             </select>
           </div>
           <div>
@@ -228,8 +224,8 @@ const REPL_LABEL: Record<string, string> = t('labels.replacement', { returnObjec
             <tr>
               <td>{{ p.name }} <span class="font-normal text-muted-foreground">· {{ p.brand.name }}</span></td>
               <td [attr.data-label]="'productos.category' | t">{{ categoryLabel[p.category] }}</td>
-              <td [attr.data-label]="'common.type' | t">{{ p.frame ? shapeLabel[p.frame.shape] : lensLabel(p.lens_type) }}</td>
-              <td [attr.data-label]="'productos.replacement' | t">{{ replLabel(p.replacement) }}</td>
+              <td [attr.data-label]="'common.type' | t">{{ p.frame ? catalogs.label('frame_shape', p.frame.shape) : catalogs.label('lens_type', p.lens_type) }}</td>
+              <td [attr.data-label]="'productos.replacement' | t">{{ catalogs.label('replacement', p.replacement) }}</td>
               <td [attr.data-label]="'common.status' | t">
                 <span class="pill"><span class="size-1.5 rounded-full" [class]="p.active ? 'bg-good' : 'bg-muted-foreground'" aria-hidden="true"></span>{{ p.active ? ('common.active' | t) : ('common.inactive' | t) }}</span>
               </td>
@@ -261,29 +257,33 @@ export default class Productos implements OnInit {
   protected readonly error = signal<string | null>(null);
   protected readonly loadError = signal<string | null>(null);
 
-  protected readonly lensTypes = Object.values(LensType).map((v) => ({ value: v, label: LENS_LABEL[v] ?? v }));
-  protected readonly replacements = Object.values(Replacement).map((v) => ({ value: v, label: REPL_LABEL[v] ?? v }));
+  protected readonly catalogs = inject(CatalogStore);
+  /** Producto en edición tal como llegó: sus valores ocultos se siguen ofreciendo, marcados "(oculto)". */
+  private readonly original = signal<AdminProduct | null>(null);
+  protected readonly lensTypes = computed(() => this.catalogs.options('lens_type', this.original()?.lens_type));
+  protected readonly replacements = computed(() => this.catalogs.options('replacement', this.original()?.replacement));
   protected readonly categories = toOptions(CATEGORY_LABEL);
-  protected readonly shapes = toOptions(SHAPE_LABEL);
-  protected readonly frameMaterials = toOptions(MATERIAL_LABEL);
-  protected readonly rims = toOptions(RIM_LABEL);
-  protected readonly genders = toOptions(GENDER_LABEL);
-  protected readonly sizes = toOptions(SIZE_LABEL);
-  protected readonly includes = Object.values(FrameInclude).map((v) => ({ value: v, label: INCLUDE_LABEL[v] }));
+  protected readonly shapes = computed(() => this.catalogs.options('frame_shape', this.original()?.frame?.shape));
+  protected readonly frameMaterials = computed(() => this.catalogs.options('frame_material', this.original()?.frame?.material));
+  protected readonly rims = computed(() => this.catalogs.options('frame_rim', this.original()?.frame?.rim));
+  protected readonly genders = computed(() => this.catalogs.options('frame_gender', this.original()?.frame?.gender));
+  protected readonly sizes = computed(() => this.catalogs.options('frame_size', this.original()?.frame?.size));
+  // Solo las casillas que el formulario tiene (se arma con el catálogo al abrirlo).
+  protected readonly includes = computed(() =>
+    this.catalogs.options('frame_include', this.original()?.frame?.includes ?? []).filter((o) => o.value in this.state().includes),
+  );
   protected readonly tri = [
     { value: '', label: t('productos.unknown') },
     { value: 'yes', label: t('productos.yes') },
     { value: 'no', label: t('productos.no') },
   ];
   protected readonly categoryLabel = CATEGORY_LABEL;
-  protected readonly shapeLabel = SHAPE_LABEL;
-  protected lensLabel = (v: string | null) => (v ? (LENS_LABEL[v] ?? v) : '—');
-  protected replLabel = (v: string | null) => (v ? (REPL_LABEL[v] ?? v) : '—');
   private readonly category = signal<ProductCategory | null>(null);
 
   protected readonly state = signal(emptyProductForm());
   protected readonly model = form(this.state, productFormSchema(() => this.editingId() !== null));
   protected readonly isFrame = computed(() => this.state().category === ProductCategory.frame);
+  protected readonly hasWarranty = computed(() => this.state().includes[WARRANTY] === true);
   protected readonly progressiveText = computed(() => {
     const ok = progressiveEligible(this.state().lens_height_mm);
     return ok == null ? '—' : t(ok ? 'productos.yes' : 'productos.no');
@@ -292,8 +292,10 @@ export default class Productos implements OnInit {
 
   async ngOnInit() {
     try {
-      const [brands] = await Promise.all([firstValueFrom(this.api.listBrands()), this.load(false)]);
+      const [brands, catalogs] = await Promise.all([firstValueFrom(this.api.listBrands()), this.catalogs.load(), this.load(false)]);
       this.brands.set(brands.items);
+      // Sin catálogo no hay opciones de forma, color, tipo de lente…: se avisa en lugar de ofrecer un formulario vacío.
+      if (!catalogs) this.loadError.set(this.catalogs.error());
     } catch (e) {
       this.loadError.set(problemMessage(e, t('productos.loadFailed')));
     }
@@ -324,7 +326,8 @@ export default class Productos implements OnInit {
   protected startCreate() {
     this.slugTouched = false;
     this.editingId.set(null);
-    this.state.set(emptyProductForm());
+    this.original.set(null);
+    this.state.set(emptyProductForm(this.catalogs.catalogs()));
     this.error.set(null);
     this.editing.set(true);
   }
@@ -332,7 +335,8 @@ export default class Productos implements OnInit {
   protected startEdit(p: AdminProduct) {
     this.slugTouched = true;
     this.editingId.set(p.id);
-    this.state.set(productFormFrom(p));
+    this.original.set(p);
+    this.state.set(productFormFrom(p, this.catalogs.catalogs()));
     this.error.set(null);
     this.editing.set(true);
   }
