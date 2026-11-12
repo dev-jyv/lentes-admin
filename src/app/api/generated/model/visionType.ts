@@ -6,10 +6,14 @@
  * OpenAPI spec version: 0.1.0
  */
 
+/**
+ * `frame_only` (Solo armazón) no lleva micas, tratamiento ni receta.
+ */
 export type VisionType = typeof VisionType[keyof typeof VisionType];
 
 
 export const VisionType = {
+  frame_only: 'frame_only',
   none: 'none',
   single_vision: 'single_vision',
   progressive: 'progressive',

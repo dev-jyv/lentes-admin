@@ -1459,6 +1459,101 @@ paths:
           $ref: "#/components/responses/Problem"
         "404":
           $ref: "#/components/responses/Problem"
+  /v1/admin/lens-treatments:
+    get:
+      operationId: adminListLensTreatments
+      summary: Todos los tratamientos de micas, activos o no
+      security:
+        - bearerAuth: [admin]
+      responses:
+        "200":
+          description: Tratamientos en su orden
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: "#/components/schemas/AdminLensTreatment" }
+    post:
+      operationId: adminCreateLensTreatment
+      summary: Crea un tratamiento de micas
+      security:
+        - bearerAuth: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LensTreatmentInput" }
+      responses:
+        "201":
+          description: Tratamiento creado
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminLensTreatment" }
+        "400":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+  /v1/admin/lens-treatments/order:
+    put:
+      operationId: adminReorderLensTreatments
+      summary: Fija el orden completo de los tratamientos
+      security:
+        - bearerAuth: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [treatment_ids]
+              properties:
+                treatment_ids:
+                  type: array
+                  items: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Tratamientos en su nuevo orden
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: "#/components/schemas/AdminLensTreatment" }
+        "400":
+          $ref: "#/components/responses/Problem"
+  /v1/admin/lens-treatments/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    put:
+      operationId: adminUpdateLensTreatment
+      summary: Reemplaza los datos de un tratamiento; se desactiva, no se borra
+      security:
+        - bearerAuth: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LensTreatmentInput" }
+      responses:
+        "200":
+          description: Tratamiento actualizado
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminLensTreatment" }
+        "400":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
   /v1/admin/catalogs:
     get:
       operationId: adminListCatalogs
@@ -1960,13 +2055,17 @@ components:
               items: { $ref: "#/components/schemas/Product" }
     VisionType:
       type: string
-      enum: [none, single_vision, progressive]
+      description: "`frame_only` (Solo armazón) no lleva micas, tratamiento ni receta."
+      enum: [frame_only, none, single_vision, progressive]
+    TreatmentIcon:
+      type: string
+      enum: [anti_reflective, color, blue_light, premium, photochromic, polarized]
     PrescriptionKind:
       type: string
       enum: [contact_lens, glasses]
     LensPackage:
       type: object
-      required: [id, name, slug, description, vision_type, requires_prescription, price_cents]
+      required: [id, name, slug, description, vision_type, requires_prescription, price_cents, badge]
       properties:
         id: { type: string, format: uuid }
         name: { type: string }
@@ -1975,6 +2074,7 @@ components:
         vision_type: { $ref: "#/components/schemas/VisionType" }
         requires_prescription: { type: boolean }
         price_cents: { type: integer, format: int64, minimum: 0 }
+        badge: { type: string, nullable: true, description: "Etiqueta de la tarjeta, p. ej. Comprar en set." }
     AdminLensPackage:
       allOf:
         - $ref: "#/components/schemas/LensPackage"
@@ -1993,6 +2093,53 @@ components:
         vision_type: { $ref: "#/components/schemas/VisionType" }
         price_cents: { type: integer, format: int64, minimum: 0 }
         active: { type: boolean }
+        badge: { type: string, nullable: true, maxLength: 24 }
+    LensTreatment:
+      type: object
+      required: [id, name, slug, description, icon, badge, price_cents, vision_types]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        slug: { type: string }
+        description: { type: string, nullable: true }
+        icon: { $ref: "#/components/schemas/TreatmentIcon" }
+        badge: { type: string, nullable: true }
+        price_cents: { type: integer, format: int64, minimum: 0 }
+        vision_types:
+          type: array
+          minItems: 1
+          description: Necesidades visuales a las que aplica; nunca `frame_only`.
+          items: { $ref: "#/components/schemas/VisionType" }
+    AdminLensTreatment:
+      allOf:
+        - $ref: "#/components/schemas/LensTreatment"
+        - type: object
+          required: [position, active]
+          properties:
+            position: { type: integer }
+            active: { type: boolean }
+    LensTreatmentInput:
+      type: object
+      required: [name, slug, icon, price_cents, vision_types, active]
+      properties:
+        name: { type: string, maxLength: 60 }
+        slug: { type: string }
+        description: { type: string, nullable: true, maxLength: 160 }
+        icon: { $ref: "#/components/schemas/TreatmentIcon" }
+        badge: { type: string, nullable: true, maxLength: 24 }
+        price_cents: { type: integer, format: int64, minimum: 0 }
+        vision_types:
+          type: array
+          minItems: 1
+          items: { $ref: "#/components/schemas/VisionType" }
+        active: { type: boolean }
+    LensTreatmentRef:
+      type: object
+      description: Tratamiento de una línea de carrito o de pedido.
+      required: [name, slug]
+      properties:
+        name: { type: string }
+        slug: { type: string }
     ProductCategory:
       type: string
       enum: [contact_lens, frame]
@@ -2269,12 +2416,16 @@ components:
       allOf:
         - $ref: "#/components/schemas/Product"
         - type: object
-          required: [images, options, frame_variants, lens_packages, frame_lead_time_days]
+          required: [images, options, frame_variants, lens_packages, lens_treatments, frame_lead_time_days]
           properties:
             lens_packages:
               description: Paquetes de micas activos; vacío en lentes de contacto o con la venta de armazones desactivada.
               type: array
               items: { $ref: "#/components/schemas/LensPackage" }
+            lens_treatments:
+              description: Tratamientos de micas activos en su orden; vacío en lentes de contacto o con la venta de armazones desactivada.
+              type: array
+              items: { $ref: "#/components/schemas/LensTreatment" }
             frame_lead_time_days:
               type: integer
               nullable: true
@@ -2430,6 +2581,11 @@ components:
         eye: { $ref: "#/components/schemas/Eye" }
         quantity: { type: integer, minimum: 1, maximum: 12 }
         lens_package_id: { type: string, format: uuid, nullable: true, description: "Requerido en armazones, con eye = both; prohibido en lentes de contacto." }
+        lens_treatment_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: "Prohibido con `frame_only` y en lentes de contacto. Con otra necesidad es requerido si hay al menos un tratamiento activo que le aplique."
     CartItemUpdate:
       type: object
       required: [quantity]
@@ -2440,7 +2596,7 @@ components:
       enum: [right, left, both]
     CartItem:
       type: object
-      required: [id, category, variant_id, sku, eye, quantity, unit_price_cents, line_total_cents, available, on_demand, purchasable, product, base_curve, diameter, lens_package, frame_price_cents, package_price_cents]
+      required: [id, category, variant_id, sku, eye, quantity, unit_price_cents, line_total_cents, available, on_demand, purchasable, product, base_curve, diameter, lens_package, frame_price_cents, package_price_cents, lens_treatment, treatment_price_cents]
       properties:
         id: { type: string, format: uuid }
         variant_id: { type: string, format: uuid }
@@ -2451,7 +2607,7 @@ components:
         line_total_cents: { type: integer, format: int64 }
         available: { type: integer, description: "stock - reserved ahora mismo; con `on_demand` es un tope técnico (9999)" }
         on_demand: { type: boolean, description: "Se surte por pedido" }
-        purchasable: { type: boolean, description: "false si la variante, el producto o el paquete de micas ya no están activos" }
+        purchasable: { type: boolean, description: "false si la variante, el producto o el paquete de micas ya no están activos, o si el tratamiento se desactivó o ya no aplica a la necesidad" }
         category: { $ref: "#/components/schemas/ProductCategory" }
         lens_package:
           type: object
@@ -2463,6 +2619,8 @@ components:
             requires_prescription: { type: boolean }
         frame_price_cents: { type: integer, format: int64, nullable: true }
         package_price_cents: { type: integer, format: int64, nullable: true }
+        lens_treatment: { allOf: [{ $ref: "#/components/schemas/LensTreatmentRef" }], nullable: true }
+        treatment_price_cents: { type: integer, format: int64, nullable: true, description: "Precio vigente del tratamiento; `null` sin tratamiento" }
         product:
           type: object
           required: [name, slug, brand, requires_prescription]
@@ -2514,10 +2672,12 @@ components:
       enum: [pending_payment, paid, preparing, shipped, delivered, cancelled, refunded, expired]
     OrderItem:
       type: object
-      required: [category, product_name, brand_name, product_slug, sku, eye, quantity, unit_price_cents, base_curve, diameter, lens_package_name]
+      required: [category, product_name, brand_name, product_slug, sku, eye, quantity, unit_price_cents, base_curve, diameter, lens_package_name, lens_treatment, treatment_price_cents]
       properties:
         category: { $ref: "#/components/schemas/ProductCategory" }
         lens_package_name: { type: string, nullable: true }
+        lens_treatment: { allOf: [{ $ref: "#/components/schemas/LensTreatmentRef" }], nullable: true }
+        treatment_price_cents: { type: integer, format: int64, nullable: true, description: "Precio del tratamiento congelado en el pedido" }
         product_name: { type: string }
         brand_name: { type: string }
         product_slug: { type: string }
@@ -2648,11 +2808,13 @@ components:
         paid_at: { type: string, format: date-time, nullable: true }
     AdminOrderLine:
       type: object
-      required: [category, sku, product_name, brand_name, eye, quantity, unit_price_cents, description, color, lens_package_name, vision_type]
+      required: [category, sku, product_name, brand_name, eye, quantity, unit_price_cents, description, color, lens_package_name, vision_type, lens_treatment, treatment_price_cents]
       properties:
         category: { $ref: "#/components/schemas/ProductCategory" }
         color: { type: string, nullable: true }
         lens_package_name: { type: string, nullable: true }
+        lens_treatment: { allOf: [{ $ref: "#/components/schemas/LensTreatmentRef" }], nullable: true }
+        treatment_price_cents: { type: integer, format: int64, nullable: true, description: "Precio del tratamiento congelado en el pedido" }
         vision_type: { allOf: [{ $ref: "#/components/schemas/VisionType" }], nullable: true }
         sku: { type: string }
         product_name: { type: string }

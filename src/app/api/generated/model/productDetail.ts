@@ -7,6 +7,7 @@
  */
 import type { FrameVariant } from './frameVariant';
 import type { LensPackage } from './lensPackage';
+import type { LensTreatment } from './lensTreatment';
 import type { Product } from './product';
 import type { ProductImage } from './productImage';
 import type { ProductOptions } from './productOptions';
@@ -14,6 +15,8 @@ import type { ProductOptions } from './productOptions';
 export type ProductDetail = Product & ({
   /** Paquetes de micas activos; vacío en lentes de contacto o con la venta de armazones desactivada. */
   lens_packages: LensPackage[];
+  /** Tratamientos de micas activos en su orden; vacío en lentes de contacto o con la venta de armazones desactivada. */
+  lens_treatments: LensTreatment[];
   /**
      * Días estimados de entrega; `null` con la venta de armazones desactivada.
      * @nullable

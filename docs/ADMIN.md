@@ -44,6 +44,7 @@ Sin SSR: es un SPA interno, no necesita SEO.
 | A5 | Inventario (ajustes con motivo e historial, stock bajo) y reportes (ventas, recompra) | **Real** (`lentes-api`: inventario B9, reportes B10) | `/v1/admin/variants/{id}/stock-adjustments`, `/v1/admin/inventory/low-stock`, `/v1/admin/reports/sales` y `/repurchase` |
 | A6 | Contenido de la tienda (SPEC 15): pantalla "Home" con barra, heroes (con imagen o ilustración de marca), secundarios, megamenú, mosaico y promesas | **Contra el contrato real, sin desplegar** (`lentes-api` rama `feature/catalog-values`) | `/v1/admin/home/banners*` con `menu`, `slot`, `icon` y `art` |
 | A7 | Catálogos de atributos (SPEC 16): pantalla "Catálogos"; formularios de producto y variante con opciones del catálogo | **Contra el contrato real, sin desplegar** (misma rama) | `/v1/admin/catalogs*` |
+| A8 | Micas por pasos (SPEC 17): pestañas "Necesidades visuales" (paquetes, con `frame_only` y etiqueta) y "Tratamientos"; tratamiento y su precio en el detalle del pedido | **Contra el contrato real, sin desplegar** (`lentes-api` rama `feature/lens-treatments`) | `/v1/admin/lens-treatments*`, `badge` en `/v1/admin/lens-packages*` |
 
 Regla: una fase se **cierra** cuando su endpoint existe en `lentes-api/api/openapi.yaml`. Si el endpoint aún no existe, la UI se construye
 contra una propuesta de contrato (que pasa a `lentes-api` al publicarse) para no frenar al admin.
@@ -87,6 +88,12 @@ Todo el admin usa el contrato real (`openapi/openapi.yaml`, copia de `lentes-api
     Se ordena con botones, como las imágenes. "Borrar" solo aparece en valores sin uso que no son de sistema; si la API responde `409`, se muestra su mensaje.
     Un color nuevo exige muestra (`#rrggbb` o `conic-gradient` de 2 a 12 colores). En los formularios, un valor oculto no se ofrece para altas;
     al editar un producto que ya lo tiene aparece como "(oculto)" y se conserva.
+17. **Micas (A8, SPEC 17).** La pantalla tiene dos pestañas. "Necesidades visuales" son los paquetes: admiten "Solo armazón" (`frame_only`)
+    y una etiqueta opcional (máx. 24, p. ej. "Comprar en set"); si requiere receta lo decide la API (solo visión sencilla y progresiva).
+    "Tratamientos" se crean, editan, ordenan con botones y se desactivan con "Activo"; **no se borran** porque los pedidos los citan.
+    Cada uno pide nombre (máx. 60), slug, descripción opcional (máx. 160), ícono de un conjunto cerrado, etiqueta opcional, precio extra
+    y al menos una necesidad (Sin graduación, Visión sencilla, Visión progresiva; nunca "Solo armazón"). Validación en `core/lens-treatments.ts`, con pruebas.
+    Las etiquetas de necesidad son las de la tienda: "Solo armazón", "Sin graduación", "Visión sencilla", "Visión progresiva".
 
 ## Pendientes de decisión (necesitan tu confirmación)
 

@@ -17,4 +17,9 @@ export interface LensPackage {
   requires_prescription: boolean;
   /** @minimum 0 */
   price_cents: number;
+  /**
+     * Etiqueta de la tarjeta, p. ej. Comprar en set.
+     * @nullable
+     */
+  badge: string | null;
 }

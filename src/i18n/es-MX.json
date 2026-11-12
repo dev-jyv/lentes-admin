@@ -32,9 +32,18 @@
       "expired": "Expirado"
     },
     "vision": {
+      "frame_only": "Solo armazón",
       "none": "Sin graduación",
-      "single_vision": "Monofocal",
-      "progressive": "Progresiva"
+      "single_vision": "Visión sencilla",
+      "progressive": "Visión progresiva"
+    },
+    "treatmentIcon": {
+      "anti_reflective": "Antirreflejante",
+      "color": "Color",
+      "blue_light": "Luz azul",
+      "premium": "Premium",
+      "photochromic": "Fotocromático",
+      "polarized": "Polarizado"
     },
     "rxStatus": {
       "pending": "En revisión",
@@ -145,6 +154,7 @@
     "type": "Tipo",
     "edit": "Editar",
     "checkRequired": "Revisa los campos obligatorios.",
+    "checkLength": "Un campo excede el largo permitido.",
     "active": "Activo",
     "inactive": "Inactivo",
     "choose": "Elegir…"
@@ -228,7 +238,9 @@
     "items": "Artículos",
     "eye": "Ojo",
     "quantity": "Cant.",
-    "vision": "Visión: {{type}}",
+    "vision": "Necesidad visual: {{type}}",
+    "package": "Paquete: {{name}}",
+    "treatment": "Tratamiento: {{name}} ({{price}})",
     "fullPair": "Par completo",
     "subtotal": "Subtotal",
     "shipping": "Envío",
@@ -350,7 +362,7 @@
     "new": "Nuevo paquete",
     "edit": "Editar paquete",
     "visionType": "Tipo de visión",
-    "visionHint": "Solo “Sin graduación” se vende sin receta.",
+    "visionHint": "“Solo armazón” y “Sin graduación” se venden sin receta.",
     "pricePesos": "Precio (MXN)",
     "package": "Paquete",
     "prescription": "Receta",
@@ -360,7 +372,14 @@
     "activeForSale": "Activo (a la venta)",
     "requires": "Requiere",
     "moveUp": "Subir {{name}}",
-    "moveDown": "Bajar {{name}}"
+    "moveDown": "Bajar {{name}}",
+    "tabsLabel": "Secciones de micas",
+    "tabs": {
+      "packages": "Necesidades visuales",
+      "treatments": "Tratamientos"
+    },
+    "badge": "Etiqueta (opcional, máx. 24)",
+    "badgeHint": "Se muestra en la tarjeta, por ejemplo “Comprar en set”."
   },
   "productos": {
     "edit": "Editar producto",
@@ -593,5 +612,21 @@
       "swatchRequired": "Un color nuevo necesita su muestra de color.",
       "swatchInvalid": "Usa #rrggbb, o conic-gradient(#rrggbb, #rrggbb, …) con 2 a 12 colores."
     }
+  },
+  "tratamientos": {
+    "hint": "Los tratamientos no se borran porque los pedidos los citan: desactívalos y dejan de ofrecerse.",
+    "new": "Nuevo tratamiento",
+    "edit": "Editar tratamiento",
+    "name": "Nombre (máx. 60)",
+    "description": "Descripción (opcional, máx. 160)",
+    "icon": "Ícono",
+    "pricePesos": "Precio extra (MXN)",
+    "visionTypes": "Aplica a",
+    "visionTypesHint": "“Solo armazón” no lleva tratamiento.",
+    "treatment": "Tratamiento",
+    "visionTypesRequired": "Elige al menos una necesidad visual.",
+    "empty": "Aún no hay tratamientos.",
+    "loadFailed": "No se pudieron cargar los tratamientos.",
+    "saveFailed": "No se pudo guardar el tratamiento (¿slug repetido?)."
   }
 }

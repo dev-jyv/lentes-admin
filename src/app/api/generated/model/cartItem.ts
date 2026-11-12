@@ -8,6 +8,7 @@
 import type { CartItemLensPackage } from './cartItemLensPackage';
 import type { CartItemProduct } from './cartItemProduct';
 import type { Eye } from './eye';
+import type { LensTreatmentRef } from './lensTreatmentRef';
 import type { ProductCategory } from './productCategory';
 
 export interface CartItem {
@@ -22,7 +23,7 @@ export interface CartItem {
   available: number;
   /** Se surte por pedido */
   on_demand: boolean;
-  /** false si la variante, el producto o el paquete de micas ya no están activos */
+  /** false si la variante, el producto o el paquete de micas ya no están activos, o si el tratamiento se desactivó o ya no aplica a la necesidad */
   purchasable: boolean;
   category: ProductCategory;
   /** @nullable */
@@ -31,6 +32,12 @@ export interface CartItem {
   frame_price_cents: number | null;
   /** @nullable */
   package_price_cents: number | null;
+  lens_treatment: LensTreatmentRef | null;
+  /**
+     * Precio vigente del tratamiento; `null` sin tratamiento
+     * @nullable
+     */
+  treatment_price_cents: number | null;
   product: CartItemProduct;
   /** @nullable */
   sphere?: number | null;
