@@ -6,6 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { Eye } from './eye';
+import type { LensTreatmentRef } from './lensTreatmentRef';
 import type { ProductCategory } from './productCategory';
 import type { VisionType } from './visionType';
 
@@ -15,6 +16,12 @@ export interface AdminOrderLine {
   color: string | null;
   /** @nullable */
   lens_package_name: string | null;
+  lens_treatment: LensTreatmentRef | null;
+  /**
+     * Precio del tratamiento congelado en el pedido
+     * @nullable
+     */
+  treatment_price_cents: number | null;
   vision_type: VisionType | null;
   sku: string;
   product_name: string;

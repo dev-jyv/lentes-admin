@@ -20,4 +20,9 @@ export interface CartItemInput {
      * @nullable
      */
   lens_package_id?: string | null;
+  /**
+     * Prohibido con `frame_only` y en lentes de contacto. Con otra necesidad es requerido si hay al menos un tratamiento activo que le aplique.
+     * @nullable
+     */
+  lens_treatment_id?: string | null;
 }

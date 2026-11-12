@@ -16,4 +16,9 @@ export interface LensPackageInput {
   /** @minimum 0 */
   price_cents: number;
   active: boolean;
+  /**
+     * @maxLength 24
+     * @nullable
+     */
+  badge?: string | null;
 }

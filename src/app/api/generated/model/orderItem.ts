@@ -6,12 +6,19 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { Eye } from './eye';
+import type { LensTreatmentRef } from './lensTreatmentRef';
 import type { ProductCategory } from './productCategory';
 
 export interface OrderItem {
   category: ProductCategory;
   /** @nullable */
   lens_package_name: string | null;
+  lens_treatment: LensTreatmentRef | null;
+  /**
+     * Precio del tratamiento congelado en el pedido
+     * @nullable
+     */
+  treatment_price_cents: number | null;
   product_name: string;
   brand_name: string;
   product_slug: string;

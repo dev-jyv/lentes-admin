@@ -30,10 +30,12 @@ import type {
   AdminHomeBanner,
   AdminImportVariants200,
   AdminLensPackage,
+  AdminLensTreatment,
   AdminListHomeBanners200,
   AdminListHomeFeatured200,
   AdminListHomeFeaturedParams,
   AdminListLensPackages200,
+  AdminListLensTreatments200,
   AdminListLowStock200,
   AdminListLowStockParams,
   AdminListOrders200,
@@ -54,6 +56,8 @@ import type {
   AdminReorderHomeBannersBody,
   AdminReorderLensPackages200,
   AdminReorderLensPackagesBody,
+  AdminReorderLensTreatments200,
+  AdminReorderLensTreatmentsBody,
   AdminReorderProductImages200,
   AdminRepurchaseReportParams,
   AdminSalesReportParams,
@@ -89,6 +93,7 @@ import type {
   ImageUpload,
   ImageUploadInput,
   LensPackageInput,
+  LensTreatmentInput,
   ListAddresses200,
   ListBrands200,
   ListBrandsParams,
@@ -2473,6 +2478,151 @@ export class DefaultService {
     );
   }
 /**
+ * @summary Todos los tratamientos de micas, activos o no
+ */
+ adminListLensTreatments<TData = AdminListLensTreatments200>( options?: HttpClientBodyOptions): Observable<TData>;
+ adminListLensTreatments<TData = AdminListLensTreatments200>( options?: HttpClientEventOptions): Observable<HttpEvent<TData>>;
+ adminListLensTreatments<TData = AdminListLensTreatments200>( options?: HttpClientResponseOptions): Observable<AngularHttpResponse<TData>>;
+  adminListLensTreatments<TData = AdminListLensTreatments200>(
+     options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.get<TData>(
+      `/v1/admin/lens-treatments`,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+      }
+    );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.get<TData>(
+      `/v1/admin/lens-treatments`,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+      }
+    );
+    }
+
+    return this.http.get<TData>(
+      `/v1/admin/lens-treatments`,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+      }
+    );
+  }
+/**
+ * @summary Crea un tratamiento de micas
+ */
+ adminCreateLensTreatment<TData = AdminLensTreatment>(lensTreatmentInput: LensTreatmentInput, options?: HttpClientBodyOptions): Observable<TData>;
+ adminCreateLensTreatment<TData = AdminLensTreatment>(lensTreatmentInput: LensTreatmentInput, options?: HttpClientEventOptions): Observable<HttpEvent<TData>>;
+ adminCreateLensTreatment<TData = AdminLensTreatment>(lensTreatmentInput: LensTreatmentInput, options?: HttpClientResponseOptions): Observable<AngularHttpResponse<TData>>;
+  adminCreateLensTreatment<TData = AdminLensTreatment>(
+    lensTreatmentInput: LensTreatmentInput, options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.post<TData>(
+      `/v1/admin/lens-treatments`,
+      lensTreatmentInput,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+      }
+    );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.post<TData>(
+      `/v1/admin/lens-treatments`,
+      lensTreatmentInput,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+      }
+    );
+    }
+
+    return this.http.post<TData>(
+      `/v1/admin/lens-treatments`,
+      lensTreatmentInput,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+      }
+    );
+  }
+/**
+ * @summary Fija el orden completo de los tratamientos
+ */
+ adminReorderLensTreatments<TData = AdminReorderLensTreatments200>(adminReorderLensTreatmentsBody: AdminReorderLensTreatmentsBody, options?: HttpClientBodyOptions): Observable<TData>;
+ adminReorderLensTreatments<TData = AdminReorderLensTreatments200>(adminReorderLensTreatmentsBody: AdminReorderLensTreatmentsBody, options?: HttpClientEventOptions): Observable<HttpEvent<TData>>;
+ adminReorderLensTreatments<TData = AdminReorderLensTreatments200>(adminReorderLensTreatmentsBody: AdminReorderLensTreatmentsBody, options?: HttpClientResponseOptions): Observable<AngularHttpResponse<TData>>;
+  adminReorderLensTreatments<TData = AdminReorderLensTreatments200>(
+    adminReorderLensTreatmentsBody: AdminReorderLensTreatmentsBody, options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.put<TData>(
+      `/v1/admin/lens-treatments/order`,
+      adminReorderLensTreatmentsBody,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+      }
+    );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.put<TData>(
+      `/v1/admin/lens-treatments/order`,
+      adminReorderLensTreatmentsBody,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+      }
+    );
+    }
+
+    return this.http.put<TData>(
+      `/v1/admin/lens-treatments/order`,
+      adminReorderLensTreatmentsBody,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+      }
+    );
+  }
+/**
+ * @summary Reemplaza los datos de un tratamiento; se desactiva, no se borra
+ */
+ adminUpdateLensTreatment<TData = AdminLensTreatment>(id: string,
+    lensTreatmentInput: LensTreatmentInput, options?: HttpClientBodyOptions): Observable<TData>;
+ adminUpdateLensTreatment<TData = AdminLensTreatment>(id: string,
+    lensTreatmentInput: LensTreatmentInput, options?: HttpClientEventOptions): Observable<HttpEvent<TData>>;
+ adminUpdateLensTreatment<TData = AdminLensTreatment>(id: string,
+    lensTreatmentInput: LensTreatmentInput, options?: HttpClientResponseOptions): Observable<AngularHttpResponse<TData>>;
+  adminUpdateLensTreatment<TData = AdminLensTreatment>(
+    id: string,
+    lensTreatmentInput: LensTreatmentInput, options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.put<TData>(
+      `/v1/admin/lens-treatments/${id}`,
+      lensTreatmentInput,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+      }
+    );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.put<TData>(
+      `/v1/admin/lens-treatments/${id}`,
+      lensTreatmentInput,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+      }
+    );
+    }
+
+    return this.http.put<TData>(
+      `/v1/admin/lens-treatments/${id}`,
+      lensTreatmentInput,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+      }
+    );
+  }
+/**
  * @summary Todos los catálogos, con valores ocultos y cuántos productos usan cada valor
  */
  adminListCatalogs<TData = Catalogs>( options?: HttpClientBodyOptions): Observable<TData>;
@@ -3029,6 +3179,10 @@ export type AdminListLensPackagesClientResult = NonNullable<AdminListLensPackage
 export type AdminCreateLensPackageClientResult = NonNullable<AdminLensPackage>
 export type AdminReorderLensPackagesClientResult = NonNullable<AdminReorderLensPackages200>
 export type AdminUpdateLensPackageClientResult = NonNullable<AdminLensPackage>
+export type AdminListLensTreatmentsClientResult = NonNullable<AdminListLensTreatments200>
+export type AdminCreateLensTreatmentClientResult = NonNullable<AdminLensTreatment>
+export type AdminReorderLensTreatmentsClientResult = NonNullable<AdminReorderLensTreatments200>
+export type AdminUpdateLensTreatmentClientResult = NonNullable<AdminLensTreatment>
 export type AdminListCatalogsClientResult = NonNullable<Catalogs>
 export type AdminCreateCatalogValueClientResult = NonNullable<CatalogValue>
 export type AdminUpdateCatalogValueClientResult = NonNullable<CatalogValue>

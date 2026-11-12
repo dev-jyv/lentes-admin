@@ -2,8 +2,9 @@ import { Component, computed, inject, input, OnInit, signal } from '@angular/cor
 import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { DefaultService } from '../../api/generated/default/default.service';
-import type { AdminOrder, OrderStatus } from '../../api/generated/model';
+import type { AdminOrder, OrderStatus, VisionType } from '../../api/generated/model';
 import { formatDateTime } from '../../core/format';
+import { VISION_LABEL } from '../../core/lens-treatments';
 import { formatMxn } from '../../core/money';
 import { nextStatuses, orderFolio, requiresTracking, STATUS_LABEL } from '../../core/order-flow';
 import { problemMessage } from '../../core/problem';
@@ -35,7 +36,8 @@ const CARRIERS = ['Estafeta', 'DHL', 'FedEx', 'Paquetexpress', 'Redpack', 'Corre
                 @for (l of o.items; track $index) {
                   <tr>
                     <td>{{ l.product_name }} <span class="font-normal text-muted-foreground">· {{ l.brand_name }}</span><br /><span class="text-xs font-normal text-muted-foreground"><span class="optic">{{ l.sku }}</span> {{ l.description }}</span>
-                      @if (l.vision_type) { <br /><span class="text-xs text-muted-foreground">{{ 'pedido.vision' | t: { type: vision(l.vision_type) } }}</span> }
+                      @if (l.vision_type) { <br /><span class="text-xs text-muted-foreground">{{ 'pedido.vision' | t: { type: vision(l.vision_type) } }}@if (l.lens_package_name) { · {{ 'pedido.package' | t: { name: l.lens_package_name } }} }</span> }
+                      @if (l.lens_treatment) { <br /><span class="text-xs text-muted-foreground">{{ 'pedido.treatment' | t: { name: l.lens_treatment.name, price: money(l.treatment_price_cents ?? 0) } }}</span> }
                     </td>
                     <td [attr.data-label]="'pedido.eye' | t">{{ l.category === 'frame' ? ('pedido.fullPair' | t) : eye(l.eye) }}</td>
                     <td class="text-right tabular-nums" [attr.data-label]="'pedido.quantity' | t">{{ l.quantity }}</td>
@@ -163,7 +165,7 @@ export default class Pedido implements OnInit {
   protected eye = (e: string) => ({ right: t('pedido.eyes.right'), left: t('pedido.eyes.left'), both: t('pedido.eyes.both') })[e] ?? e;
   protected action = (s: OrderStatus) =>
     ({ preparing: t('pedido.actions.preparing'), shipped: t('pedido.actions.shipped'), delivered: t('pedido.actions.delivered'), cancelled: t('pedido.actions.cancelled') })[s as string] ?? STATUS_LABEL[s];
-  protected vision = (v: string) => ({ none: t('labels.vision.none'), single_vision: t('labels.vision.single_vision'), progressive: t('labels.vision.progressive') })[v] ?? v;
+  protected vision = (v: VisionType) => VISION_LABEL[v] ?? v;
   protected rxLabel = (s: string | null | undefined) => ({ pending: t('labels.rxStatus.pending'), approved: t('labels.rxStatus.approved'), rejected: t('labels.rxStatus.rejected') })[s ?? ''] ?? '—';
   protected val = (e: Event) => (e.target as HTMLInputElement).value;
 
