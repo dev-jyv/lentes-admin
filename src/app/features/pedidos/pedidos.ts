@@ -14,7 +14,7 @@ import { OrderStatusBadge } from '../../shared/order-status-badge';
   selector: 'app-pedidos',
   imports: [RouterLink, TPipe, OrderStatusBadge],
   template: `
-    <h1 class="page-title mb-5">{{ 'nav.pedidos' | t }}</h1>
+    <h1 class="page-head page-title mb-5 lg:mb-6">{{ 'nav.pedidos' | t }}</h1>
 
     <!-- Filtro por estado como chips: se recorre con el pulgar en el teléfono. -->
     <div role="group" [attr.aria-label]="'pedidos.filterLabel' | t" class="-mx-4 mb-4 flex gap-2 overflow-x-auto px-4 pb-1 md:mx-0 md:flex-wrap md:px-0">

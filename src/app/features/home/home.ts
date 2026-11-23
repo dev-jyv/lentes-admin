@@ -35,13 +35,13 @@ type FeaturedItem = Pick<Product, 'id' | 'name' | 'brand'> & { active?: boolean;
   selector: 'app-home-content',
   imports: [FormField, TPipe, BannerTable, MosaicGrid, PromiseIconView],
   template: `
-    <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+    <div class="page-head">
       <h1 class="page-title">{{ 'nav.home' | t }}</h1>
       <button type="button" class="btn btn-primary" (click)="startCreate()">{{ 'homeAdmin.newBanner' | t }}</button>
     </div>
 
     @if (editing()) {
-      <section class="panel mb-8 max-w-3xl p-5 shadow-[0_4px_16px_rgb(14_34_48/0.08)]" aria-labelledby="btitle">
+      <section class="panel-raised mb-8 max-w-3xl p-5" aria-labelledby="btitle">
         <h2 #formTitle id="btitle" tabindex="-1" class="mb-1 text-lg outline-none">{{ editingId() ? ('homeAdmin.editBanner' | t) : ('homeAdmin.newBanner' | t) }}</h2>
         <p class="mb-3 text-sm text-muted-foreground">{{ 'homeAdmin.honesty' | t }}</p>
         <form class="grid gap-4 sm:grid-cols-2" (submit)="save($event)">
@@ -88,7 +88,7 @@ type FeaturedItem = Pick<Product, 'id' | 'name' | 'brand'> & { active?: boolean;
                 }
               </div>
               @if (state().icon === 'delivery') {
-                <p id="icon-warning" class="mt-2 rounded-lg bg-amber-soft px-3 py-2 text-sm text-foreground">{{ 'homeAdmin.deliveryWarning' | t }}</p>
+                <p id="icon-warning" class="mt-2 rounded-lg bg-sun-soft px-3 py-2 text-sm text-foreground">{{ 'homeAdmin.deliveryWarning' | t }}</p>
               }
             </fieldset>
           }

@@ -11,8 +11,12 @@ import { t, TPipe } from '../../core/i18n';
   selector: 'app-inventario',
   imports: [RouterLink, StockAdjust, TPipe],
   template: `
-    <h1 class="page-title mb-1">{{ 'nav.inventario' | t }}</h1>
-    <p class="mb-6 text-sm text-muted-foreground">{{ 'inventario.description' | t }}</p>
+    <header class="page-head">
+      <div>
+        <h1 class="page-title">{{ 'nav.inventario' | t }}</h1>
+        <p class="page-sub">{{ 'inventario.description' | t }}</p>
+      </div>
+    </header>
     <div class="mb-4 flex items-center gap-3">
       <label for="thr" class="text-sm font-medium">{{ 'inventario.threshold' | t }}</label>
       <input id="thr" type="number" min="0" class="field w-24" [value]="threshold()" (change)="setThreshold($event)" />
@@ -44,7 +48,7 @@ import { t, TPipe } from '../../core/i18n';
               <td class="text-right tabular-nums" [attr.data-label]="'inventario.stock' | t">{{ v.stock }}</td>
               <td class="text-right tabular-nums" [attr.data-label]="'inventario.reserved' | t">{{ v.reserved }}</td>
               <td class="text-right" [attr.data-label]="'inventario.available' | t">
-                <span class="pill font-semibold tabular-nums" [class]="v.available <= 0 ? 'bg-destructive/10 text-destructive' : 'bg-amber-soft'">{{ v.available }}</span>
+                <span class="pill font-semibold tabular-nums" [class]="v.available <= 0 ? 'bg-destructive/10 text-destructive' : 'bg-sun-soft'">{{ v.available }}</span>
               </td>
               <td class="actions">
                 <button type="button" class="link" (click)="selected.set(v)">{{ 'inventario.adjust' | t }}</button>

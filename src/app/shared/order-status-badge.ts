@@ -5,7 +5,7 @@ import { STATUS_LABEL } from '../core/order-flow';
 // El color va solo en el punto; el texto conserva el color de tinta para cumplir contraste AA.
 const DOT: Record<OrderStatus, string> = {
   pending_payment: 'bg-muted-foreground',
-  paid: 'bg-amber',
+  paid: 'bg-sun',
   preparing: 'bg-primary',
   shipped: 'bg-primary',
   delivered: 'bg-good',

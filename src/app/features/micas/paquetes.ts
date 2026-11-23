@@ -37,7 +37,7 @@ const empty = (): PackageForm => ({
     </div>
 
     @if (editing()) {
-      <section class="panel mb-8 max-w-3xl p-5 shadow-[0_4px_16px_rgb(14_34_48/0.08)]" aria-labelledby="ptitle">
+      <section class="panel-raised mb-8 max-w-3xl p-5" aria-labelledby="ptitle">
         <h3 id="ptitle" class="mb-3 text-lg">{{ editingId() ? ('micas.edit' | t) : ('micas.new' | t) }}</h3>
         <form class="grid gap-4 sm:grid-cols-2" (submit)="save($event)">
           <div>

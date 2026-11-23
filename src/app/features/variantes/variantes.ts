@@ -42,13 +42,13 @@ const fmt = (n: number | null | undefined) => (n == null ? '—' : String(n));
   imports: [FormField, RouterLink, StockAdjust, TPipe],
   template: `
     <a routerLink="/productos" class="back-link">{{ 'imagenes.back' | t }}</a>
-    <div class="my-4 flex flex-wrap items-center justify-between gap-3">
+    <div class="page-head mt-3">
       <h1 class="page-title">{{ 'inventario.variants' | t }}</h1>
       <button type="button" class="btn btn-primary" (click)="startCreate()">{{ 'variantes.new' | t }}</button>
     </div>
 
     @if (editing()) {
-      <section class="panel mb-8 max-w-3xl p-5 shadow-[0_4px_16px_rgb(14_34_48/0.08)]" aria-labelledby="vtitle">
+      <section class="panel-raised mb-8 max-w-3xl p-5" aria-labelledby="vtitle">
         <h2 id="vtitle" class="mb-3 text-lg">{{ editingId() ? ('variantes.edit' | t) : ('variantes.new' | t) }}</h2>
         <form class="grid gap-4 sm:grid-cols-3" (submit)="save($event)">
           <div class="sm:col-span-3">

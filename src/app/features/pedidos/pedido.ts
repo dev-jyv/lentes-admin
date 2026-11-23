@@ -24,7 +24,7 @@ const CARRIERS = ['Estafeta', 'DHL', 'FedEx', 'Paquetexpress', 'Redpack', 'Corre
         <h1 class="page-title">{{ 'pedido.title' | t: { folio: folio(o.number) } }}</h1>
         <app-order-status-badge [status]="o.status" />
       </div>
-      <p class="mb-6 text-sm text-muted-foreground">{{ o.customer_email }} · {{ 'pedido.createdAt' | t: { date: date(o.created_at) } }}@if (o.paid_at) { · {{ 'pedido.paidAt' | t: { date: date(o.paid_at) } }} }</p>
+      <p class="page-sub mb-6 lg:mb-8">{{ o.customer_email }} · {{ 'pedido.createdAt' | t: { date: date(o.created_at) } }}@if (o.paid_at) { · {{ 'pedido.paidAt' | t: { date: date(o.paid_at) } }} }</p>
 
       <div class="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
         <section aria-labelledby="art" class="min-w-0">
@@ -77,7 +77,7 @@ const CARRIERS = ['Estafeta', 'DHL', 'FedEx', 'Paquetexpress', 'Redpack', 'Corre
             </section>
           }
           @if (o.lab_blockers.length) {
-            <section aria-labelledby="lab" class="rounded-2xl bg-amber-soft p-4 text-sm">
+            <section aria-labelledby="lab" class="rounded-2xl bg-sun-soft p-4 text-sm">
               <h2 id="lab" class="mb-1 text-base">{{ 'pedido.labBlockers' | t }}</h2>
               <ul class="list-disc pl-4">@for (b of o.lab_blockers; track b) { <li>{{ b }}</li> }</ul>
             </section>
