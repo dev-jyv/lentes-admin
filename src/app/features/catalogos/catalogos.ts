@@ -23,7 +23,7 @@ export const canDelete = (v: CatalogValue): boolean => !v.system && (v.product_c
   selector: 'app-catalogos',
   imports: [FormField, TPipe],
   template: `
-    <div class="mb-2 flex flex-wrap items-center justify-between gap-3">
+    <div class="page-head mb-2 lg:mb-3">
       <h1 class="page-title">{{ 'nav.catalogos' | t }}</h1>
       @if (!fixed()) {
         <button type="button" class="btn btn-primary" (click)="startCreate()">{{ 'catalogos.new' | t }}</button>
@@ -38,7 +38,7 @@ export const canDelete = (v: CatalogValue): boolean => !v.system && (v.product_c
     </div>
 
     @if (editing()) {
-      <section class="panel mb-6 max-w-3xl p-5 shadow-[0_4px_16px_rgb(14_34_48/0.08)]" aria-labelledby="vtitle">
+      <section class="panel-raised mb-6 max-w-3xl p-5" aria-labelledby="vtitle">
         <h2 id="vtitle" class="mb-3 text-lg">{{ editingCode() ? ('catalogos.edit' | t) : ('catalogos.new' | t) }} · {{ kindLabel() }}</h2>
         <form class="grid gap-4 sm:grid-cols-2" (submit)="save($event)">
           <div>

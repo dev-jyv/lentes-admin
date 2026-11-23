@@ -13,10 +13,14 @@ import { t, TPipe } from '../../core/i18n';
   imports: [RouterLink, TPipe],
   template: `
     <a routerLink="/productos" class="back-link">{{ 'imagenes.back' | t }}</a>
-    <h1 class="page-title my-4">{{ 'imagenes.title' | t }}</h1>
-    <p class="mb-6 text-sm text-muted-foreground">{{ 'imagenes.hint' | t }}</p>
+    <div class="page-head mt-3">
+      <div>
+        <h1 class="page-title">{{ 'imagenes.title' | t }}</h1>
+        <p class="page-sub">{{ 'imagenes.hint' | t }}</p>
+      </div>
+    </div>
 
-    <div class="panel mb-6 max-w-xl border-dashed p-5">
+    <div class="mb-6 max-w-xl rounded-2xl border-2 border-dashed border-input bg-card p-5">
       <label for="files" class="field-label">{{ 'imagenes.add' | t }}</label>
       <input id="files" type="file" multiple [accept]="accept" class="block" (change)="upload($event)" [disabled]="busy()" />
       @if (busy()) { <p role="status" class="mt-3 flex items-center gap-2 text-sm text-muted-foreground"><span class="size-3 animate-pulse rounded-full bg-primary" aria-hidden="true"></span>{{ 'imagenes.uploading' | t }}</p> }

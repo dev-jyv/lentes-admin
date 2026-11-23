@@ -113,7 +113,6 @@
     "forbidden": "No tienes permisos de administrador."
   },
   "shell": {
-    "band": "Panel de administración",
     "closeMenu": "Cerrar menú",
     "openMenu": "Abrir menú",
     "homeLabel": "Pupila admin, inicio",
@@ -179,7 +178,17 @@
     "insights": "Análisis"
   },
   "login": {
-    "title": "Admin · Iniciar sesión",
+    "title": "Iniciar sesión",
+    "subtitle": "Panel de administración de la tienda. Solo cuentas del equipo.",
+    "shellTitle": "Pedidos, recetas y catálogo de la tienda en un solo lugar.",
+    "perks": {
+      "orders": "Prepara y envía los pedidos pagados",
+      "prescriptions": "Revisa las recetas antes de fabricar",
+      "catalog": "Mantén productos, micas y existencias al día",
+      "store": "Edita los banners y el mosaico del inicio"
+    },
+    "showPassword": "Mostrar contraseña",
+    "hidePassword": "Ocultar contraseña",
     "forbidden": "Esta cuenta no tiene permisos de administrador.",
     "email": "Correo",
     "password": "Contraseña",

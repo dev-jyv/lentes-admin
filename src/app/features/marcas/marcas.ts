@@ -11,7 +11,7 @@ import { t, TPipe } from '../../core/i18n';
   selector: 'app-marcas',
   imports: [FormField, TPipe],
   template: `
-    <h1 class="page-title mb-6">{{ 'nav.marcas' | t }}</h1>
+    <h1 class="page-head page-title">{{ 'nav.marcas' | t }}</h1>
     <div class="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
       <div class="min-w-0">
         @if (loadError()) { <p role="alert" class="alert-error mb-4">{{ loadError() }}</p> }

@@ -19,10 +19,10 @@ const weekday = new Intl.DateTimeFormat('es-MX', { weekday: 'short', timeZone: '
   selector: 'app-resumen',
   imports: [RouterLink, TPipe, OrderStatusBadge],
   template: `
-    <header class="mb-6 flex flex-wrap items-end justify-between gap-3">
+    <header class="page-head">
       <div>
         <h1 class="page-title">{{ 'resumen.title' | t }}</h1>
-        <p class="mt-1 text-sm text-muted-foreground first-letter:uppercase">{{ todayLabel }}</p>
+        <p class="page-sub first-letter:uppercase">{{ todayLabel }}</p>
       </div>
       <a routerLink="/reportes" class="btn btn-secondary">{{ 'resumen.seeReports' | t }}</a>
     </header>
@@ -32,7 +32,7 @@ const weekday = new Intl.DateTimeFormat('es-MX', { weekday: 'short', timeZone: '
     <!-- Lo que el equipo vino a hacer: la cola de pendientes manda en la pantalla. -->
     <section aria-labelledby="todo" class="mb-8">
       <h2 id="todo" class="mb-3 text-lg">{{ 'resumen.todo' | t }}</h2>
-      <ul class="grid overflow-hidden rounded-2xl border border-border bg-card shadow-[0_1px_2px_rgb(14_34_48/0.04)] grid-cols-3 divide-x divide-border">
+      <ul class="grid overflow-hidden panel grid-cols-3 divide-x divide-border">
         @for (q of queue(); track q.path) {
           <li>
             <a [routerLink]="q.path" [queryParams]="q.query" class="group flex h-full flex-col gap-1 p-3 sm:p-5 transition-colors duration-150 hover:bg-accent/50 focus-visible:ring-inset">
@@ -64,7 +64,7 @@ const weekday = new Intl.DateTimeFormat('es-MX', { weekday: 'short', timeZone: '
       <div class="min-w-0 space-y-8">
         <section aria-labelledby="ventas">
           <h2 id="ventas" class="mb-3 text-lg">{{ 'resumen.sales7' | t }}</h2>
-          <div class="rounded-2xl border border-border bg-card p-5">
+          <div class="panel p-5">
             @if (sales(); as s) {
               <dl class="flex flex-wrap items-baseline gap-x-8 gap-y-2">
                 <div>
@@ -112,7 +112,7 @@ const weekday = new Intl.DateTimeFormat('es-MX', { weekday: 'short', timeZone: '
             <h2 id="recientes" class="text-lg">{{ 'resumen.recent' | t }}</h2>
             <a routerLink="/pedidos" class="link text-sm">{{ 'resumen.seeAll' | t }}</a>
           </div>
-          <ul class="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card">
+          <ul class="divide-y divide-border overflow-hidden panel">
             @for (o of recent(); track o.id) {
               <li>
                 <a [routerLink]="['/pedidos', o.id]" class="grid grid-cols-[1fr_auto] items-center gap-x-4 gap-y-1 px-5 py-3 transition-colors duration-150 hover:bg-accent/50 focus-visible:ring-inset sm:grid-cols-[7rem_minmax(0,1fr)_8rem_7rem]">
@@ -138,14 +138,14 @@ const weekday = new Intl.DateTimeFormat('es-MX', { weekday: 'short', timeZone: '
           <h2 id="bajo" class="text-lg">{{ 'resumen.lowTitle' | t }}</h2>
           <a routerLink="/inventario" class="link text-sm">{{ 'resumen.seeInventory' | t }}</a>
         </div>
-        <ul class="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card">
+        <ul class="divide-y divide-border overflow-hidden panel">
           @for (i of low(); track i.variant_id) {
             <li class="flex items-center gap-3 px-5 py-3 text-sm">
               <div class="min-w-0 flex-1">
                 <p class="truncate font-medium">{{ i.product_name }}</p>
                 <p class="truncate text-xs text-muted-foreground">{{ i.brand_name }} · <span class="optic">{{ i.sku }}</span></p>
               </div>
-              <span class="shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold tabular-nums" [class]="i.available <= 0 ? 'bg-destructive/10 text-destructive' : 'bg-amber-soft text-foreground'">
+              <span class="shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold tabular-nums" [class]="i.available <= 0 ? 'bg-destructive/10 text-destructive' : 'bg-sun-soft text-foreground'">
                 {{ 'resumen.available' | t: { count: i.available } }}
               </span>
             </li>

@@ -12,7 +12,7 @@ import { t, TPipe } from '../../core/i18n';
   selector: 'app-reportes',
   imports: [TPipe],
   template: `
-    <h1 class="page-title mb-6">{{ 'nav.reportes' | t }}</h1>
+    <h1 class="page-head page-title">{{ 'nav.reportes' | t }}</h1>
     <form class="panel mb-6 flex flex-wrap items-end gap-3 p-4" (submit)="apply($event)">
       <div><label for="from" class="field-label">{{ 'reportes.from' | t }}</label><input id="from" type="date" class="field" [value]="from()" (input)="from.set(val($event))" /></div>
       <div><label for="to" class="field-label">{{ 'reportes.to' | t }}</label><input id="to" type="date" class="field" [value]="to()" (input)="to.set(val($event))" /></div>

@@ -29,7 +29,7 @@ import { t, TPipe } from '../../core/i18n';
     <p class="mb-4 max-w-3xl text-sm text-muted-foreground">{{ 'tratamientos.hint' | t }}</p>
 
     @if (editing()) {
-      <section class="panel mb-8 max-w-3xl p-5 shadow-[0_4px_16px_rgb(14_34_48/0.08)]" aria-labelledby="ttitle">
+      <section class="panel-raised mb-8 max-w-3xl p-5" aria-labelledby="ttitle">
         <h3 id="ttitle" class="mb-3 text-lg">{{ editingId() ? ('tratamientos.edit' | t) : ('tratamientos.new' | t) }}</h3>
         <form class="grid gap-4 sm:grid-cols-2" (submit)="save($event)">
           <div>

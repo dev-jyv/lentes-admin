@@ -18,7 +18,7 @@ const fmt = (n: number | null | undefined) => (n == null ? '—' : n > 0 ? `+${n
   selector: 'app-recetas',
   imports: [TPipe],
   template: `
-    <h1 class="page-title mb-6">{{ 'nav.recetas' | t }}</h1>
+    <h1 class="page-head page-title">{{ 'nav.recetas' | t }}</h1>
     <div role="tablist" [attr.aria-label]="'common.status' | t" class="mb-4 flex gap-2 overflow-x-auto">
       @for (t of tabs; track t.value) {
         <button type="button" role="tab" [attr.aria-selected]="tab() === t.value" class="chip" (click)="select(t.value)">{{ t.label }}</button>

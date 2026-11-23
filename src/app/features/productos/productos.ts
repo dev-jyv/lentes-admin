@@ -18,13 +18,13 @@ import { t, TPipe } from '../../core/i18n';
   selector: 'app-productos',
   imports: [FormField, RouterLink, TPipe],
   template: `
-    <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+    <div class="page-head">
       <h1 class="page-title">{{ 'nav.productos' | t }}</h1>
       <button type="button" class="btn btn-primary" (click)="startCreate()">{{ 'productos.new' | t }}</button>
     </div>
 
     @if (editing()) {
-      <section class="panel mb-8 max-w-3xl p-5 shadow-[0_4px_16px_rgb(14_34_48/0.08)]" aria-labelledby="form-title">
+      <section class="panel-raised mb-8 max-w-3xl p-5" aria-labelledby="form-title">
         <h2 id="form-title" class="mb-3 text-lg">{{ editingId() ? ('productos.edit' | t) : ('productos.new' | t) }}</h2>
         <form class="grid gap-4 sm:grid-cols-2" (submit)="save($event)">
           <div class="sm:col-span-2">

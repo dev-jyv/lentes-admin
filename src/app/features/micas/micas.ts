@@ -10,7 +10,7 @@ type Tab = 'packages' | 'treatments';
   selector: 'app-micas',
   imports: [TPipe, LensPackages, LensTreatments],
   template: `
-    <h1 class="page-title mb-4">{{ 'nav.micas' | t }}</h1>
+    <h1 class="page-head page-title mb-4 lg:mb-5">{{ 'nav.micas' | t }}</h1>
     <div role="tablist" [attr.aria-label]="'micas.tabsLabel' | t" class="mb-5 flex flex-wrap gap-2">
       @for (x of tabs; track x.value) {
         <button type="button" role="tab" class="chip" [attr.aria-selected]="tab() === x.value" (click)="tab.set(x.value)">{{ x.label }}</button>

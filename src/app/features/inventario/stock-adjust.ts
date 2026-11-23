@@ -11,7 +11,7 @@ import { t, TPipe } from '../../core/i18n';
   selector: 'app-stock-adjust',
   imports: [TPipe],
   template: `
-    <section class="panel space-y-4 p-5 shadow-[0_4px_16px_rgb(14_34_48/0.08)]" [attr.aria-label]="'stock.adjustLabel' | t: { sku: sku() }">
+    <section class="panel-raised space-y-4 p-5" [attr.aria-label]="'stock.adjustLabel' | t: { sku: sku() }">
       <h3 class="text-lg">{{ 'stock.adjustTitle' | t: { sku: sku() } }} <span class="font-normal text-muted-foreground">{{ 'stock.current' | t: { stock: stock() } }}</span></h3>
       <form class="grid gap-3 sm:grid-cols-3" (submit)="save($event)">
         <div>

@@ -37,6 +37,16 @@ const ICON = {
     .safe-bottom {
       padding-bottom: env(safe-area-inset-bottom);
     }
+    /* Sobre marino: anillo del logo y foco en sus tonos para tema oscuro, que sí contrastan. */
+    .sidebar {
+      --logo-ring: #43c3d2;
+      --logo-iris: #f0b85a;
+      --logo-iris-soft: #3a2c15;
+      --logo-pupil: #e4edf0;
+    }
+    .sidebar :is(a, button):focus-visible {
+      box-shadow: 0 0 0 3px color-mix(in oklab, var(--mint) 70%, transparent);
+    }
   `,
   template: `
     <ng-template #icon let-d>
@@ -46,17 +56,17 @@ const ICON = {
     </ng-template>
 
     <div class="min-h-screen lg:pl-64">
-      <!-- Barra lateral (escritorio): clara como la de lentes-web (--sidebar = superficie), con borde fino. -->
-      <aside class="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground lg:flex">
-        <a routerLink="/" [attr.aria-label]="'shell.homeLabel' | t" class="mx-3 mt-4 mb-2 flex min-h-12 items-center gap-2.5 rounded-xl px-3">
+      <!-- Barra lateral (escritorio): franja marino como la barra promocional y el pie de lentes-web; acento menta en la sección activa. -->
+      <aside class="sidebar fixed inset-y-0 left-0 z-40 hidden w-64 flex-col bg-sidebar text-sidebar-foreground lg:flex dark:border-r dark:border-sidebar-border">
+        <a routerLink="/" [attr.aria-label]="'shell.homeLabel' | t" class="mx-3 mt-5 mb-3 flex min-h-12 items-center gap-2.5 rounded-xl px-3">
           <ng-container [ngTemplateOutlet]="logo" />
           <span class="font-display text-xl font-extrabold tracking-tight">{{ 'brand.wordmark' | t }}</span>
-          <span class="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">{{ 'shell.adminTag' | t }}</span>
+          <span class="rounded-full bg-white/10 px-2 py-0.5 text-[0.6875rem] font-semibold tracking-[0.06em] text-white/80 uppercase">{{ 'shell.adminTag' | t }}</span>
         </a>
         <nav [attr.aria-label]="'shell.navLabel' | t" class="flex-1 overflow-y-auto px-3 pb-4">
           @for (group of groups; track group.label) {
             @if (group.label) {
-              <p class="mt-5 mb-1 px-3 text-xs font-semibold text-muted-foreground" [id]="'grp-' + $index">{{ group.label }}</p>
+              <p class="mt-6 mb-1.5 px-3 text-[0.6875rem] font-semibold tracking-[0.08em] text-white/60 uppercase" [id]="'grp-' + $index">{{ group.label }}</p>
             }
             <ul class="space-y-0.5" [attr.aria-labelledby]="group.label ? 'grp-' + $index : null">
               @for (item of group.items; track item.path) {
@@ -66,14 +76,15 @@ const ICON = {
                     routerLinkActive
                     [routerLinkActiveOptions]="{ exact: item.path === '/' }"
                     ariaCurrentWhenActive="page"
-                    class="group flex min-h-10 items-center gap-3 rounded-lg px-3 text-sm font-medium text-muted-foreground transition-colors duration-150 hover:bg-muted hover:text-foreground aria-[current=page]:bg-sidebar-accent aria-[current=page]:font-semibold aria-[current=page]:text-sidebar-accent-foreground"
+                    class="group relative flex min-h-10 items-center gap-3 rounded-xl px-3 text-sm font-medium text-white/75 transition-colors duration-150 hover:bg-white/6 hover:text-white aria-[current=page]:bg-sidebar-accent aria-[current=page]:font-semibold aria-[current=page]:text-white"
                   >
-                    <span class="group-hover:text-foreground group-aria-[current=page]:text-sidebar-primary">
+                    <span class="absolute inset-y-2 -left-3 w-1 rounded-r-full bg-sidebar-primary opacity-0 transition-opacity duration-150 group-aria-[current=page]:opacity-100" aria-hidden="true"></span>
+                    <span class="text-white/60 group-hover:text-white group-aria-[current=page]:text-sidebar-primary">
                       <ng-container [ngTemplateOutlet]="icon" [ngTemplateOutletContext]="{ $implicit: item.icon }" />
                     </span>
                     <span class="flex-1">{{ item.label }}</span>
                     @if (badgeOf(item); as b) {
-                      <span class="min-w-6 rounded-full bg-amber-soft px-1.5 py-0.5 text-center text-xs font-semibold text-foreground tabular-nums" aria-hidden="true">{{ b }}</span>
+                      <span class="min-w-6 rounded-full bg-sun px-1.5 py-0.5 text-center text-xs font-bold text-navy tabular-nums" aria-hidden="true">{{ b }}</span>
                       <span class="sr-only">, {{ item.badgeText!(b) }}</span>
                     }
                   </a>
@@ -82,13 +93,16 @@ const ICON = {
             </ul>
           }
         </nav>
-        <div class="border-t border-sidebar-border p-3">
-          <p class="truncate px-3 pb-2 text-xs text-muted-foreground" [title]="auth.email()">{{ auth.email() }}</p>
+        <div class="m-3 rounded-2xl bg-white/5 p-2">
+          <div class="flex items-center gap-2.5 px-2 pt-1 pb-2">
+            <span class="grid size-8 shrink-0 place-items-center rounded-full bg-mint font-display text-sm font-bold text-navy uppercase" aria-hidden="true">{{ initial() }}</span>
+            <p class="min-w-0 truncate text-xs text-white/75" [title]="auth.email()">{{ auth.email() }}</p>
+          </div>
           <div class="flex items-center gap-1">
-            <button type="button" class="flex min-h-10 flex-1 items-center rounded-lg px-3 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground" (click)="logout()">
+            <button type="button" class="flex min-h-10 flex-1 items-center rounded-xl px-2 text-sm font-medium text-white/75 hover:bg-white/8 hover:text-white" (click)="logout()">
               {{ 'common.signOut' | t }}
             </button>
-            <ng-container [ngTemplateOutlet]="themeButton" [ngTemplateOutletContext]="{ $implicit: 'text-muted-foreground hover:bg-muted hover:text-foreground' }" />
+            <ng-container [ngTemplateOutlet]="themeButton" [ngTemplateOutletContext]="{ $implicit: 'text-white/75 hover:bg-white/8 hover:text-white' }" />
           </div>
         </div>
       </aside>
@@ -99,7 +113,7 @@ const ICON = {
           <a routerLink="/" [attr.aria-label]="'shell.homeLabel' | t" class="flex min-h-11 items-center gap-2 rounded-full">
             <ng-container [ngTemplateOutlet]="logo" />
             <span class="font-display text-lg font-extrabold tracking-tight">{{ 'brand.wordmark' | t }}</span>
-            <span class="text-xs font-medium text-muted-foreground">{{ 'shell.adminTag' | t }}</span>
+            <span class="pill py-0.5 text-[0.6875rem] font-semibold tracking-[0.06em] text-muted-foreground uppercase">{{ 'shell.adminTag' | t }}</span>
           </a>
           <div class="ml-auto">
             <ng-container [ngTemplateOutlet]="themeButton" [ngTemplateOutletContext]="{ $implicit: 'hover:bg-accent' }" />
@@ -107,12 +121,12 @@ const ICON = {
         </div>
       </header>
 
-      <main class="container-page min-w-0 py-6 pb-28 lg:py-8 lg:pb-10"><router-outlet /></main>
+      <main class="container-page min-w-0 py-6 pb-28 lg:py-10 lg:pb-12"><router-outlet /></main>
 
       <!-- Hoja "Más" (teléfono): el resto de secciones y cerrar sesión. -->
       @if (moreOpen()) {
-        <div class="fixed inset-0 z-40 bg-band/40 lg:hidden" aria-hidden="true" (click)="closeMore()"></div>
-        <nav id="menu-mas" [attr.aria-label]="'shell.moreLabel' | t" class="safe-bottom fixed inset-x-0 bottom-16 z-50 max-h-[70dvh] overflow-y-auto rounded-t-2xl border-t border-border bg-card px-4 pt-3 pb-4 shadow-[0_-8px_24px_rgb(14_34_48/0.12)] lg:hidden">
+        <div class="fixed inset-0 z-40 bg-navy/50 backdrop-blur-[2px] lg:hidden" aria-hidden="true" (click)="closeMore()"></div>
+        <nav id="menu-mas" [attr.aria-label]="'shell.moreLabel' | t" class="safe-bottom fixed inset-x-0 bottom-16 z-50 max-h-[70dvh] overflow-y-auto rounded-t-3xl bg-card px-4 pt-3 pb-4 shadow-lift-strong lg:hidden">
           @for (group of groups; track group.label) {
             @if (group.label) {
               <p class="mt-3 mb-1 px-3 text-xs font-semibold text-muted-foreground">{{ group.label }}</p>
@@ -131,7 +145,7 @@ const ICON = {
                     <ng-container [ngTemplateOutlet]="icon" [ngTemplateOutletContext]="{ $implicit: item.icon }" />
                     <span class="flex-1">{{ item.label }}</span>
                     @if (badgeOf(item); as b) {
-                      <span class="min-w-6 rounded-full bg-amber-soft px-1.5 py-0.5 text-center text-xs font-semibold text-foreground tabular-nums" aria-hidden="true">{{ b }}</span>
+                      <span class="min-w-6 rounded-full bg-sun px-1.5 py-0.5 text-center text-xs font-bold text-navy tabular-nums" aria-hidden="true">{{ b }}</span>
                       <span class="sr-only">, {{ item.badgeText!(b) }}</span>
                     }
                   </a>
@@ -162,7 +176,7 @@ const ICON = {
                 <span class="relative">
                   <ng-container [ngTemplateOutlet]="icon" [ngTemplateOutletContext]="{ $implicit: item.icon }" />
                   @if (badgeOf(item); as b) {
-                    <span class="absolute -top-1.5 left-3 min-w-4.5 rounded-full bg-amber px-1 text-center text-[0.6875rem] leading-4.5 font-semibold text-band tabular-nums" aria-hidden="true">{{ b }}</span>
+                    <span class="absolute -top-1.5 left-3 min-w-4.5 rounded-full bg-sun px-1 text-center text-[0.6875rem] leading-4.5 font-bold text-navy tabular-nums" aria-hidden="true">{{ b }}</span>
                   }
                 </span>
                 {{ item.label }}
@@ -189,9 +203,9 @@ const ICON = {
 
     <ng-template #logo>
       <svg viewBox="0 0 32 32" aria-hidden="true" class="size-7 shrink-0" fill="none">
-        <circle cx="16" cy="16" r="14.2" stroke="var(--teal)" stroke-width="1.6" />
-        <circle cx="16" cy="16" r="8.4" fill="var(--amber-soft)" stroke="var(--amber)" stroke-width="1.6" />
-        <circle cx="16" cy="16" r="3.6" fill="var(--ink)" />
+        <circle cx="16" cy="16" r="14.2" stroke="var(--logo-ring)" stroke-width="1.6" />
+        <circle cx="16" cy="16" r="8.4" fill="var(--logo-iris-soft)" stroke="var(--logo-iris)" stroke-width="1.6" />
+        <circle cx="16" cy="16" r="3.6" fill="var(--logo-pupil)" />
         <circle cx="14.4" cy="14.4" r="1.1" fill="#fff" opacity="0.9" />
       </svg>
     </ng-template>
@@ -265,6 +279,7 @@ export default class Shell {
   protected readonly dark = signal(document.documentElement.dataset['theme'] === 'dark');
   protected readonly moreOpen = signal(false);
   protected readonly badgeOf = (item: NavItem) => item.badge?.() ?? null;
+  protected readonly initial = () => this.auth.email().charAt(0);
 
   constructor() {
     const sub = this.router.events.pipe(filter((e) => e instanceof NavigationEnd)).subscribe(() => void this.attention.refresh());
